@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://music.apple.com/lyric-ttml-internal" xmlns:ttm="http://www.w3.org/ns/ttml#metadata" itunes:timing="Word">
+    <head>
+        <metadata>
+            <ttm:agent type="person" xml:id="v1"/>
+            <ttm:agent type="person" xml:id="v2"/>
+            <ttm:agent type="person" xml:id="v3"/>
+            <ttm:agent type="person" xml:id="v4"/>
+            <ttm:agent type="person" xml:id="v5"/>
+        </metadata>
+    </head>
+    <body dur="04:08.000">
+        <div begin="00:01.900" end="04:07.000">
+            <p begin="00:01.900" end="00:05.500" ttm:agent="v1" itunes:key="L1">
+                <span begin="00:01.900" end="00:03.400">何者にも</span>
+                <span begin="00:03.400" end="00:04.300">なれない</span>
+                <span begin="00:04.300" end="00:05.500">体と</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">与这具一事无成的身体</span>
+            </p >
+            <p begin="00:06.500" end="00:11.200" ttm:agent="v2" itunes:key="L2">
+                <span begin="00:06.500" end="00:07.500">借りた</span>
+                <span begin="00:07.800" end="00:08.700">命の</span>
+                <span begin="00:09.000" end="00:09.600">中で</span>
+                <span begin="00:09.900" end="00:10.500">息を</span>
+                <span begin="00:10.500" end="00:11.200">して</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">在借来的生命中呼吸</span>
+            </p >
+            <p begin="00:12.800" end="00:16.500" ttm:agent="v3" itunes:key="L3">
+                <span begin="00:12.800" end="00:13.500">奥の</span>
+                <span begin="00:13.800" end="00:14.700">方まで</span>
+                <span begin="00:15.100" end="00:15.700">深く</span>
+                <span begin="00:15.700" end="00:16.500">潜れば</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">潜入内心深处的话</span>
+            </p >
+            <p begin="00:17.900" end="00:21.000" ttm:agent="v4" itunes:key="L4">
+                <span begin="00:17.900" end="00:18.500">今も</span>
+                <span begin="00:18.700" end="00:19.100">あの</span>
+                <span begin="00:19.300" end="00:19.700">日の</span>
+                <span begin="00:20.100" end="00:21.000">自分が</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">如今那天的自己</span>
+            </p >
+            <p begin="00:23.200" end="00:26.000" ttm:agent="v5" itunes:key="L5">
+                <span begin="00:23.200" end="00:24.500">まだ</span>
+                <span begin="00:24.800" end="00:26.000">笑ってる</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">依然在微笑</span>
+            </p >
+            <p begin="00:37.900" end="00:42.000" ttm:agent="v5" itunes:key="L6">
+                <span begin="00:37.900" end="00:39.800">振り返れば</span>
+                <span begin="00:39.800" end="00:40.500">確かに</span>
+                <span begin="00:40.800" end="00:42.000">残る</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">回首望去 的确残留着</span>
+            </p >
+            <p begin="00:42.800" end="00:47.500" ttm:agent="v5" itunes:key="L7">
+                <span begin="00:42.800" end="00:43.500">胸に</span>
+                <span begin="00:43.700" end="00:44.800">芽生えて</span>
+                <span begin="00:45.100" end="00:45.700">いた</span>
+                <span begin="00:45.700" end="00:46.300">夢の</span>
+                <span begin="00:46.500" end="00:47.500">かけら</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">心中萌生出的梦想碎片</span>
+            </p >
+            <p begin="00:48.800" end="00:53.000" ttm:agent="v4" itunes:key="L8">
+                <span begin="00:48.800" end="00:50.000">理想の</span>
+                <span begin="00:50.000" end="00:50.500">影に</span>
+                <span begin="00:51.000" end="00:53.000">押し潰されて</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">被理想的影子压垮</span>
+            </p >
+            <p begin="00:53.800" end="00:57.500" ttm:agent="v4" itunes:key="L9">
+                <span begin="00:53.800" end="00:54.500">それは</span>
+                <span begin="00:54.700" end="00:55.800">いつしか</span>
+                <span begin="00:56.000" end="00:57.500">嫌いに</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">那不知不觉间变得讨厌</span>
+            </p >
+            <p begin="00:58.000" end="01:08.800" ttm:agent="v3" itunes:key="L10">
+                <span begin="00:58.000" end="01:00.800">変わってしまった</span>
+                <span begin="01:01.200" end="01:02.000">過去を</span>
+                <span begin="01:02.500" end="01:03.800">撫でて</span>
+                <span begin="01:03.800" end="01:04.800">みても</span>
+                <span begin="01:05.200" end="01:07.800">仕方がない</span>
+                <span begin="01:07.800" end="01:08.800">よな</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">已经改变了 就算抚摸过去 也无济于事啊</span>
+            </p >
+            <p begin="01:10.800" end="01:20.000" ttm:agent="v5" itunes:key="L11">
+                <span begin="01:10.800" end="01:12.800">ほんの小さな</span>
+                <span begin="01:13.000" end="01:14.800">優しい光</span>
+                <span begin="01:15.200" end="01:17.000">信じた</span>
+                <span begin="01:17.000" end="01:18.000">想いは</span>
+                <span begin="01:18.000" end="01:20.000">まだ届かない</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">那微小而温柔的光芒 坚信的思念仍未传达</span>
+            </p >
+            <p begin="01:20.800" end="01:33.800" ttm:agent="v1" itunes:key="L12">
+                <span begin="01:20.800" end="01:22.000">それでも</span>
+                <span begin="01:22.200" end="01:23.800">乾いたまま</span>
+                <span begin="01:24.200" end="01:26.000">目の前にある</span>
+                <span begin="01:26.200" end="01:28.800">真っ白な景色に</span>
+                <span begin="01:29.000" end="01:30.000">この手で</span>
+                <span begin="01:30.500" end="01:33.800">もっと何かを描いていた</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">即便如此 依旧干涸着 在眼前纯白的景色中 用这双手描绘着更多事物</span>
+            </p >
+            <p begin="01:39.500" end="01:43.500" ttm:agent="v2" itunes:key="L13">
+                <span begin="01:39.500" end="01:41.000">離したくない</span>
+                <span begin="01:41.500" end="01:42.500">夢の</span>
+                <span begin="01:42.500" end="01:43.500">続きを</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">不想放手的梦的延续</span>
+            </p >
+            <p begin="01:44.200" end="01:49.000" ttm:agent="v2" itunes:key="L14">
+                <span begin="01:44.200" end="01:46.000">少しだけ</span>
+                <span begin="01:46.000" end="01:47.000">誰かに</span>
+                <span begin="01:47.200" end="01:49.000">知ってほしくて</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">只想让某个人稍微知道一些</span>
+            </p >
+            <p begin="01:50.500" end="01:54.500" ttm:agent="v1" itunes:key="L15">
+                <span begin="01:50.500" end="01:52.000">追いかけても</span>
+                <span begin="01:52.500" end="01:53.500">遥かに</span>
+                <span begin="01:53.800" end="01:54.500">遠く</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">即使追赶 也遥不可及</span>
+            </p >
+            <p begin="01:55.200" end="01:59.000" ttm:agent="v1" itunes:key="L16">
+                <span begin="01:55.200" end="01:56.000">それは</span>
+                <span begin="01:56.200" end="01:57.500">いつしか</span>
+                <span begin="01:57.800" end="01:59.000">迷いに</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">那不知不觉间化为迷惘</span>
+            </p >
+            <p begin="01:59.200" end="02:10.000" ttm:agent="v3" itunes:key="L17">
+                <span begin="01:59.200" end="02:02.000">変わってしまった</span>
+                <span begin="02:02.500" end="02:05.000">零れ落ちる</span>
+                <span begin="02:05.500" end="02:06.200">涙</span>
+                <span begin="02:06.800" end="02:10.000">求めなさいと海</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">已经改变了 洒落的泪水 "去寻求吧" 如海一般</span>
+            </p >
+            <p begin="02:12.000" end="02:21.000" ttm:agent="v5" itunes:key="L18">
+                <span begin="02:12.000" end="02:14.000">今をすべて</span>
+                <span begin="02:14.500" end="02:16.000">投げ捨てても</span>
+                <span begin="02:16.500" end="02:18.000">目指した</span>
+                <span begin="02:18.000" end="02:19.000">場所には</span>
+                <span begin="02:19.200" end="02:21.000">まだ届かない</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">即使抛弃现在的一切 仍无法到达向往的地方</span>
+            </p >
+            <p begin="02:21.800" end="02:35.500" ttm:agent="v2" itunes:key="L19">
+                <span begin="02:21.800" end="02:23.000">それでも</span>
+                <span begin="02:23.500" end="02:25.000">音を立てて</span>
+                <span begin="02:25.500" end="02:27.000">壊れながら</span>
+                <span begin="02:27.500" end="02:30.000">諦められずに</span>
+                <span begin="02:30.500" end="02:32.000">本音を</span>
+                <span begin="02:32.500" end="02:35.500">吐き出した心が痛い</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">即便如此 伴随着声响崩坏着 无法放弃 倾吐真心的内心在痛</span>
+            </p >
+            <p begin="02:57.000" end="03:06.500" ttm:agent="v5" itunes:key="L20">
+                <span begin="02:57.000" end="03:02.000">築き上げた現実が</span>
+                <span begin="03:02.200" end="03:06.500">望んだものではなくても</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">即使构筑的现实并非所望</span>
+            </p >
+            <p begin="03:07.500" end="03:17.500" ttm:agent="v4" itunes:key="L21">
+                <span begin="03:07.500" end="03:08.800">答えは</span>
+                <span begin="03:09.000" end="03:11.800">ただ一つじゃない</span>
+                <span begin="03:12.000" end="03:14.000">きっと何度も</span>
+                <span begin="03:14.500" end="03:17.500">塗り替えていける</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">答案并非只有一个 一定能无数次地重新描绘</span>
+            </p >
+            <p begin="03:22.000" end="03:31.000" ttm:agent="v5" itunes:key="L22">
+                <span begin="03:22.000" end="03:24.000">ほんの小さな</span>
+                <span begin="03:24.200" end="03:26.000">優しい光</span>
+                <span begin="03:26.200" end="03:28.000">信じた</span>
+                <span begin="03:28.000" end="03:29.000">想いは</span>
+                <span begin="03:29.200" end="03:31.000">まだ届かない</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">那微小而温柔的光芒 坚信的思念仍未传达</span>
+            </p >
+            <p begin="03:31.800" end="03:44.500" ttm:agent="v3" itunes:key="L23">
+                <span begin="03:31.800" end="03:33.000">それでも</span>
+                <span begin="03:33.200" end="03:34.800">乾いたまま</span>
+                <span begin="03:35.000" end="03:37.000">目の前にある</span>
+                <span begin="03:37.200" end="03:39.500">真っ白な景色に</span>
+                <span begin="03:39.800" end="03:41.000">この手で</span>
+                <span begin="03:41.500" end="03:44.500">もっと未来を描いてみた</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">即便如此 依旧干涸着 在眼前纯白的景色中 用这双手尝试描绘更远的未来</span>
+            </p >
+            <p begin="03:49.800" end="03:53.000" ttm:agent="v1" itunes:key="L24">
+                <span begin="03:49.800" end="03:53.000">たとえ綺麗じゃなくても</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">就算不那么美丽</span>
+            </p >
+            <p begin="03:54.000" end="03:56.000" ttm:agent="v2" itunes:key="L25">
+                <span begin="03:54.000" end="03:56.000">自分らしく</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">也要活出自我</span>
+            </p >
+            <p begin="03:58.000" end="04:02.000" ttm:agent="v4" itunes:key="L26">
+                <span begin="03:58.000" end="04:02.000">ただ目に映る</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">只是映入眼帘</span>
+            </p >
+            <p begin="04:03.500" end="04:07.000" ttm:agent="v3" itunes:key="L27">
+                <span begin="04:03.500" end="04:07.000">この世界を描いていた</span>
+                <span ttm:role="x-translation" xml:lang="zh-CN">描绘着这个世界</span>
+            </p >
+        </div>
+    </body>
+</tt>
