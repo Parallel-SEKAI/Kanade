@@ -1,25 +1,23 @@
 # Kanade Redesign Plan: Apple Music Style Full Screen Player
 
 ## 1. UI/UX Redesign (Apple Music Style)
-- [ ] **Dynamic Background**: Always use a multi-layered blurred album art background instead of a solid color.
-- [ ] **Album Art**: Implement large rounded corners (approx 24.dp) and a "breathing" scale animation when playing/paused.
-- [ ] **Layout Reconstruction**:
-    - [ ] Move Title and Artist to the left above the progress bar.
-    - [ ] Add a "More Options" button next to the title.
-    - [ ] Redesign the progress bar and time labels to be more minimalist.
-    - [ ] Redesign Playback Controls: Larger icons, consistent spacing.
-- [ ] **Bottom Action Bar**: Add icons for Lyrics, AirPlay (placeholder), and Queue (placeholder) at the very bottom.
-- [ ] **Lyrics UI Improvements**:
-    - [ ] **Typography**: Use much larger, bolder fonts for the active line.
-    - [ ] **Alignment**: Change to left-aligned with a significant left margin (standard Apple Music style).
-    - [ ] **Visual Effects**: Add a subtle "glow" or increased brightness to the active line.
-    - [ ] **Compact Header**: Create a minimal header for the lyric view (mini-art + title).
-    - [ ] **Scrolling**: Implement smoother, more centered auto-scrolling logic.
+- [x] **Dynamic Background**: Added basic blurred background.
+- [/] **Optimized Dynamic Background (Apple Music Style)**:
+    - [ ] **Dependency**: Add `androidx.palette:palette-ktx`.
+    - [ ] **Logic**: Implement Palette color extraction from album art.
+    - [ ] **Component**: Create `FluidBackground` with moving gradient blobs.
+    - [ ] **Polishing**: Smooth color cross-fade and GPU optimization.
+- [x] **Album Art**: Implement large rounded corners and scale animation.
+- [x] **Layout Reconstruction**:
+    - [x] Title and Artist left-aligned.
+    - [x] Redesign progress bar and controls.
+- [x] **Lyrics UI Improvements**: Large font, left-aligned, smooth centering.
+- [x] **Smooth Move Transitions**: Persistent elements for seamless animation.
 
 ## 2. Technical Tasks
-- [ ] **Palette Integration**: Use Android Palette API or Compose-based color extraction for better background blending.
-- [ ] **Animation Polishing**: Refine `SharedTransition` and add subtle scale animations for the album art.
-- [ ] **Component Modularization**: Refactor `FullScreenContent` into smaller, manageable pieces (Header, Content, Controls, Footer).
+- [ ] **Palette Integration**: Use Android Palette API for color extraction.
+- [x] **Animation Polishing**: Refined `SharedTransition` and persistent element offsets.
+- [ ] **Performance**: Ensure 60fps for fluid background.
 
 ## 3. Verification
 - [ ] **Build and Install**: `./gradlew installDebug`

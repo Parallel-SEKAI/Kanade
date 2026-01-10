@@ -3,6 +3,7 @@ package org.parallel_sekai.kanade.ui.screens.player
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -23,7 +24,9 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -33,6 +36,90 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import java.util.concurrent.TimeUnit
+
+@Composable
+fun FluidBackground(
+    colors: List<Color>,
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "FluidBackground")
+    
+    val offset1 by infiniteTransition.animateValue(
+        initialValue = IntOffset(0, 0),
+        targetValue = IntOffset(300, 400),
+        typeConverter = IntOffset.VectorConverter,
+        animationSpec = infiniteRepeatable(
+            animation = tween(10000, easing = LinearEasing),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+        ),
+        label = "Blob1Offset"
+    )
+    
+    val offset2 by infiniteTransition.animateValue(
+        initialValue = IntOffset(400, 200),
+        targetValue = IntOffset(0, 500),
+        typeConverter = IntOffset.VectorConverter,
+        animationSpec = infiniteRepeatable(
+            animation = tween(12000, easing = LinearEasing),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+        ),
+        label = "Blob2Offset"
+    )
+
+    val offset3 by infiniteTransition.animateValue(
+        initialValue = IntOffset(100, 500),
+        targetValue = IntOffset(500, 0),
+        typeConverter = IntOffset.VectorConverter,
+        animationSpec = infiniteRepeatable(
+            animation = tween(15000, easing = LinearEasing),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+        ),
+        label = "Blob3Offset"
+    )
+
+    val color1 by animateColorAsState(colors.getOrElse(0) { Color.DarkGray }, tween(1500))
+    val color2 by animateColorAsState(colors.getOrElse(1) { Color.Black }, tween(1500))
+    val color3 by animateColorAsState(colors.getOrElse(2) { color1 }, tween(1500))
+
+    Box(modifier = modifier.fillMaxSize().blur(100.dp)) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawRect(color = color2)
+            
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(color1, Color.Transparent),
+                    center = androidx.compose.ui.geometry.Offset(offset1.x.toFloat(), offset1.y.toFloat()),
+                    radius = size.width,
+                    tileMode = TileMode.Clamp
+                ),
+                radius = size.width,
+                center = androidx.compose.ui.geometry.Offset(offset1.x.toFloat(), offset1.y.toFloat())
+            )
+            
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(color3, Color.Transparent),
+                    center = androidx.compose.ui.geometry.Offset(size.width - offset2.x, offset2.y.toFloat()),
+                    radius = size.width * 0.8f,
+                    tileMode = TileMode.Clamp
+                ),
+                radius = size.width * 0.8f,
+                center = androidx.compose.ui.geometry.Offset(size.width - offset2.x, offset2.y.toFloat())
+            )
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(color2, Color.Transparent),
+                    center = androidx.compose.ui.geometry.Offset(offset3.x.toFloat(), size.height - offset3.y),
+                    radius = size.width * 1.2f,
+                    tileMode = TileMode.Clamp
+                ),
+                radius = size.width * 1.2f,
+                center = androidx.compose.ui.geometry.Offset(offset3.x.toFloat(), size.height - offset3.y)
+            )
+        }
+    }
+}
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -204,15 +291,16 @@ private fun FullScreenContent(
                     label = "ArtCorner"
                 )
 
-                // 2. 动态模糊背景
-                AsyncImage(
-                    model = state.currentSong?.coverUrl,
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize().blur(50.dp).alpha(0.6f),
-                    contentScale = ContentScale.Crop
+                // 3. 优化版动态模糊背景
+                FluidBackground(
+                    colors = state.gradientColors,
+                    modifier = Modifier.fillMaxSize().alpha(0.8f)
                 )
+                
+                // 黑色遮罩，增强文字可读性
+                Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.2f)))
 
-                // 3. 核心位置计算 (歌词模式下精确对齐)
+                // 4. 核心位置计算 (歌词模式下精确对齐)
                 val albumArtOffset by animateIntOffsetAsState(
                     targetValue = if (showLyrics) {
                         IntOffset(with(density) { 24.dp.roundToPx() }, with(density) { 66.dp.roundToPx() })
@@ -237,7 +325,7 @@ private fun FullScreenContent(
                     }
                 )
 
-                // 4. 持久化共享元素
+                // 5. 持久化共享元素
                 AsyncImage(
                     model = state.currentSong?.coverUrl,
                     contentDescription = null,
@@ -273,7 +361,7 @@ private fun FullScreenContent(
                         .sharedElement(rememberSharedContentState(key = "song_artist"), animatedVisibilityScope)
                 )
 
-                // 5. 内容层
+                // 6. 内容层
                 Column(
                     modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally

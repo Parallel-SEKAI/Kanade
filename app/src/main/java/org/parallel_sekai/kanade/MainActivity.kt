@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val playbackRepository = PlaybackRepository(applicationContext)
-        val viewModel = PlayerViewModel(playbackRepository)
+        val viewModel = PlayerViewModel(playbackRepository, applicationContext)
 
         setContent {
             KanadeTheme {

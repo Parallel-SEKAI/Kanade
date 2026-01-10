@@ -1,23 +1,41 @@
 package org.parallel_sekai.kanade.ui.screens.player
 
+import android.content.Context
+import android.graphics.Bitmap
+import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.palette.graphics.Palette
+import coil.ImageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
+import org.parallel_sekai.kanade.data.source.MusicModel
 
 class PlayerViewModel(
-    private val playbackRepository: PlaybackRepository
+    private val playbackRepository: PlaybackRepository,
+    private val context: Context // 需要 Context 来初始化 Coil Request
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PlayerState())
     val state = _state.asStateFlow()
+    private val imageLoader = ImageLoader(context)
 
     init {
         // 加载初始音乐列表
         viewModelScope.launch {
             val list = playbackRepository.fetchMusicList()
-            _state.update { it.copy(currentSong = list.firstOrNull()) }
+            val initialSong = list.firstOrNull()
+            _state.update { it.copy(
+                musicList = list,
+                currentSong = initialSong
+            ) }
+            initialSong?.let { extractColors(it) }
         }
 
         // 监听播放状态并同步到 UI State
@@ -36,12 +54,12 @@ class PlayerViewModel(
                         currentSong = song,
                         lyrics = null // 重置旧歌词
                     ) }
-                    // 异步加载歌词
+                    
+                    // 异步加载歌词和颜色
                     viewModelScope.launch {
+                        extractColors(song)
                         val lyrics = playbackRepository.fetchLyrics(song.id)
-                        android.util.Log.d("LyricDebug", "Fetched lyrics for ${song.title}: ${lyrics?.take(50)}...")
                         val lyricData = lyrics?.let { LyricParserFactory.getParser(it).parse(it) }
-                        android.util.Log.d("LyricDebug", "Parsed lines: ${lyricData?.lines?.size ?: 0}")
                         _state.update { it.copy(
                             lyrics = lyrics,
                             lyricData = lyricData
@@ -141,6 +159,32 @@ class PlayerViewModel(
             }
             is PlayerIntent.ToggleShuffle -> {
                 playbackRepository.setShuffleModeEnabled(!state.value.shuffleModeEnabled)
+            }
+        }
+    }
+
+    private suspend fun extractColors(song: MusicModel) {
+        val request = ImageRequest.Builder(context)
+            .data(song.coverUrl)
+            .allowHardware(false) // Palette 需要获取 Bitmap 的像素，不能是 Hardware Bitmap
+            .build()
+
+        val result = imageLoader.execute(request)
+        if (result is SuccessResult) {
+            val bitmap = result.drawable.toBitmap()
+            val colors = withContext(Dispatchers.Default) {
+                val palette = Palette.from(bitmap).generate()
+                listOfNotNull(
+                    palette.getVibrantColor(0),
+                    palette.getMutedColor(0),
+                    palette.getDominantColor(0),
+                    palette.getDarkVibrantColor(0)
+                ).filter { it != 0 }
+                    .distinct()
+                    .map { Color(it) }
+            }
+            if (colors.isNotEmpty()) {
+                _state.update { it.copy(gradientColors = colors) }
             }
         }
     }
