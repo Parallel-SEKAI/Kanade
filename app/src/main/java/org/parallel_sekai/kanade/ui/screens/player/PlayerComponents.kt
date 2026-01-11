@@ -7,6 +7,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -23,13 +24,18 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
@@ -259,7 +265,15 @@ private fun FullScreenContent(
         }
 
         var showLyrics by remember { mutableStateOf(false) }
+        var controlsVisible by remember { mutableStateOf(true) }
         val density = LocalDensity.current
+
+        LaunchedEffect(controlsVisible, state.isPlaying) {
+            if (controlsVisible && state.isPlaying) {
+                kotlinx.coroutines.delay(5000)
+                controlsVisible = false
+            }
+        }
 
         Surface(
             modifier = Modifier
@@ -268,39 +282,41 @@ private fun FullScreenContent(
                     animatedVisibilityScope = animatedVisibilityScope,
                     resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
                 )
-                .fillMaxSize(),
+                .fillMaxSize()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { controlsVisible = !controlsVisible },
             color = Color.Black
         ) {
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                 val screenWidth = maxWidth
                 val screenHeight = maxHeight
 
-                // 1. 动态尺寸计算 (基于屏幕宽度)
                 val targetArtSize = screenWidth * 0.85f
                 val artX = (screenWidth - targetArtSize) / 2
 
-                // 2. 动画参数
+                val controlsAlpha by animateFloatAsState(
+                    targetValue = if (controlsVisible) 1f else 0f,
+                    animationSpec = tween(500),
+                    label = "ControlsAlpha"
+                )
                 val albumArtSize by animateDpAsState(
                     targetValue = if (showLyrics) 42.dp else targetArtSize,
                     animationSpec = spring(Spring.DampingRatioLowBouncy, Spring.StiffnessLow),
                     label = "ArtSize"
                 )
-                
                 val albumArtCornerRadius by animateDpAsState(
                     targetValue = if (showLyrics) 4.dp else 24.dp,
                     label = "ArtCorner"
                 )
 
-                // 3. 优化版动态模糊背景
                 FluidBackground(
                     colors = state.gradientColors,
                     modifier = Modifier.fillMaxSize().alpha(0.8f)
                 )
-                
-                // 黑色遮罩，增强文字可读性
                 Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.2f)))
 
-                // 4. 核心位置计算 (歌词模式下精确对齐)
                 val albumArtOffset by animateIntOffsetAsState(
                     targetValue = if (showLyrics) {
                         IntOffset(with(density) { 24.dp.roundToPx() }, with(density) { 66.dp.roundToPx() })
@@ -308,7 +324,6 @@ private fun FullScreenContent(
                         IntOffset(with(density) { artX.roundToPx() }, with(density) { 140.dp.roundToPx() })
                     }
                 )
-
                 val titleOffset by animateIntOffsetAsState(
                     targetValue = if (showLyrics) {
                         IntOffset(with(density) { 76.dp.roundToPx() }, with(density) { 64.dp.roundToPx() })
@@ -316,7 +331,6 @@ private fun FullScreenContent(
                         IntOffset(with(density) { artX.roundToPx() }, with(density) { (screenHeight - 380.dp).roundToPx() })
                     }
                 )
-
                 val artistOffset by animateIntOffsetAsState(
                     targetValue = if (showLyrics) {
                         IntOffset(with(density) { 76.dp.roundToPx() }, with(density) { 88.dp.roundToPx() })
@@ -325,7 +339,6 @@ private fun FullScreenContent(
                     }
                 )
 
-                // 5. 持久化共享元素
                 AsyncImage(
                     model = state.currentSong?.coverUrl,
                     contentDescription = null,
@@ -348,6 +361,7 @@ private fun FullScreenContent(
                         .offset { titleOffset }
                         .width(if (showLyrics) screenWidth - 120.dp else targetArtSize)
                         .sharedElement(rememberSharedContentState(key = "song_title"), animatedVisibilityScope)
+                        .alpha(if (showLyrics) 1f else controlsAlpha)
                 )
 
                 Text(
@@ -359,39 +373,97 @@ private fun FullScreenContent(
                         .offset { artistOffset }
                         .width(if (showLyrics) screenWidth - 120.dp else targetArtSize)
                         .sharedElement(rememberSharedContentState(key = "song_artist"), animatedVisibilityScope)
+                        .alpha(if (showLyrics) 1f else controlsAlpha)
                 )
 
-                // 6. 内容层
                 Column(
-                    modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp),
+                    modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
-                        Box(modifier = Modifier.size(36.dp, 4.dp).clip(RoundedCornerShape(2.dp)).background(Color.White.copy(alpha = 0.3f)).align(Alignment.TopCenter))
-                        Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
-                            IconButton(onClick = { }) { Icon(Icons.Default.MoreHoriz, null, tint = Color.White) }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(88.dp)
+                            .padding(horizontal = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = controlsVisible,
+                            enter = fadeIn(tween(500)),
+                            exit = fadeOut(tween(500))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Box(modifier = Modifier.size(36.dp, 4.dp).clip(RoundedCornerShape(2.dp)).background(Color.White.copy(alpha = 0.3f)).align(Alignment.TopCenter))
+                                Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
+                                    IconButton(onClick = { }) { Icon(Icons.Default.MoreHoriz, null, tint = Color.White) }
+                                }
+                            }
                         }
                     }
 
                     Box(
-                        modifier = Modifier.weight(1f).fillMaxWidth().clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { showLyrics = !showLyrics },
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
                         androidx.compose.animation.AnimatedVisibility(
                             visible = showLyrics,
-                            enter = fadeIn(tween(500)),
-                            exit = fadeOut(tween(500))
+                            enter = fadeIn(tween(500)) + expandVertically(expandFrom = Alignment.CenterVertically),
+                            exit = fadeOut(tween(500)) + shrinkVertically(shrinkTowards = Alignment.CenterVertically)
                         ) {
-                            LyricContent(state)
+                            LyricContent(state, onIntent)
+                        }
+                        
+                        if (!showLyrics) {
+                            Box(modifier = Modifier
+                                .offset { albumArtOffset }
+                                .size(albumArtSize)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) { 
+                                    showLyrics = true 
+                                    controlsVisible = true
+                                }
+                            )
                         }
                     }
 
-                    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-                        if (!showLyrics) {
-                            Spacer(modifier = Modifier.height(160.dp))
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = controlsVisible,
+                        enter = fadeIn(tween(500)) + expandVertically(expandFrom = Alignment.Bottom),
+                        exit = fadeOut(tween(500)) + shrinkVertically(shrinkTowards = Alignment.Bottom)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 24.dp)
+                                .padding(horizontal = 24.dp)
+                        ) {
+                            val dynamicSpacerHeight by animateDpAsState(
+                                targetValue = if (showLyrics) 0.dp else 160.dp,
+                                animationSpec = tween(500, easing = FastOutSlowInEasing),
+                                label = "LyricAreaHeightAnimation"
+                            )
+                            Spacer(modifier = Modifier.height(dynamicSpacerHeight))
+                            PlayerControlsSection(state, onIntent, showLyrics) { 
+                                showLyrics = it
+                                controlsVisible = true
+                            }
                         }
-                        PlayerControlsSection(state, onIntent, showLyrics) { showLyrics = it }
                     }
+                    
+                    // 使用动画控制底部安全边距，消除隐藏控件时的跳动感
+                    val bottomSafeMargin by animateDpAsState(
+                        targetValue = if (controlsVisible) 0.dp else 24.dp,
+                        animationSpec = tween(500),
+                        label = "BottomSafeMarginAnimation"
+                    )
+                    Spacer(modifier = Modifier.height(bottomSafeMargin))
                 }
             }
         }
@@ -478,24 +550,46 @@ private fun formatTime(millis: Long): String {
 }
 
 @Composable
-fun LyricContent(state: PlayerState) {
+fun LyricContent(
+    state: PlayerState,
+    onIntent: (PlayerIntent) -> Unit
+) {
     val lyricData = state.lyricData
     val currentProgress = state.progress
+    val haptic = LocalHapticFeedback.current
     
     val activeLineIndex = remember(lyricData, currentProgress) {
         lyricData?.lines?.indexOfLast { it.startTime <= currentProgress } ?: -1
     }
 
     val listState = rememberLazyListState()
+    val isDragged by listState.interactionSource.collectIsDraggedAsState()
+    
+    val density = LocalDensity.current
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val screenHeightDp = configuration.screenHeightDp.dp
 
     LaunchedEffect(activeLineIndex) {
-        if (activeLineIndex >= 0) {
-            listState.animateScrollToItem(activeLineIndex, scrollOffset = -300)
+        if (activeLineIndex >= 0 && !isDragged) {
+            val offset = with(density) { -(screenHeightDp * 0.10f).roundToPx() }
+            listState.animateScrollToItem(activeLineIndex, scrollOffset = offset)
         }
     }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+            .drawWithContent {
+                drawContent()
+                val fadingBrush = Brush.verticalGradient(
+                    0f to Color.Transparent,
+                    0.05f to Color.Black,
+                    0.85f to Color.Black,
+                    1f to Color.Transparent
+                )
+                drawRect(brush = fadingBrush, blendMode = BlendMode.DstIn)
+            },
         contentAlignment = Alignment.TopStart
     ) {
         if (lyricData == null || lyricData.lines.isEmpty()) {
@@ -509,48 +603,81 @@ fun LyricContent(state: PlayerState) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 100.dp, bottom = 300.dp)
+                contentPadding = PaddingValues(top = 40.dp, bottom = 500.dp)
             ) {
                 itemsIndexed(lyricData.lines) { index, line ->
                     val isActive = index == activeLineIndex
+                    val distance = if (activeLineIndex == -1) 0 else kotlin.math.abs(index - activeLineIndex)
+                    
+                    val targetAlpha = if (isActive || isDragged) 1f else (0.6f - (distance * 0.07f)).coerceAtLeast(0.25f)
                     val alpha by animateFloatAsState(
-                        targetValue = if (isActive) 1f else 0.4f,
+                        targetValue = targetAlpha,
+                        animationSpec = tween(600),
                         label = "LyricAlpha"
                     )
                     val scale by animateFloatAsState(
-                        targetValue = if (isActive) 1.05f else 1f,
+                        targetValue = if (isActive) 1.06f else 1f,
+                        animationSpec = spring(Spring.DampingRatioLowBouncy, Spring.StiffnessLow),
                         label = "LyricScale"
                     )
+                    
+                    val targetBlur = if (isActive || isDragged) 0.dp else (distance.toFloat() * 4f).dp.coerceAtMost(16.dp)
+                    val blurRadius by animateDpAsState(
+                        targetValue = targetBlur,
+                        animationSpec = tween(600),
+                        label = "LyricBlur"
+                    )
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp)
-                            .graphicsLayer(
-                                alpha = alpha,
-                                scaleX = scale,
-                                scaleY = scale,
-                                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0.5f)
-                            ),
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        Text(
-                            text = line.content,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            textAlign = TextAlign.Start
-                        )
-                        if (!line.translation.isNullOrBlank()) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        // 1. 视觉层 (占据全屏宽度，移除水平 Padding 以防模糊被切除)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 20.dp)
+                                .blur(blurRadius)
+                                .graphicsLayer {
+                                    this.alpha = alpha
+                                    this.scaleX = scale
+                                    this.scaleY = scale
+                                    this.transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0.5f)
+                                },
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            // 在文字级别添加 Padding，为模糊留出“溢出”空间
                             Text(
-                                text = line.translation,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White.copy(alpha = 0.8f),
+                                text = line.content,
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White,
                                 textAlign = TextAlign.Start,
-                                modifier = Modifier.padding(top = 8.dp)
+                                lineHeight = MaterialTheme.typography.headlineLarge.lineHeight * 1.2f,
+                                modifier = Modifier.padding(horizontal = 32.dp)
                             )
+                            if (!line.translation.isNullOrBlank()) {
+                                Text(
+                                    text = line.translation,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    textAlign = TextAlign.Start,
+                                    modifier = Modifier.padding(top = 8.dp).padding(horizontal = 32.dp)
+                                )
+                            }
                         }
+
+                        // 2. 交互层 (通过 padding 限制点击范围，使侧边可穿透)
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .padding(horizontal = 32.dp)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onIntent(PlayerIntent.SeekTo(line.startTime))
+                                }
+                        )
                     }
                 }
             }

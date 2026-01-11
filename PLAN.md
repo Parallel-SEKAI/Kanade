@@ -1,24 +1,24 @@
 # Kanade Redesign Plan: Apple Music Style Full Screen Player
 
 ## 1. UI/UX Redesign (Apple Music Style)
-- [x] **Dynamic Background**: Added basic blurred background.
-- [/] **Optimized Dynamic Background (Apple Music Style)**:
-    - [ ] **Dependency**: Add `androidx.palette:palette-ktx`.
-    - [ ] **Logic**: Implement Palette color extraction from album art.
-    - [ ] **Component**: Create `FluidBackground` with moving gradient blobs.
-    - [ ] **Polishing**: Smooth color cross-fade and GPU optimization.
-- [x] **Album Art**: Implement large rounded corners and scale animation.
-- [x] **Layout Reconstruction**:
-    - [x] Title and Artist left-aligned.
-    - [x] Redesign progress bar and controls.
-- [x] **Lyrics UI Improvements**: Large font, left-aligned, smooth centering.
+- [x] **Dynamic Background**: Added multi-layered fluid background.
+- [ ] **Optimized Lyric Widget (Apple Music Style)**:
+    - [x] **Visuals**: Implement fading edges.
+    - [x] **Typography**: Extra bold fonts, improved spacing.
+    - [/] **Focus Effects**: Added alpha/scale focus.
+    - [ ] **Lyric Blur**: Implement dynamic blur for inactive lines.
+    - [x] **Scrolling**: Target-based centered scrolling.
+    - [x] **Interaction**: Click-to-seek with haptic feedback.
+    - [x] **Auto-hide Controls**: Hide header/footer with physical expansion.
+- [x] **Album Art**: Large rounded corners and scale animation.
+- [x] **Layout Reconstruction**: Left-aligned info, redesigned progress/controls.
 - [x] **Smooth Move Transitions**: Persistent elements for seamless animation.
 
 ## 2. Technical Tasks
-- [ ] **Palette Integration**: Use Android Palette API for color extraction.
-- [x] **Animation Polishing**: Refined `SharedTransition` and persistent element offsets.
-- [ ] **Performance**: Ensure 60fps for fluid background.
+- [x] **Palette Integration**: Extracted colors for fluid background.
+- [x] **Animation Polishing**: Persistent element offsets.
+- [ ] **Performance**: Ensure 60fps with high-radius blurs.
 
 ## 3. Verification
 - [ ] **Build and Install**: `./gradlew installDebug`
-- [ ] **UI Review**: Verify transparency, blur performance, and layout alignment.
+- [ ] **UI Review**: Verify blur aesthetics and scrolling smoothness.

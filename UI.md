@@ -1,57 +1,28 @@
 # Kanade UI Design: Apple Music Style
 
-## Dynamic Background Optimization
+## Lyric Widget Optimization (v2)
 
 ```text
 +---------------------------------------+
-|          [ Player Controls ]          | <-- High contrast text/icons
+|  [Compact Header (Art + Info)]        |
 +---------------------------------------+
-|        [ Semi-transparent Scrim ]     | <-- Ensures readability
+|  :::::::::::::::::::::::::::::::::::  |
+|                                       |
+|  Previous lyric line (Blur 8dp)       | <-- Blurred & Dimmed
+|                                       |
+|  ACTIVE LINE (Sharp, ExtraBold)       | <-- Crystal Clear Focus
+|                                       |
+|  Next lyric line (Blur 6dp)           | <-- Blurred & Dimmed
+|                                       |
+|  :::::::::::::::::::::::::::::::::::  |
 +---------------------------------------+
-|   ( Blob A )         ( Blob B )       | <-- Moving radial gradients
-|           ( Blob C )                  | <-- 3-5 extracted Palette colors
-+---------------------------------------+
-|      [ Base Blurred Art ]             | <-- 60dp+ blur for core tone
+|  [Playback Controls Section]          |
 +---------------------------------------+
 ```
 
-### Background Visual Strategy
-1. **Layer 1: Base Tone**
-   - Highly blurred album art image.
-2. **Layer 2: Fluid Gradients**
-   - 3 to 4 moving blobs using `Brush.radialGradient`.
-   - Positions and radii animated with `rememberInfiniteTransition`.
-   - Colors dynamically extracted using Palette API (Vibrant, Muted, Dominant).
-3. **Layer 3: Scrim**
-   - Semi-transparent overlay to ensure accessibility and text contrast.
-
----
-
-## Full Screen Player Layout
-
-```text
-+---------------------------------------+
-|                [Grab]                 |
-|  (Art) Title - Artist           ( ...)|  <-- Compact header (Lyric Mode)
-+---------------------------------------+
-|                                       |
-|          +-----------------+          |
-|          |                 |          |
-|          |    ALBUM ART    |          |
-|          |                 |          |
-|          +-----------------+          |
-|                                       |
-+---------------------------------------+
-|                                       |
-|  Song Title                           |
-|  Artist Name                          |
-|                                       |
-|  +---------------------------------+  |
-|  |-----------O                     |  |
-|  0:45                          -3:15  |
-|                                       |
-|      [Prev]     [PLAY]     [Next]     |
-|                                       |
-|   [Lyrics]    [Cast]    [Queue]       |
-+---------------------------------------+
-```
+### Advanced Focus System
+1. **Dynamic Blurring**:
+   - Inactive lines transition from sharp to blurred using `animateDpAsState`.
+   - Enhances depth perception and directs eye attention to the current line.
+2. **Layering**:
+   - Background (Fluid) -> Lyric (Blurred/Sharp) -> Controls (High Contrast).
