@@ -81,15 +81,6 @@ fun SettingsScreen(
                 modifier = Modifier.clickable(onClick = onNavigateToExcludedFolders)
             )
 
-            ListItem(
-                headlineContent = { Text("Theme") },
-                supportingContent = { Text("System Default") }
-            )
-            ListItem(
-                headlineContent = { Text("Audio Quality") },
-                supportingContent = { Text("High") }
-            )
-
             // 为底部的 MiniPlayer 留出空间
             Spacer(modifier = Modifier.height(80.dp))
         }
