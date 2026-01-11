@@ -1,25 +1,33 @@
-# Kanade Redesign Plan: Apple Music Style Full Screen Player
+# Implementation Plan - Karaoke Word-by-Word Progress Filling
 
-## 1. UI/UX Redesign (Apple Music Style)
-- [x] **Dynamic Background**: Added multi-layered fluid background.
-- [ ] **Optimized Lyric Widget (Apple Music Style)**:
-    - [x] **Visuals**: Implement fading edges.
-    - [x] **Typography**: Extra bold fonts, improved spacing.
-    - [/] **Focus Effects**: Added alpha/scale focus.
-    - [ ] **Lyric Blur**: Implement dynamic blur for inactive lines.
-    - [x] **Scrolling**: Target-based centered scrolling.
-    - [x] **Interaction**: Click-to-seek with haptic feedback.
-    - [x] **Auto-hide Controls**: Hide header/footer with physical expansion.
-- [x] **Album Art**: Large rounded corners and scale animation.
-- [x] **Layout Reconstruction**: Left-aligned info, redesigned progress/controls.
-- [x] **Smooth Move Transitions**: Persistent elements for seamless animation.
+Implement a horizontal linear gradient fill effect for lyrics, where the "current word" fills smoothly based on playback progress instead of changing color instantly.
 
-## 2. Technical Tasks
-- [x] **Palette Integration**: Extracted colors for fluid background.
-- [x] **Animation Polishing**: Persistent element offsets.
-- [/] **Gesture-driven Expansion**: Implement hand-following drag transition between MiniPlayer and FullScreen player.
-- [ ] **Performance**: Ensure 60fps with high-radius blurs.
+## User Review Required
 
-## 3. Verification
-- [ ] **Build and Install**: `./gradlew installDebug`
-- [ ] **UI Review**: Verify blur aesthetics and scrolling smoothness.
+> [!IMPORTANT]
+> This change will replace the current alpha-based word animation with a continuous color-filling effect. Is this transition style what you're looking for?
+
+## Proposed Changes
+
+### UI Components (`app/src/main/java/org/parallel_sekai/kanade/ui/screens/player/PlayerComponents.kt`)
+
+- [x] **Create `KaraokeWord` Composable**: 
+    - A specialized text component that renders a single word.
+    - Uses `drawWithContent` and `BlendMode.SrcIn` to achieve partial filling.
+    - Calculates horizontal fill percentage based on `(currentProgress - startTime) / duration`.
+- [x] **Update `WordByWordLine`**:
+    - Replace the standard `Text` within the `FlowRow` with `KaraokeWord`.
+    - Retain existing scale animations for the active word to enhance the "singing" feel.
+- [ ] **Optimize Performance**:
+    - Ensure `KaraokeWord` uses `CompositingStrategy.Offscreen` to handle blend modes correctly without affecting other UI elements.
+
+## Verification Plan
+
+### Automated Tests
+- N/A (Visual effect verification)
+
+### Manual Verification
+- Play a track with enhanced LRC/TTML lyrics (word-by-word data).
+- Observe the active word as it's being sung.
+- Verify the filling is smooth and matches the singing pace.
+- Check that previous words remain fully filled and upcoming words remain dimmed.

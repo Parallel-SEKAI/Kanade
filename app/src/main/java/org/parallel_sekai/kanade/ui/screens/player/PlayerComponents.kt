@@ -39,7 +39,10 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -736,6 +739,112 @@ private fun formatTime(millis: Long): String {
 }
 
 @Composable
+private fun KaraokeWord(
+    text: String,
+    startTime: Long,
+    endTime: Long,
+    currentProgress: Long,
+    isActiveLine: Boolean,
+    textStyle: androidx.compose.ui.text.TextStyle,
+    modifier: Modifier = Modifier
+) {
+    val duration = endTime - startTime
+    val shouldGlow = duration > 500 // 超过0.5s
+
+    val fillProgress = remember(currentProgress, startTime, endTime) {
+        if (currentProgress >= endTime) 1f
+        else if (currentProgress < startTime) 0f
+        else (currentProgress - startTime).toFloat() / (endTime - startTime).coerceAtLeast(1).toFloat()
+    }.coerceIn(0f, 1f)
+
+    val isWordActive = currentProgress in startTime until endTime
+    val wordScale by animateFloatAsState(
+        targetValue = if (isActiveLine && isWordActive) 1.05f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "WordScale"
+    )
+
+    // 恒定发光：仅在正在唱的时候显示，不带呼吸效果
+    val glowRadius by animateFloatAsState(
+        targetValue = if (isActiveLine && isWordActive && shouldGlow) 20f else 0f,
+        animationSpec = tween(300),
+        label = "GlowRadius"
+    )
+
+    val baseAlpha = if (isActiveLine) 0.35f else 1f
+
+    Box(
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = wordScale
+                scaleY = wordScale
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.5f)
+            }
+    ) {
+        // 底层：基础色
+        Text(
+            text = text,
+            style = textStyle,
+            color = Color.White.copy(alpha = baseAlpha),
+            fontWeight = FontWeight.ExtraBold,
+            softWrap = false
+        )
+
+        // 顶层：填充层 + 发光效果
+        if (isActiveLine && fillProgress > 0f) {
+            // 只要动画半径 > 0，就保留 Shadow 以实现淡出过渡
+            val shadow = if (shouldGlow && glowRadius > 0f) {
+                Shadow(
+                    color = Color.White.copy(alpha = (glowRadius / 20f) * 0.7f),
+                    blurRadius = glowRadius,
+                    offset = Offset.Zero
+                )
+            } else null
+
+            Text(
+                text = text,
+                style = textStyle.copy(shadow = shadow),
+                color = Color.White,
+                fontWeight = FontWeight.ExtraBold,
+                softWrap = false,
+                modifier = Modifier.drawWithContent {
+                    clipRect(right = size.width * fillProgress) {
+                        this@drawWithContent.drawContent()
+                    }
+                }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun WordByWordLine(
+    words: List<WordInfo>,
+    currentProgress: Long,
+    isActive: Boolean,
+    modifier: Modifier = Modifier
+) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        words.forEach { word ->
+            KaraokeWord(
+                text = word.text,
+                startTime = word.startTime,
+                endTime = word.endTime,
+                currentProgress = currentProgress,
+                isActiveLine = isActive,
+                textStyle = MaterialTheme.typography.headlineLarge.copy(
+                    lineHeight = MaterialTheme.typography.headlineLarge.lineHeight * 1.2f
+                )
+            )
+        }
+    }
+}
+
+@Composable
 fun LyricContent(
     state: PlayerState,
     onIntent: (PlayerIntent) -> Unit
@@ -828,15 +937,25 @@ fun LyricContent(
                                 },
                             horizontalAlignment = Alignment.Start
                         ) {
-                            Text(
-                                text = line.content,
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color.White,
-                                textAlign = TextAlign.Start,
-                                lineHeight = MaterialTheme.typography.headlineLarge.lineHeight * 1.2f,
-                                modifier = Modifier.padding(horizontal = 32.dp)
-                            )
+                            if (line.words.isNotEmpty()) {
+                                WordByWordLine(
+                                    words = line.words,
+                                    currentProgress = currentProgress,
+                                    isActive = isActive,
+                                    modifier = Modifier.padding(horizontal = 32.dp)
+                                )
+                            } else {
+                                Text(
+                                    text = line.content,
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Start,
+                                    lineHeight = MaterialTheme.typography.headlineLarge.lineHeight * 1.2f,
+                                    modifier = Modifier.padding(horizontal = 32.dp)
+                                )
+                            }
+                            
                             if (!line.translation.isNullOrBlank()) {
                                 Text(
                                     text = line.translation,

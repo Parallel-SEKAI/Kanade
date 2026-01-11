@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 **Kanade** is a high-performance music player for Android designed with a focus on clean architecture, modern UI, and robust playback capabilities. It provides a unified experience for local music storage with advanced features like:
-- **Rich Lyric Support**: Parsing and displaying LRC (Standard/Enhanced) and TTML (Apple style) lyrics, including word-by-word sync and translations.
+- **Rich Lyric Support**: Parsing and displaying LRC (Standard/Enhanced) and TTML (Apple style) lyrics, including word-by-word sync, translations, and smooth Karaoke-style horizontal filling effects.
 - **Background Playback**: Leveraging Android Media3 to ensure seamless audio sessions across the system.
 - **Modern UI/UX**: A reactive interface built with Jetpack Compose following Material 3 guidelines, featuring a floating MiniPlayer and a fullscreen immersive player.
 
@@ -76,6 +76,7 @@ app/src/main/java/org/parallel_sekai/kanade/
     - `PlayerViewModel` observes `currentMediaId`.
     - Upon change, it fetches the lyric file, determines the format via `LyricParserFactory`, and parses it into `LyricData`.
     - The UI highlights the active `LyricLine` based on the position from `progressFlow`.
+    - **Karaoke Effect**: Individual words are rendered using a dynamic `Brush.linearGradient` that fills horizontally in real-time based on the high-frequency `progressFlow` from `PlaybackRepository`.
 4. **State Persistence**: `MediaController` ensures that playback state is synchronized between the UI and the `KanadePlaybackService` even when the app is backgrounded.
 
 ## 8. Agent Development Instructions (AI Context)

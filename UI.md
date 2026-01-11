@@ -1,28 +1,38 @@
-# Kanade UI Design: Apple Music Style
+# UI Design - Karaoke Progress Filling
 
-## Lyric Widget Optimization (v2)
+## Visual Representation (ASCII)
 
+Legend:
+- `[####]` : Active/Filled text (White)
+- `[....]` : Inactive/Empty text (White 35% Alpha)
+- `[##..]` : Partially filled word (Transitioning)
+
+### Lyric Line State:
+
+Current Line (Active):
 ```text
-+---------------------------------------+
-|  [Compact Header (Art + Info)]        |
-+---------------------------------------+
-|  :::::::::::::::::::::::::::::::::::  |
-|                                       |
-|  Previous lyric line (Blur 8dp)       | <-- Blurred & Dimmed
-|                                       |
-|  ACTIVE LINE (Sharp, ExtraBold)       | <-- Crystal Clear Focus
-|                                       |
-|  Next lyric line (Blur 6dp)           | <-- Blurred & Dimmed
-|                                       |
-|  :::::::::::::::::::::::::::::::::::  |
-+---------------------------------------+
-|  [Playback Controls Section]          |
-+---------------------------------------+
+  [HELL] [O ] [DA..] [RKNE] [SS ]
+    ^      ^     ^      ^      ^
+  Done   Done Filling  Next   Next
 ```
 
-### Advanced Focus System
-1. **Dynamic Blurring**:
-   - Inactive lines transition from sharp to blurred using `animateDpAsState`.
-   - Enhances depth perception and directs eye attention to the current line.
-2. **Layering**:
-   - Background (Fluid) -> Lyric (Blurred/Sharp) -> Controls (High Contrast).
+### Detailed Word Transition (Zoomed):
+Word: "DARKNESS" (Duration: 1000ms, Progress: 500ms)
+
+```text
++-----------------------+
+| D  A  R  K | N  E  S  S|
+| [  Active  | Inactive ]|
++-----------------------+
+             ^
+       Linear Gradient 
+       Split Point (50%)
+```
+
+## Behavior
+1. **Unstarted Word**: Rendered with `inactiveColor` (35% alpha white).
+2. **Current Word**: Horizontal fill from left to right.
+   - The fill boundary moves linearly according to the word's internal progress.
+   - The edge is sharp (hard stop) to mimic classic karaoke.
+3. **Completed Word**: Fully rendered with `activeColor` (100% white).
+4. **Translation**: Remains unchanged (standard fade/highlight).
