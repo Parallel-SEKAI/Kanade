@@ -158,46 +158,7 @@ fun SongListItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ArtistListScreen(
-    state: PlayerState,
-    onBackClick: () -> Unit,
-    onArtistClick: (String) -> Unit
-) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Artists") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 80.dp)
-        ) {
-            items(state.artistList) { artist ->
-                ListItem(
-                    headlineContent = { Text(artist.name) },
-                    supportingContent = { Text("${artist.albumCount} albums • ${artist.songCount} songs") },
-                    leadingContent = {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = null,
-                            modifier = Modifier.size(40.dp).clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(8.dp)
-                        )
-                    },
-                    modifier = Modifier.clickable { onArtistClick(artist.name) }
-                )
-            }
-        }
-    }
-}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -420,23 +381,7 @@ fun MusicListDetailScreen(
     }
 }
 
-@Composable
-fun ArtistDetailScreen(
-    name: String,
-    state: PlayerState,
-    onBackClick: () -> Unit,
-    onSongClick: (MusicModel, List<MusicModel>) -> Unit
-) {
-    MusicListDetailScreen(
-        title = name,
-        subtitle = "${state.detailMusicList.size} songs",
-        songs = state.detailMusicList,
-        currentSong = state.currentSong,
-        artistJoinString = state.artistJoinString,
-        onBackClick = onBackClick,
-        onSongClick = onSongClick
-    )
-}
+
 
 @Composable
 fun AlbumDetailScreen(

@@ -102,38 +102,54 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
     }
 
     override suspend fun getArtistList(): List<ArtistModel> = withContext(Dispatchers.IO) {
-        val artistList = mutableListOf<ArtistModel>()
+        val artistStats = mutableMapOf<String, Pair<Int, MutableSet<String>>>() // Name -> (SongCount, AlbumSet)
+
         val projection = arrayOf(
-            MediaStore.Audio.Artists._ID,
-            MediaStore.Audio.Artists.ARTIST,
-            MediaStore.Audio.Artists.NUMBER_OF_ALBUMS,
-            MediaStore.Audio.Artists.NUMBER_OF_TRACKS
+            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.ALBUM,
+            MediaStore.Audio.Media.DATA
         )
+        val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND ${MediaStore.Audio.Media.DURATION} >= 30000"
 
         context.contentResolver.query(
-            MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI,
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
             projection,
+            selection,
             null,
-            null,
-            "${MediaStore.Audio.Artists.ARTIST} ASC"
+            null
         )?.use { cursor ->
-            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Artists._ID)
-            val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Artists.ARTIST)
-            val albumsColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Artists.NUMBER_OF_ALBUMS)
-            val tracksColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Artists.NUMBER_OF_TRACKS)
+            val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+            val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+            val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
 
             while (cursor.moveToNext()) {
-                artistList.add(
-                    ArtistModel(
-                        id = cursor.getLong(idColumn).toString(),
-                        name = cursor.getString(nameColumn),
-                        albumCount = cursor.getInt(albumsColumn),
-                        songCount = cursor.getInt(tracksColumn)
-                    )
-                )
+                val path = cursor.getString(dataColumn)
+                // 排除文件夹过滤
+                if (excludedFolders.any { path.startsWith(it) }) continue
+
+                val artistString = cursor.getString(artistColumn)
+                val album = cursor.getString(albumColumn) ?: "Unknown Album"
+                
+                val parsedArtists = MusicUtils.parseArtists(artistString)
+                
+                parsedArtists.forEach { artistName ->
+                    val stats = artistStats.getOrPut(artistName) { 0 to mutableSetOf() }
+                    // Update song count (using Pair's first component is immutable, need to replace)
+                    val newCount = stats.first + 1
+                    stats.second.add(album)
+                    artistStats[artistName] = newCount to stats.second
+                }
             }
         }
-        artistList
+
+        artistStats.map { (name, stats) ->
+            ArtistModel(
+                id = name, // Use name as ID for parsed artists
+                name = name,
+                albumCount = stats.second.size,
+                songCount = stats.first
+            )
+        }.sortedBy { it.name }
     }
 
     override suspend fun getAlbumList(): List<AlbumModel> = withContext(Dispatchers.IO) {
@@ -210,8 +226,11 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
     }
 
     override suspend fun getSongsByArtist(artistName: String): List<MusicModel> {
-        val selection = "${MediaStore.Audio.Media.ARTIST} = ?"
-        return getMusicListWithSelection(selection, arrayOf(artistName))
+        val selection = "${MediaStore.Audio.Media.ARTIST} LIKE ?"
+        val potentialSongs = getMusicListWithSelection(selection, arrayOf("%$artistName%"))
+        return potentialSongs.filter { song ->
+            song.artists.any { it.equals(artistName, ignoreCase = true) }
+        }
     }
 
     override suspend fun getSongsByAlbum(albumId: String): List<MusicModel> {

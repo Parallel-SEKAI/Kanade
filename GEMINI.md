@@ -35,6 +35,8 @@ app/src/main/java/org/parallel_sekai/kanade/
 │   └── KanadePlaybackService.kt    # Media3 MediaSessionService for robust background playback
 ├── ui/
 │   ├── screens/
+│   │   ├── artist/                 # Artist list and detail screens
+│   │   │   └── ArtistScreen.kt
 │   │   ├── library/                # UI for browsing music library
 │   │   ├── search/                 # UI and logic for searching music
 │   │   │   ├── SearchContract.kt   # MVI Contract for search
@@ -84,7 +86,7 @@ app/src/main/java/org/parallel_sekai/kanade/
 - `SearchViewModel`: Handles debounced search queries and manages search history persistence. Now observes `ArtistParsingSettings` for the join string.
 - `SettingsRepository`: Manages user preferences. Now includes `ArtistParsingSettings` for artist parsing behavior.
 - `SettingsViewModel`: Provides access to various settings flows and update functions for the UI, including `artistParsingSettings`.
-- `LocalMusicSource`: Uses `ContentResolver` to query `MediaStore`. Attempts to find `.lrc` or `.ttml` files in the same directory as the audio file. Now uses `MusicUtils` for artist parsing.
+- `LocalMusicSource`: Uses `ContentResolver` to query `MediaStore`. Custom implementation for `getArtistList` and `getSongsByArtist` to support multi-artist parsing (splitting raw strings) and excluded folders, overriding standard `MediaStore` artist grouping.
 
 ## 7. Implementation Logic
 1. **Startup**: `MainActivity` requests media permissions. `PlayerViewModel` initializes and refreshes the library via `PlaybackRepository`.
@@ -106,6 +108,7 @@ app/src/main/java/org/parallel_sekai/kanade/
 6. **Predictive Back**: The app supports Android 14+ predictive back gestures. The `NavHost` handles screen transitions, and the `KanadePlayerContainer` implements a custom `PredictiveBackHandler` to provide visual feedback (scaling and offset) when dismissing the full-screen player.
 7. **Configurable Artist Parsing**:
     - Users can now configure artist parsing separators, whitelist entries, and the display join string through a dedicated settings screen. These settings are persisted and dynamically applied by `MusicUtils`.
+    - `LocalMusicSource` manually aggregates artist stats by parsing all songs, ensuring the "Artists" library screen reflects the split artist names rather than raw MediaStore strings.
 
 ## Current Status
 - [x] Basic playback functionality with Media3.
@@ -115,6 +118,8 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Enhanced Library Page with Artists, Albums, and Folders support.
 - [x] Multi-artist parsing and display implemented across the application.
 - [x] Configurable artist parsing settings UI and logic implemented.
+- [x] Refactored `ArtistScreen` into its own package `ui/screens/artist/`.
+- [x] Artist Library and Detail pages now use parsed artist lists instead of raw MediaStore data.
 
 ## 8. Agent Development Instructions (AI Context)
 - **State Management**: Always use `MutableStateFlow` in ViewModels. UI must be stateless and react only to the `state` flow.

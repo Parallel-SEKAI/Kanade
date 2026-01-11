@@ -32,8 +32,8 @@ import com.google.accompanist.permissions.rememberPermissionState
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.ui.screens.library.LibraryScreen
-import org.parallel_sekai.kanade.ui.screens.library.ArtistListScreen
-import org.parallel_sekai.kanade.ui.screens.library.ArtistDetailScreen
+import org.parallel_sekai.kanade.ui.screens.artist.ArtistListScreen
+import org.parallel_sekai.kanade.ui.screens.artist.ArtistDetailScreen
 import org.parallel_sekai.kanade.ui.screens.library.AlbumListScreen
 import org.parallel_sekai.kanade.ui.screens.library.AlbumDetailScreen
 import org.parallel_sekai.kanade.ui.screens.library.PlaylistListScreen
