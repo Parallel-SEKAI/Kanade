@@ -31,3 +31,17 @@
     - Title: "Display Join String"
     - Description: "Used to combine multiple artists for display (e.g., 'Artist A & Artist B')."
     - `TextField` for `joinString` (e.g., default: ", ").
+
+## Album Detail Page (Optimized)
+
+### Header
+- Full width album art (if available).
+- Album Title.
+- **Album Artist** (Intersection of all song artists).
+
+### Song List
+- List of songs in the album.
+- **Item Layout**:
+    - [Hidden] Individual Song Art (Cover).
+    - Title.
+    - [Conditional] Artist Name (Hidden if all songs have same artist).

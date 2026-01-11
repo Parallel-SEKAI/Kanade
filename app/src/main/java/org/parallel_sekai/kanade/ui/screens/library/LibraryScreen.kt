@@ -132,7 +132,9 @@ fun SongListItem(
     song: MusicModel,
     isSelected: Boolean,
     onClick: () -> Unit,
-    artistJoinString: String // 新增参数
+    artistJoinString: String,
+    showCover: Boolean = true,
+    showArtist: Boolean = true
 ) {
     Row(
         modifier = Modifier
@@ -141,19 +143,38 @@ fun SongListItem(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AsyncImage(
-            model = song.coverUrl,
-            contentDescription = null,
+        if (showCover) {
+            AsyncImage(
+                model = song.coverUrl,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentScale = ContentScale.Crop
+            )
+        }
+        Column(
             modifier = Modifier
-                .size(56.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentScale = ContentScale.Crop
-        )
-        Column(modifier = Modifier.padding(start = 16.dp).weight(1f)) {
+                .padding(start = if (showCover) 16.dp else 0.dp)
+                .weight(1f)
+        ) {
             val color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-            Text(text = song.title, style = MaterialTheme.typography.bodyLarge, color = color, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, maxLines = 1)
-            Text(text = song.artists.joinToString(artistJoinString), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            Text(
+                text = song.title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = color,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 1
+            )
+            if (showArtist) {
+                Text(
+                    text = song.artists.joinToString(artistJoinString),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
         }
     }
 }
@@ -292,7 +313,9 @@ fun MusicListDetailScreen(
     coverUrl: String? = null,
     songs: List<MusicModel>,
     currentSong: MusicModel?,
-    artistJoinString: String, // 新增参数
+    artistJoinString: String,
+    showSongCover: Boolean = true,
+    showSongArtist: Boolean = true,
     onBackClick: () -> Unit,
     onSongClick: (MusicModel, List<MusicModel>) -> Unit
 ) {
@@ -374,7 +397,9 @@ fun MusicListDetailScreen(
                     song = song,
                     isSelected = currentSong?.id == song.id,
                     onClick = { onSongClick(song, songs) },
-                    artistJoinString = artistJoinString // 传入 artistJoinString
+                    artistJoinString = artistJoinString,
+                    showCover = showSongCover,
+                    showArtist = showSongArtist
                 )
             }
         }
@@ -392,15 +417,34 @@ fun AlbumDetailScreen(
     onSongClick: (MusicModel, List<MusicModel>) -> Unit
 ) {
     val coverUrl = state.detailMusicList.firstOrNull()?.coverUrl
-    val artist = state.detailMusicList.firstOrNull()?.artists?.joinToString(state.artistJoinString) ?: ""
-
+    
+    // Calculate intersection of artists for all songs in the album
+    val allArtistsList = state.detailMusicList.map { it.artists.toSet() }
+    val commonArtists = if (allArtistsList.isNotEmpty()) {
+        allArtistsList.reduce { acc, set -> acc.intersect(set) }
+    } else {
+        emptySet()
+    }
+    
+    val albumArtist = if (commonArtists.isNotEmpty()) {
+        commonArtists.joinToString(state.artistJoinString)
+    } else {
+        ""
+    }
+    
+    // Determine if we show artist for each song
+    // Hide artist if all songs share the exact same set of artists (equal to the intersection)
+    val allSongsHaveSameArtists = state.detailMusicList.all { it.artists.toSet() == commonArtists }
+    
     MusicListDetailScreen(
         title = title,
-        subtitle = artist,
+        subtitle = albumArtist.ifEmpty { null },
         coverUrl = coverUrl,
         songs = state.detailMusicList,
         currentSong = state.currentSong,
         artistJoinString = state.artistJoinString,
+        showSongCover = false,
+        showSongArtist = !allSongsHaveSameArtists,
         onBackClick = onBackClick,
         onSongClick = onSongClick
     )

@@ -1,4 +1,14 @@
-- [x] Create `app/src/main/java/org/parallel_sekai/kanade/ui/screens/artist/ArtistScreen.kt` and move `ArtistListScreen`, `ArtistDetailScreen` into it.
-- [x] Remove `ArtistListScreen` and `ArtistDetailScreen` from `app/src/main/java/org/parallel_sekai/kanade/ui/screens/library/LibraryScreen.kt`.
-- [x] Update imports in `app/src/main/java/org/parallel_sekai/kanade/MainActivity.kt`.
-- [x] Build and install the app to verify.
+- [x] Update `SongListItem` in `LibraryScreen.kt` to accept `showCover: Boolean = true` and `showArtist: Boolean = true`.
+- [x] Update `MusicListDetailScreen` in `LibraryScreen.kt` to accept `showSongCover: Boolean = true` and `showSongArtist: Boolean = true`.
+- [x] Refactor `AlbumDetailScreen` in `LibraryScreen.kt`:
+    - Calculate the intersection of artists for all songs in the album.
+    - If the intersection is non-empty, use it as the subtitle.
+    - If all songs in the album share the exact same set of artists (equal to the intersection), set `showSongArtist = false`.
+    - Set `showSongCover = false`.
+- [x] Verify `ArtistDetailScreen`, `PlaylistDetailScreen`, and `FolderDetailScreen` still work correctly (passing default `true` values implicit or explicit).
+- [x] Add `various_artists` string resource.
+- [x] Refactor `LocalMusicSource.getAlbumList` to aggregate from `MediaStore.Audio.Media` (Songs) instead of `MediaStore.Audio.Albums`.
+    - Apply `excludedFolders` filter (fixing a hidden bug).
+    - Group by `ALBUM_ID`.
+    - Calculate artist intersection for each album.
+    - If intersection is empty, use "Various Artists".

@@ -153,45 +153,72 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
     }
 
     override suspend fun getAlbumList(): List<AlbumModel> = withContext(Dispatchers.IO) {
-        val albumList = mutableListOf<AlbumModel>()
+        // ID -> (Title, List of ArtistSets)
+        val albumMap = mutableMapOf<Long, Pair<String, MutableList<Set<String>>>>()
+
         val projection = arrayOf(
-            MediaStore.Audio.Albums._ID,
-            MediaStore.Audio.Albums.ALBUM,
-            MediaStore.Audio.Albums.ARTIST,
-            MediaStore.Audio.Albums.NUMBER_OF_SONGS
+            MediaStore.Audio.Media.ALBUM_ID,
+            MediaStore.Audio.Media.ALBUM,
+            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.DATA
         )
 
+        val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND ${MediaStore.Audio.Media.DURATION} >= 30000"
+
         context.contentResolver.query(
-            MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
             projection,
+            selection,
             null,
-            null,
-            "${MediaStore.Audio.Albums.ALBUM} ASC"
+            null
         )?.use { cursor ->
-            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Albums._ID)
-            val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Albums.ALBUM)
-            val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Albums.ARTIST)
-            val songsColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Albums.NUMBER_OF_SONGS)
+            val albumIdCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
+            val albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+            val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+            val dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
 
             while (cursor.moveToNext()) {
-                val id = cursor.getLong(idColumn)
-                val albumArtUri = ContentUris.withAppendedId(
-                    Uri.parse("content://media/external/audio/albumart"),
-                    id
-                ).toString()
+                val path = cursor.getString(dataCol)
+                if (excludedFolders.any { path.startsWith(it) }) continue
 
-                albumList.add(
-                    AlbumModel(
-                        id = id.toString(),
-                        title = cursor.getString(titleColumn),
-                        artists = MusicUtils.parseArtists(cursor.getString(artistColumn)),
-                        coverUrl = albumArtUri,
-                        songCount = cursor.getInt(songsColumn)
-                    )
-                )
+                val albumId = cursor.getLong(albumIdCol)
+                val rawArtist = cursor.getString(artistCol)
+                val albumTitle = cursor.getString(albumCol) ?: "Unknown Album"
+
+                val artists = MusicUtils.parseArtists(rawArtist).toSet()
+
+                val entry = albumMap.getOrPut(albumId) { albumTitle to mutableListOf() }
+                entry.second.add(artists)
             }
         }
-        albumList
+
+        albumMap.map { (id, pair) ->
+            val (title, artistSets) = pair
+            val commonArtists = if (artistSets.isNotEmpty()) {
+                artistSets.reduce { acc, set -> acc.intersect(set) }
+            } else {
+                emptySet()
+            }
+
+            val finalArtists = if (commonArtists.isNotEmpty()) {
+                commonArtists.toList().sorted()
+            } else {
+                listOf(context.getString(org.parallel_sekai.kanade.R.string.various_artists))
+            }
+
+            val albumArtUri = ContentUris.withAppendedId(
+                Uri.parse("content://media/external/audio/albumart"),
+                id
+            ).toString()
+
+            AlbumModel(
+                id = id.toString(),
+                title = title,
+                artists = finalArtists,
+                coverUrl = albumArtUri,
+                songCount = artistSets.size
+            )
+        }.sortedBy { it.title }
     }
 
     override suspend fun getFolderList(): List<FolderModel> = withContext(Dispatchers.IO) {
