@@ -17,6 +17,7 @@
 ## 2. Technical Tasks
 - [x] **Palette Integration**: Extracted colors for fluid background.
 - [x] **Animation Polishing**: Persistent element offsets.
+- [/] **Gesture-driven Expansion**: Implement hand-following drag transition between MiniPlayer and FullScreen player.
 - [ ] **Performance**: Ensure 60fps with high-radius blurs.
 
 ## 3. Verification

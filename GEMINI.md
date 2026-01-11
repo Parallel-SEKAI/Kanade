@@ -68,7 +68,11 @@ app/src/main/java/org/parallel_sekai/kanade/
 ## 7. Implementation Logic
 1. **Startup**: `MainActivity` requests media permissions. `PlayerViewModel` initializes and refreshes the library via `PlaybackRepository`.
 2. **Playback Initiation**: When a user selects a song, `PlaybackRepository` builds a `MediaItem` list, sets it in `MediaController`, and begins playback.
-3. **Lyric Syncing**: 
+3. **Gesture-driven Expansion**: 
+    - `KanadePlayerContainer` uses `AnchoredDraggable` to handle swipe-to-expand gestures.
+    - Transitions are driven by a continuous `expansionFraction` (0.0 to 1.0), enabling "hand-following" morphing between MiniPlayer and FullScreen views.
+    - Key UI elements (album art, text) use linear interpolation (lerp) for smooth positioning and scaling during drag.
+4. **Lyric Syncing**: 
     - `PlayerViewModel` observes `currentMediaId`.
     - Upon change, it fetches the lyric file, determines the format via `LyricParserFactory`, and parses it into `LyricData`.
     - The UI highlights the active `LyricLine` based on the position from `progressFlow`.

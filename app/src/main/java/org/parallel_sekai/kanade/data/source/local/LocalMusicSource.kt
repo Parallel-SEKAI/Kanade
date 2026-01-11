@@ -61,9 +61,9 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                     id
                 )
 
-                // 修正：构建专辑封面的 Uri
+                // 恢复：使用专辑封面的 Uri
                 val albumArtUri = ContentUris.withAppendedId(
-                    android.net.Uri.parse("content://media/external/audio/albumart"),
+                    Uri.parse("content://media/external/audio/albumart"),
                     albumId
                 ).toString()
 
