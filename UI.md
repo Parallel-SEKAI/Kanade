@@ -1,42 +1,81 @@
-# UI Design - Search Page
+# UI Design - Library Page Enhancements
 
-## Search Screen Layout
+## Library Main Screen
+
+The top of the Library screen will feature 5 primary entry points.
 
 ```text
 +---------------------------------------+
-|  [ <- ]  [ Search music...         X ]|  <-- Search Bar
+|              Your Library             |
 +---------------------------------------+
 |                                       |
-|  RECENT SEARCHES            [ CLEAR ] |  <-- History Header (Visible if query empty)
-|                                       |
-|  * Song title 1                       |  <-- History Item
-|  * Artist Name                        |
-|  * Another search                     |
+|  [ All Music ]      [ Artists   ]     |  <-- 2x3 Grid or Vertical List
+|  [ Albums    ]      [ Playlists ]     |
+|  [ Folders   ]                        |
 |                                       |
 +---------------------------------------+
+|           Recently Played             |
 |                                       |
-|  SEARCH RESULTS                       |  <-- Results Header (Visible if query NOT empty)
-|                                       |
-|  +-------+  Song Title                |  <-- Result Item
-|  | COVER |  Artist - Album            |
-|  +-------+                            |
-|                                       |
-|  +-------+  Another Song              |
-|  | COVER |  Artist - Album            |
-|  +-------+                            |
+|  [Song A]  [Song B]  [Song C]         |
 |                                       |
 +---------------------------------------+
+|             All Songs                 |
 |                                       |
-|          [ No results found ]         |  <-- Empty State
-|                                       |
-+---------------------------------------+
-| [ Home ] [ Search ] [ Library ] [ More]| <-- Bottom Navigation (Existing)
+|  ( ) Song 1                           |
+|  ( ) Song 2                           |
+|  ...                                  |
 +---------------------------------------+
 ```
 
-## Components
+### Entry Button Style (Material 3 Card)
+Each button will be a `Surface` or `ElevatedCard` with an icon and text.
 
-- **Search Bar**: Material 3 `SearchFullWidth` or `DockedSearchBar`.
-- **Music Item**: Same style as `LibraryScreen` items for consistency.
-- **History Item**: Simple text with a delete icon or just clickable text.
-- **Empty State**: Centered text with an icon.
+```text
++-------------------+
+|  (Icon)           |
+|  All Music        |
++-------------------+
+```
+
+## Artist List Screen
+```text
++---------------------------------------+
+| < Artists                             |
++---------------------------------------+
+| Search Artists...                     |
++---------------------------------------+
+| Artist A                              |
+| 5 Albums, 20 Songs                    |
+|                                       |
+| Artist B                              |
+| 2 Albums, 10 Songs                    |
++---------------------------------------+
+```
+
+## Album List Screen
+```text
++---------------------------------------+
+| < Albums                              |
++---------------------------------------+
+| Search Albums...                      |
++---------------------------------------+
+| [Cover] Album Title                   |
+|         Artist Name                   |
+|                                       |
+| [Cover] Album Title 2                 |
+|         Artist Name                   |
++---------------------------------------+
+```
+
+## Folder List Screen
+```text
++---------------------------------------+
+| < Folders                             |
++---------------------------------------+
+| /storage/emulated/0/Music             |
+| 50 Songs                              |
+|                                       |
+| /storage/emulated/0/Download          |
+| 10 Songs                              |
++---------------------------------------+
+```

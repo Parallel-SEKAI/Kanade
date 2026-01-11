@@ -47,19 +47,28 @@ class PlayerViewModel(
                         album = item.mediaMetadata.albumTitle?.toString() ?: "",
                         coverUrl = item.mediaMetadata.artworkUri?.toString() ?: "",
                         mediaUri = item.requestMetadata.mediaUri?.toString() ?: "",
-                        duration = 0, // Duration will be updated via progressFlow
+                        duration = 0,
                         sourceId = item.mediaMetadata.extras?.getString("source_id") ?: "unknown"
                     )
                 }
-                _state.update { it.copy(musicList = list) }
+                _state.update { it.copy(currentPlaylist = list) }
             }
             .launchIn(viewModelScope)
 
         // 加载初始音乐列表
         viewModelScope.launch {
             val list = playbackRepository.fetchMusicList()
+            val artists = playbackRepository.fetchArtistList()
+            val albums = playbackRepository.fetchAlbumList()
+            val folders = playbackRepository.fetchFolderList()
+            
             val initialSong = list.firstOrNull()
             _state.update { it.copy(
+                allMusicList = list,
+                currentPlaylist = list, // 初始时将全部音乐设为当前队列
+                artistList = artists,
+                albumList = albums,
+                folderList = folders,
                 currentSong = initialSong
             ) }
             initialSong?.let { extractColors(it) }
@@ -75,7 +84,7 @@ class PlayerViewModel(
         // 监听当前播放的 MediaId 并更新 currentSong
         playbackRepository.currentMediaId
             .onEach { mediaId ->
-                val song = state.value.musicList.find { it.id == mediaId }
+                val song = state.value.allMusicList.find { it.id == mediaId }
                 if (song != null) {
                     _state.update { it.copy(
                         currentSong = song,
@@ -144,8 +153,15 @@ class PlayerViewModel(
             is PlayerIntent.RefreshList -> {
                 viewModelScope.launch {
                     val list = playbackRepository.fetchMusicList()
+                    val artists = playbackRepository.fetchArtistList()
+                    val albums = playbackRepository.fetchAlbumList()
+                    val folders = playbackRepository.fetchFolderList()
+                    
                     _state.update { it.copy(
-                        musicList = list,
+                        allMusicList = list,
+                        artistList = artists,
+                        albumList = albums,
+                        folderList = folders,
                         currentSong = it.currentSong ?: list.firstOrNull()
                     ) }
                 }
@@ -164,8 +180,9 @@ class PlayerViewModel(
                         lyricData = lyricData
                     ) }
                 }
-                val index = state.value.musicList.indexOf(intent.song).coerceAtLeast(0)
-                playbackRepository.setPlaylist(state.value.musicList, index)
+                // 当从“全部音乐”点击时，我们将整个“全部音乐”列表作为播放队列
+                val index = state.value.allMusicList.indexOf(intent.song).coerceAtLeast(0)
+                playbackRepository.setPlaylist(state.value.allMusicList, index)
             }
             is PlayerIntent.Next -> {
                 playbackRepository.next()

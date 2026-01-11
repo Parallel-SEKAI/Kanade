@@ -10,6 +10,9 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import org.parallel_sekai.kanade.data.source.AlbumModel
+import org.parallel_sekai.kanade.data.source.ArtistModel
+import org.parallel_sekai.kanade.data.source.FolderModel
 import org.parallel_sekai.kanade.data.source.MusicModel
 import org.parallel_sekai.kanade.data.source.local.LocalMusicSource
 import org.parallel_sekai.kanade.service.KanadePlaybackService
@@ -117,6 +120,18 @@ class PlaybackRepository(context: Context) {
 
     suspend fun fetchMusicList(query: String = ""): List<MusicModel> {
         return localMusicSource.getMusicList(query)
+    }
+
+    suspend fun fetchArtistList(): List<ArtistModel> {
+        return localMusicSource.getArtistList()
+    }
+
+    suspend fun fetchAlbumList(): List<AlbumModel> {
+        return localMusicSource.getAlbumList()
+    }
+
+    suspend fun fetchFolderList(): List<FolderModel> {
+        return localMusicSource.getFolderList()
     }
 
     suspend fun fetchLyrics(musicId: String): String? {

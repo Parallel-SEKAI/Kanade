@@ -23,6 +23,21 @@ interface IMusicSource {
      * 按需获取歌词
      */
     suspend fun getLyrics(musicId: String): String?
+
+    /**
+     * 获取艺术家列表
+     */
+    suspend fun getArtistList(): List<ArtistModel> = emptyList()
+
+    /**
+     * 获取专辑列表
+     */
+    suspend fun getAlbumList(): List<AlbumModel> = emptyList()
+
+    /**
+     * 获取文件夹列表
+     */
+    suspend fun getFolderList(): List<FolderModel> = emptyList()
 }
 
 data class MusicModel(
@@ -35,6 +50,27 @@ data class MusicModel(
     val duration: Long,
     val sourceId: String,
     val lyrics: String? = null
+)
+
+data class ArtistModel(
+    val id: String,
+    val name: String,
+    val albumCount: Int,
+    val songCount: Int
+)
+
+data class AlbumModel(
+    val id: String,
+    val title: String,
+    val artist: String,
+    val coverUrl: String,
+    val songCount: Int
+)
+
+data class FolderModel(
+    val name: String,
+    val path: String,
+    val songCount: Int
 )
 
 /**

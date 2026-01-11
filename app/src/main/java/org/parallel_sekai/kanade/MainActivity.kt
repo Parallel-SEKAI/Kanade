@@ -32,6 +32,10 @@ import com.google.accompanist.permissions.rememberPermissionState
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.ui.screens.library.LibraryScreen
+import org.parallel_sekai.kanade.ui.screens.library.AllMusicScreen
+import org.parallel_sekai.kanade.ui.screens.library.ArtistListScreen
+import org.parallel_sekai.kanade.ui.screens.library.AlbumListScreen
+import org.parallel_sekai.kanade.ui.screens.library.FolderListScreen
 import org.parallel_sekai.kanade.ui.screens.more.MoreScreen
 import org.parallel_sekai.kanade.ui.screens.search.SearchScreen
 import org.parallel_sekai.kanade.ui.screens.search.SearchViewModel
@@ -49,6 +53,12 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector?
     object More : Screen("more", "More", Icons.Filled.Info)
     object Settings : Screen("settings", "Settings", null)
     object LyricsSettings : Screen("lyrics_settings", "Lyrics Settings", null)
+    
+    // Library sub-screens
+    object AllMusic : Screen("all_music", "All Music", null)
+    object Artists : Screen("artists", "Artists", null)
+    object Albums : Screen("albums", "Albums", null)
+    object Folders : Screen("folders", "Folders", null)
 }
 
 val items = listOf(
@@ -135,8 +145,10 @@ class MainActivity : ComponentActivity() {
                                 if (permissionState.status.isGranted) {
                                     LibraryScreen(
                                         state = state,
-                                        musicList = state.musicList,
-                                        onSongClick = { song -> viewModel.handleIntent(PlayerIntent.SelectSong(song)) }
+                                        onSongClick = { song -> viewModel.handleIntent(PlayerIntent.SelectSong(song)) },
+                                        onNavigateToArtists = { navController.navigate(Screen.Artists.route) },
+                                        onNavigateToAlbums = { navController.navigate(Screen.Albums.route) },
+                                        onNavigateToFolders = { navController.navigate(Screen.Folders.route) }
                                     )
                                 } else {
                                     Box(
@@ -146,6 +158,31 @@ class MainActivity : ComponentActivity() {
                                         Text(text = "Please grant storage permission to scan music.")
                                     }
                                 }
+                            }
+                            composable(Screen.AllMusic.route) {
+                                AllMusicScreen(
+                                    state = state,
+                                    onBackClick = { navController.popBackStack() },
+                                    onSongClick = { song -> viewModel.handleIntent(PlayerIntent.SelectSong(song)) }
+                                )
+                            }
+                            composable(Screen.Artists.route) {
+                                ArtistListScreen(
+                                    state = state,
+                                    onBackClick = { navController.popBackStack() }
+                                )
+                            }
+                            composable(Screen.Albums.route) {
+                                AlbumListScreen(
+                                    state = state,
+                                    onBackClick = { navController.popBackStack() }
+                                )
+                            }
+                            composable(Screen.Folders.route) {
+                                FolderListScreen(
+                                    state = state,
+                                    onBackClick = { navController.popBackStack() }
+                                )
                             }
                             composable(Screen.Search.route) {
                                 SearchScreen(

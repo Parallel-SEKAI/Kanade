@@ -790,7 +790,7 @@ fun PlaylistContent(
     val listState = rememberLazyListState()
     
     LaunchedEffect(state.currentSong) {
-        val index = state.musicList.indexOf(state.currentSong)
+        val index = state.currentPlaylist.indexOf(state.currentSong)
         if (index >= 0) {
             listState.animateScrollToItem(index)
         }
@@ -883,7 +883,7 @@ fun PlaylistContent(
                     },
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
-                itemsIndexed(state.musicList) { index, music ->
+                itemsIndexed(state.currentPlaylist) { index, music ->
                     val isCurrent = music.id == state.currentSong?.id
                     
                     Surface(

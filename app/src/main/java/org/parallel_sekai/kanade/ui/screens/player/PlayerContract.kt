@@ -1,6 +1,9 @@
 package org.parallel_sekai.kanade.ui.screens.player
 
 import androidx.compose.ui.graphics.Color
+import org.parallel_sekai.kanade.data.source.AlbumModel
+import org.parallel_sekai.kanade.data.source.ArtistModel
+import org.parallel_sekai.kanade.data.source.FolderModel
 import org.parallel_sekai.kanade.data.source.MusicModel
 import org.parallel_sekai.kanade.data.repository.LyricsSettings
 
@@ -13,7 +16,11 @@ enum class RepeatMode {
  */
 data class PlayerState(
     val currentSong: MusicModel? = null,
-    val musicList: List<MusicModel> = emptyList(), // 存储扫描到的列表
+    val allMusicList: List<MusicModel> = emptyList(), // 完整的本地库列表
+    val currentPlaylist: List<MusicModel> = emptyList(), // 当前播放队列
+    val artistList: List<ArtistModel> = emptyList(),
+    val albumList: List<AlbumModel> = emptyList(),
+    val folderList: List<FolderModel> = emptyList(),
     val isPlaying: Boolean = false,
     val isExpanded: Boolean = false, 
     val progress: Long = 0L,
