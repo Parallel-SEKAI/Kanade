@@ -14,10 +14,11 @@ Implement a playlist (Up Next) feature for the fullscreen player with a UI style
 
 ## Tasks
 - [x] Analyze existing player code.
-- [/] Update `PLAN.md` and `UI.md`.
-- [ ] Implement `PlaylistContent` in `PlayerComponents.kt`.
-- [ ] Update `FullScreenContent` to support playlist mode.
-- [ ] Add logic to highlight the currently playing song in the playlist.
+- [x] Update `PLAN.md` and `UI.md`.
+- [x] Implement `PlaylistContent` in `PlayerComponents.kt`.
+- [x] Update `FullScreenContent` to support playlist mode.
+- [x] Add logic to highlight the currently playing song in the playlist.
 - [x] Enable clicking a song in the playlist to play it.
-- [/] Add Shuffle and Repeat buttons to the playlist view.
+- [x] Add Shuffle and Repeat buttons to the playlist view.
+- [x] Fix: MiniPlayer container blocking Bottom Navigation clicks when collapsed.
 - [ ] Verify by building and running the app.

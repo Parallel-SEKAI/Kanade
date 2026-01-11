@@ -73,13 +73,14 @@ app/src/main/java/org/parallel_sekai/kanade/
     - `KanadePlayerContainer` uses `AnchoredDraggable` to handle swipe-to-expand gestures.
     - Transitions are driven by a continuous `expansionFraction` (0.0 to 1.0), enabling "hand-following" morphing between MiniPlayer and FullScreen views.
     - Key UI elements (album art, text) use linear interpolation (lerp) for smooth positioning and scaling during drag.
-4. **Lyric Syncing**: 
+3. **Lyric & Playlist Syncing**: 
     - `PlayerViewModel` observes `currentMediaId`.
-    - Upon change, it fetches the lyric file, determines the format via `LyricParserFactory`, and parses it into `LyricData`.
-    - The UI highlights the active `LyricLine` based on the position from `progressFlow`.
-    - **Karaoke Effect**: Individual words are rendered using a dynamic `Brush.linearGradient` that fills horizontally in real-time based on the high-frequency `progressFlow` from `PlaybackRepository`.
-4. **State Persistence**: `MediaController` ensures that playback state is synchronized between the UI and the `KanadePlaybackService` even when the app is backgrounded.
-
+    - Upon change, it fetches lyrics and extracts theme colors from the album art via `Palette`.
+    - The UI highlights the active `LyricLine` based on `progressFlow`.
+    - `PlaylistContent` allows users to view and interact with the current queue, supporting shuffle and repeat modes.
+4. **State Persistence & UI Safety**: 
+    - `MediaController` ensures state synchronization.
+    - `KanadePlayerContainer` handles its visibility and touch events carefully to ensure underlying components like the `NavigationBar` remain interactive when the player is collapsed.
 ## 8. Agent Development Instructions (AI Context)
 - **State Management**: Always use `MutableStateFlow` in ViewModels. UI must be stateless and react only to the `state` flow.
 - **Lyric Handling**: When extending lyric features, ensure compatibility with both `LrcParser` and `TtmlParser`. Use `LyricUtils.parseTimestamp` for consistent time handling.

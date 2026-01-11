@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -189,7 +190,8 @@ fun KanadePlayerContainer(
         // 这是一个随 offsetY 移动的包装器，它承载了手势和内容
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .height(lerp(80.dp, configuration.screenHeightDp.dp, fraction))
                 .offset { IntOffset(0, offsetY.value.roundToInt()) }
                 .draggable(
                     orientation = Orientation.Vertical,
@@ -237,17 +239,19 @@ fun KanadePlayerContainer(
             }
 
             // 全屏播放器层
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(if (isTransitioning) 1f else 0f) // 滑动时在前面，切换前在后面
-            ) {
-                FullScreenContent(
-                    state = state,
-                    onIntent = onIntent,
-                    expansionFraction = fraction,
-                    offsetY = 0f
-                )
+            if (fraction > 0f) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(if (isTransitioning) 1f else 0f) // 滑动时在前面，切换前在后面
+                ) {
+                    FullScreenContent(
+                        state = state,
+                        onIntent = onIntent,
+                        expansionFraction = fraction,
+                        offsetY = 0f
+                    )
+                }
             }
         }
     }
@@ -746,7 +750,7 @@ private fun PlayerControlsSection(
             Icon(Icons.Default.Airplay, contentDescription = null, tint = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
         }
         IconButton(onClick = { onTogglePlaylist(!showPlaylist) }) {
-            Icon(imageVector = Icons.Default.QueueMusic, contentDescription = null, tint = if (showPlaylist) Color.White else Color.White.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
+            Icon(imageVector = Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null, tint = if (showPlaylist) Color.White else Color.White.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
         }
     }
 }
