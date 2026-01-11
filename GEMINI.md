@@ -4,7 +4,8 @@
 **Kanade** is a high-performance music player for Android designed with a focus on clean architecture, modern UI, and robust playback capabilities. It provides a unified experience for local music storage with advanced features like:
 - **Rich Lyric Support**: Parsing and displaying LRC (Standard/Enhanced) and TTML (Apple style) lyrics, including word-by-word sync, translations, and smooth Karaoke-style horizontal filling effects.
 - **Background Playback**: Leveraging Android Media3 to ensure seamless audio sessions across the system.
-- **Modern UI/UX**: A reactive interface built with Jetpack Compose following Material 3 guidelines, featuring a floating MiniPlayer and a fullscreen immersive player with rich lyric sync and an Apple Music-style playlist (Up Next) view.
+- **Modern UI/UX**: A reactive interface built with Jetpack Compose following Material 3 guidelines, featuring a floating MiniPlayer, a fullscreen immersive player with rich lyric sync and an Apple Music-style playlist (Up Next) view.
+- **Search Capability**: Integrated search for local music with history support and debounced querying.
 
 ## 2. Tech Stack
 - **Language**: [Kotlin](https://kotlinlang.org/) (JVM 17)
@@ -21,21 +22,25 @@
 app/src/main/java/org/parallel_sekai/kanade/
 ├── data/
 │   ├── repository/
-│   │   └── PlaybackRepository.kt   # Bridges UI with Media3; manages playback lifecycle and state flows
+│   │   ├── PlaybackRepository.kt   # Bridges UI with Media3; manages playback lifecycle and state flows
+│   │   └── SettingsRepository.kt   # Manages user preferences and search history
 │   └── source/
 │       ├── IMusicSource.kt         # Interface for music data providers
 │       └── local/
 │           └── LocalMusicSource.kt # MediaStore implementation; handles file scanning and lyric fetching
-├───service/
-│   └───KanadePlaybackService.kt    # Media3 MediaSessionService for robust background playback
-├───ui/
-│   ├───screens/
-│   │   ├───library/                # UI for browsing music library
-│   │   ├───more/                   # More screen with settings entry
-│   │   ├───settings/               # Settings screen
-│   │   └───player/                 # MVI components for player and lyrics
-│   │       ├───LyricModels.kt      # Data classes for lyrics, lines, and words
-
+├── service/
+│   └── KanadePlaybackService.kt    # Media3 MediaSessionService for robust background playback
+├── ui/
+│   ├── screens/
+│   │   ├── library/                # UI for browsing music library
+│   │   ├── search/                 # UI and logic for searching music
+│   │   │   ├── SearchContract.kt   # MVI Contract for search
+│   │   │   ├── SearchViewModel.kt  # ViewModel for search logic
+│   │   │   └── SearchScreen.kt     # UI for search screen
+│   │   ├── more/                   # More screen with settings entry
+│   │   ├── settings/               # Settings screen
+│   │   └── player/                 # MVI components for player and lyrics
+│   │       ├── LyricModels.kt      # Data classes for lyrics, lines, and words
 │   │       ├── LyricParsers.kt     # LRC and TTML parser implementations
 │   │       ├── PlayerContract.kt   # Defines MVI State, Intent, and Effect
 │   │       ├── PlayerViewModel.kt  # Orchestrates logic, playback, and lyric syncing
@@ -67,6 +72,7 @@ app/src/main/java/org/parallel_sekai/kanade/
 - `LrcParser` & `TtmlParser`: Specialized parsers for handling various lyric formats. Supports `WordInfo` for granular word-by-word animation.
 - `PlaylistContent`: Displays the current playback queue with smooth transitions, allowing users to browse and select songs directly from the fullscreen player.
 - `PlayerViewModel`: Manages the current playlist, handles playback intents, and fetches/parses lyrics when the track changes.
+- `SearchViewModel`: Handles debounced search queries and manages search history persistence.
 - `LocalMusicSource`: Uses `ContentResolver` to query `MediaStore`. Attempts to find `.lrc` or `.ttml` files in the same directory as the audio file.
 
 ## 7. Implementation Logic
@@ -81,8 +87,20 @@ app/src/main/java/org/parallel_sekai/kanade/
     - Upon change, it fetches lyrics and extracts theme colors from the album art via `Palette`.
     - The UI highlights the active `LyricLine` based on `progressFlow`.
     - `PlaylistContent` allows users to view and interact with the current queue, supporting shuffle and repeat modes.
-4. **State Persistence**: `MediaController` ensures that playback state is synchronized between the UI and the `KanadePlaybackService` even when the app is backgrounded.
-5. **Predictive Back**: The app supports Android 14+ predictive back gestures. The `NavHost` handles screen transitions, and the `KanadePlayerContainer` implements a custom `PredictiveBackHandler` to provide visual feedback (scaling and offset) when dismissing the full-screen player.## 8. Agent Development Instructions (AI Context)
+4. **Search Flow**: 
+    - `SearchViewModel` uses `debounce` to minimize unnecessary queries.
+    - Results are displayed in a standard `MusicItem` list.
+    - Search history is persisted using `DataStore`.
+5. **State Persistence**: `MediaController` ensures that playback state is synchronized between the UI and the `KanadePlaybackService` even when the app is backgrounded.
+6. **Predictive Back**: The app supports Android 14+ predictive back gestures. The `NavHost` handles screen transitions, and the `KanadePlayerContainer` implements a custom `PredictiveBackHandler` to provide visual feedback (scaling and offset) when dismissing the full-screen player.
+
+## Current Status
+- [x] Basic playback functionality with Media3.
+- [x] Local music scanning and library display.
+- [x] Rich lyric support (LRC/TTML).
+- [x] Search Page implementation with history support.
+
+## 8. Agent Development Instructions (AI Context)
 - **State Management**: Always use `MutableStateFlow` in ViewModels. UI must be stateless and react only to the `state` flow.
 - **Lyric Handling**: When extending lyric features, ensure compatibility with both `LrcParser` and `TtmlParser`. Use `LyricUtils.parseTimestamp` for consistent time handling.
 - **Repository Pattern**: Never interact with `MediaController` directly in the UI. All actions must be encapsulated in `PlaybackRepository`.

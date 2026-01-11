@@ -17,6 +17,19 @@ class SettingsViewModel(private val repository: SettingsRepository) : ViewModel(
             initialValue = LyricsSettings()
         )
 
+    val searchResultAsPlaylist: StateFlow<Boolean> = repository.searchResultAsPlaylistFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = true
+        )
+
+    fun updateSearchResultAsPlaylist(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateSearchResultAsPlaylist(enabled)
+        }
+    }
+
     fun updateShowTranslation(show: Boolean) {
         viewModelScope.launch {
             repository.updateShowTranslation(show)

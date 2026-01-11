@@ -35,6 +35,9 @@ class PlaybackRepository(context: Context) {
     private val _shuffleModeEnabled = MutableStateFlow(false)
     val shuffleModeEnabled = _shuffleModeEnabled.asStateFlow()
 
+    private val _currentPlaylist = MutableStateFlow<List<MediaItem>>(emptyList())
+    val currentPlaylist = _currentPlaylist.asStateFlow()
+
     /**
      * 根据屏幕刷新率动态计算延迟时间
      */
@@ -83,12 +86,25 @@ class PlaybackRepository(context: Context) {
                     override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
                         _shuffleModeEnabled.value = shuffleModeEnabled
                     }
+
+                    override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
+                        updatePlaylist(controller)
+                    }
                 })
                 // 初始化状态
                 _repeatMode.value = controller.repeatMode
                 _shuffleModeEnabled.value = controller.shuffleModeEnabled
+                updatePlaylist(controller)
             }
         }, MoreExecutors.directExecutor())
+    }
+
+    private fun updatePlaylist(controller: MediaController) {
+        val items = mutableListOf<MediaItem>()
+        for (i in 0 until controller.mediaItemCount) {
+            items.add(controller.getMediaItemAt(i))
+        }
+        _currentPlaylist.value = items
     }
 
     fun setRepeatMode(mode: Int) {
@@ -111,15 +127,24 @@ class PlaybackRepository(context: Context) {
         if (controllerFuture.isDone) {
             val controller = controllerFuture.get()
             val mediaItems = list.map { music ->
+                val extras = android.os.Bundle().apply {
+                    putString("source_id", music.sourceId)
+                }
                 MediaItem.Builder()
                     .setMediaId(music.id)
                     .setUri(music.mediaUri)
+                    .setRequestMetadata(
+                        androidx.media3.common.MediaItem.RequestMetadata.Builder()
+                            .setMediaUri(android.net.Uri.parse(music.mediaUri))
+                            .build()
+                    )
                     .setMediaMetadata(
                         MediaMetadata.Builder()
                             .setTitle(music.title)
                             .setArtist(music.artist)
                             .setAlbumTitle(music.album)
                             .setArtworkUri(android.net.Uri.parse(music.coverUrl))
+                            .setExtras(extras)
                             .build()
                     )
                     .build()

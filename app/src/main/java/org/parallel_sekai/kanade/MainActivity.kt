@@ -33,6 +33,8 @@ import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.ui.screens.library.LibraryScreen
 import org.parallel_sekai.kanade.ui.screens.more.MoreScreen
+import org.parallel_sekai.kanade.ui.screens.search.SearchScreen
+import org.parallel_sekai.kanade.ui.screens.search.SearchViewModel
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.LyricsSettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
@@ -66,6 +68,7 @@ class MainActivity : ComponentActivity() {
         val settingsRepository = SettingsRepository(applicationContext)
         val viewModel = PlayerViewModel(playbackRepository, settingsRepository, applicationContext)
         val settingsViewModel = SettingsViewModel(settingsRepository)
+        val searchViewModel = SearchViewModel(playbackRepository, settingsRepository)
 
         setContent {
             KanadeTheme {
@@ -145,9 +148,10 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                             composable(Screen.Search.route) {
-                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Text("Search Screen")
-                                }
+                                SearchScreen(
+                                    viewModel = searchViewModel,
+                                    onBackClick = { navController.popBackStack() }
+                                )
                             }
                             composable(Screen.More.route) {
                                 MoreScreen(
@@ -156,6 +160,7 @@ class MainActivity : ComponentActivity() {
                             }
                             composable(Screen.Settings.route) {
                                 SettingsScreen(
+                                    viewModel = settingsViewModel,
                                     onNavigateBack = { navController.popBackStack() },
                                     onNavigateToLyricsSettings = { navController.navigate(Screen.LyricsSettings.route) }
                                 )

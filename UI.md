@@ -1,101 +1,42 @@
-# UI Design - Fullscreen Player Playlist
+# UI Design - Search Page
 
-## Fullscreen Player Overlay (Playlist Mode)
-
-```text
-+---------------------------------------+
-|  [v] Indicator                        |
-|                                       |
-|  [Art]  Song Title           (More)   |
-|         Artist Name                   |
-|                                       |
-|  +---------------------------------+  |
-|  | Playing Next      [Shuf] [Rep]  |  |
-|  |                                 |  |
-|  | [Art] Song 2           [::]     |  |
-|  |       Artist 2                  |  |
-|  |                                 |  |
-|  | [Art] Song 3           [::]     |  |
-|  |       Artist 3                  |  |
-|  |                                 |  |
-|  | ...                             |  |
-|  +---------------------------------+  |
-|                                       |
-|  (Slider)---------------------------- |
-|  0:45                          -3:20  |
-|                                       |
-|  [Prev]      [Play/Pause]      [Next] |
-|                                       |
-|  [Lyrics]     [Airplay]     [Playlist*|
-+---------------------------------------+
-```
-
-### Components:
-- **Header**: Mini art, Title, and Artist moved to top left (similar to lyric mode).
-- **Playlist Area**: A `LazyColumn` showing the remaining songs in the queue.
-- **List Item**: 
-    - Small album art.
-    - Title and Artist.
-    - Drag handle (placeholder icon).
-    - Highlighting for the current song.
-- **Controls**: Same as cover/lyric mode, but with the Playlist button highlighted.
-
-### Transitions:
-- Clicking the Playlist button fades out the current center content (Cover or Lyrics) and fades in the Playlist.
-- The top header (Art/Title/Artist) follows the same interpolation logic as Lyric mode.
-
-## More Screen
+## Search Screen Layout
 
 ```text
 +---------------------------------------+
-|  More                                 |
+|  [ <- ]  [ Search music...         X ]|  <-- Search Bar
++---------------------------------------+
 |                                       |
-|  +---------------------------------+  |
-|  | [Settings Icon] Settings    [>] |  |
-|  +---------------------------------+  |
-|  | [About Icon] About          [>] |  |
-|  +---------------------------------+  |
+|  RECENT SEARCHES            [ CLEAR ] |  <-- History Header (Visible if query empty)
 |                                       |
+|  * Song title 1                       |  <-- History Item
+|  * Artist Name                        |
+|  * Another search                     |
+|                                       |
++---------------------------------------+
+|                                       |
+|  SEARCH RESULTS                       |  <-- Results Header (Visible if query NOT empty)
+|                                       |
+|  +-------+  Song Title                |  <-- Result Item
+|  | COVER |  Artist - Album            |
+|  +-------+                            |
+|                                       |
+|  +-------+  Another Song              |
+|  | COVER |  Artist - Album            |
+|  +-------+                            |
+|                                       |
++---------------------------------------+
+|                                       |
+|          [ No results found ]         |  <-- Empty State
+|                                       |
++---------------------------------------+
+| [ Home ] [ Search ] [ Library ] [ More]| <-- Bottom Navigation (Existing)
 +---------------------------------------+
 ```
 
-### Components:
-- **Title**: Large title "More".
-- **List Items**:
-    - Icon.
-    - Title.
-    - Trailing arrow indicator.
-    - Clickable area for navigation.
+## Components
 
-## Settings Screen
-
-```text
-+---------------------------------------+
-|  [<] Settings                         |
-|                                       |
-|  UI (Header)                          |
-|  +---------------------------------+  |
-|  | Lyrics UI                   [>] |  |
-|  +---------------------------------+  |
-|                                       |
-|  Audio (Header)                       |
-|  +---------------------------------+  |
-|  | Audio Quality               [>] |  |
-|  +---------------------------------+  |
-+---------------------------------------+
-```
-
-## Lyrics Settings Screen
-
-```text
-+---------------------------------------+
-|  [<] Lyrics UI                        |
-|                                       |
-|  Display (Header)                     |
-|  +---------------------------------+  |
-|  | Show Translation         [Toggle]|  |
-|  +---------------------------------+  |
-|  | Font Size                [Slider]|  |
-|  +---------------------------------+  |
-+---------------------------------------+
-```
+- **Search Bar**: Material 3 `SearchFullWidth` or `DockedSearchBar`.
+- **Music Item**: Same style as `LibraryScreen` items for consistency.
+- **History Item**: Simple text with a delete icon or just clickable text.
+- **Empty State**: Centered text with an icon.

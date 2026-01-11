@@ -25,6 +25,8 @@ class SettingsRepository(private val context: Context) {
     private val BLUR_ENABLED = booleanPreferencesKey("blur_enabled")
     private val ALIGNMENT = intPreferencesKey("alignment")
     private val BALANCE_LINES = booleanPreferencesKey("balance_lines")
+    private val SEARCH_HISTORY = stringSetPreferencesKey("search_history")
+    private val SEARCH_RESULT_AS_PLAYLIST = booleanPreferencesKey("search_result_as_playlist")
 
     val lyricsSettingsFlow: Flow<LyricsSettings> = context.dataStore.data
         .map { preferences ->
@@ -37,6 +39,48 @@ class SettingsRepository(private val context: Context) {
                 balanceLines = preferences[BALANCE_LINES] ?: false
             )
         }
+
+    val searchResultAsPlaylistFlow: Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[SEARCH_RESULT_AS_PLAYLIST] ?: true
+        }
+
+    suspend fun updateSearchResultAsPlaylist(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[SEARCH_RESULT_AS_PLAYLIST] = enabled
+        }
+    }
+
+    val searchHistoryFlow: Flow<List<String>> = context.dataStore.data
+        .map { preferences ->
+            preferences[SEARCH_HISTORY]?.toList() ?: emptyList()
+        }
+
+    suspend fun addSearchHistory(query: String) {
+        if (query.isBlank()) return
+        context.dataStore.edit { preferences ->
+            val current = preferences[SEARCH_HISTORY] ?: emptySet()
+            val updated = current.toMutableSet().apply {
+                remove(query) // Move to top by removing and adding
+                add(query)
+            }
+            // Limit to 20 items
+            preferences[SEARCH_HISTORY] = updated.toList().takeLast(20).toSet()
+        }
+    }
+
+    suspend fun removeSearchHistory(query: String) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[SEARCH_HISTORY] ?: emptySet()
+            preferences[SEARCH_HISTORY] = current.filter { it != query }.toSet()
+        }
+    }
+
+    suspend fun clearSearchHistory() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(SEARCH_HISTORY)
+        }
+    }
 
     suspend fun updateShowTranslation(show: Boolean) {
         context.dataStore.edit { preferences ->

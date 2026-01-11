@@ -7,6 +7,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -17,10 +18,13 @@ import androidx.compose.foundation.verticalScroll
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToLyricsSettings: () -> Unit
 ) {
     val scrollState = rememberScrollState()
+    val searchAsPlaylist = viewModel.searchResultAsPlaylist.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -49,6 +53,17 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
             SettingsSectionHeader(title = "常规")
+
+            ListItem(
+                headlineContent = { Text("搜索结果作为播放列表") },
+                supportingContent = { Text("播放搜索结果中的歌曲时，将整个列表设为当前队列") },
+                trailingContent = {
+                    Switch(
+                        checked = searchAsPlaylist.value,
+                        onCheckedChange = { viewModel.updateSearchResultAsPlaylist(it) }
+                    )
+                }
+            )
 
             ListItem(
                 headlineContent = { Text("Theme") },

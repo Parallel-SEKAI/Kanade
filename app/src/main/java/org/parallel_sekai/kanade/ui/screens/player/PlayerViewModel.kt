@@ -36,12 +36,30 @@ class PlayerViewModel(
             }
             .launchIn(viewModelScope)
 
+        // 监听播放队列变化并同步到 UI
+        playbackRepository.currentPlaylist
+            .onEach { mediaItems ->
+                val list = mediaItems.map { item ->
+                    MusicModel(
+                        id = item.mediaId,
+                        title = item.mediaMetadata.title?.toString() ?: "",
+                        artist = item.mediaMetadata.artist?.toString() ?: "",
+                        album = item.mediaMetadata.albumTitle?.toString() ?: "",
+                        coverUrl = item.mediaMetadata.artworkUri?.toString() ?: "",
+                        mediaUri = item.requestMetadata.mediaUri?.toString() ?: "",
+                        duration = 0, // Duration will be updated via progressFlow
+                        sourceId = item.mediaMetadata.extras?.getString("source_id") ?: "unknown"
+                    )
+                }
+                _state.update { it.copy(musicList = list) }
+            }
+            .launchIn(viewModelScope)
+
         // 加载初始音乐列表
         viewModelScope.launch {
             val list = playbackRepository.fetchMusicList()
             val initialSong = list.firstOrNull()
             _state.update { it.copy(
-                musicList = list,
                 currentSong = initialSong
             ) }
             initialSong?.let { extractColors(it) }
