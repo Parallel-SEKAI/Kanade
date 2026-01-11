@@ -33,6 +33,8 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -186,7 +188,15 @@ private fun MiniPlayerContent(
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp))
                 )
                 .fillMaxWidth()
-                .height(64.dp),
+                .height(64.dp)
+                .pointerInput(Unit) {
+                    detectVerticalDragGestures { change, dragAmount ->
+                        change.consume()
+                        if (dragAmount < -15f) {
+                            onIntent(PlayerIntent.Expand)
+                        }
+                    }
+                },
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.surfaceVariant,
             tonalElevation = 0.dp
@@ -283,6 +293,14 @@ private fun FullScreenContent(
                     resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
                 )
                 .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectVerticalDragGestures { change, dragAmount ->
+                        change.consume()
+                        if (dragAmount > 15f) {
+                            onIntent(PlayerIntent.Collapse)
+                        }
+                    }
+                }
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -457,7 +475,6 @@ private fun FullScreenContent(
                         }
                     }
                     
-                    // 使用动画控制底部安全边距，消除隐藏控件时的跳动感
                     val bottomSafeMargin by animateDpAsState(
                         targetValue = if (controlsVisible) 0.dp else 24.dp,
                         animationSpec = tween(500),
@@ -629,7 +646,6 @@ fun LyricContent(
                     )
 
                     Box(modifier = Modifier.fillMaxWidth()) {
-                        // 1. 视觉层 (占据全屏宽度，移除水平 Padding 以防模糊被切除)
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -643,7 +659,6 @@ fun LyricContent(
                                 },
                             horizontalAlignment = Alignment.Start
                         ) {
-                            // 在文字级别添加 Padding，为模糊留出“溢出”空间
                             Text(
                                 text = line.content,
                                 style = MaterialTheme.typography.headlineLarge,
@@ -665,7 +680,6 @@ fun LyricContent(
                             }
                         }
 
-                        // 2. 交互层 (通过 padding 限制点击范围，使侧边可穿透)
                         Box(
                             modifier = Modifier
                                 .matchParentSize()
