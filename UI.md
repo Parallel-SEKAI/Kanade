@@ -1,38 +1,45 @@
-# UI Design - Karaoke Progress Filling
+# UI Design - Fullscreen Player Playlist
 
-## Visual Representation (ASCII)
-
-Legend:
-- `[####]` : Active/Filled text (White)
-- `[....]` : Inactive/Empty text (White 35% Alpha)
-- `[##..]` : Partially filled word (Transitioning)
-
-### Lyric Line State:
-
-Current Line (Active):
-```text
-  [HELL] [O ] [DA..] [RKNE] [SS ]
-    ^      ^     ^      ^      ^
-  Done   Done Filling  Next   Next
-```
-
-### Detailed Word Transition (Zoomed):
-Word: "DARKNESS" (Duration: 1000ms, Progress: 500ms)
+## Fullscreen Player Overlay (Playlist Mode)
 
 ```text
-+-----------------------+
-| D  A  R  K | N  E  S  S|
-| [  Active  | Inactive ]|
-+-----------------------+
-             ^
-       Linear Gradient 
-       Split Point (50%)
++---------------------------------------+
+|  [v] Indicator                        |
+|                                       |
+|  [Art]  Song Title           (More)   |
+|         Artist Name                   |
+|                                       |
+|  +---------------------------------+  |
+|  | Playing Next      [Shuf] [Rep]  |  |
+|  |                                 |  |
+|  | [Art] Song 2           [::]     |  |
+|  |       Artist 2                  |  |
+|  |                                 |  |
+|  | [Art] Song 3           [::]     |  |
+|  |       Artist 3                  |  |
+|  |                                 |  |
+|  | ...                             |  |
+|  +---------------------------------+  |
+|                                       |
+|  (Slider)---------------------------- |
+|  0:45                          -3:20  |
+|                                       |
+|  [Prev]      [Play/Pause]      [Next] |
+|                                       |
+|  [Lyrics]     [Airplay]     [Playlist*|
++---------------------------------------+
 ```
 
-## Behavior
-1. **Unstarted Word**: Rendered with `inactiveColor` (35% alpha white).
-2. **Current Word**: Horizontal fill from left to right.
-   - The fill boundary moves linearly according to the word's internal progress.
-   - The edge is sharp (hard stop) to mimic classic karaoke.
-3. **Completed Word**: Fully rendered with `activeColor` (100% white).
-4. **Translation**: Remains unchanged (standard fade/highlight).
+### Components:
+- **Header**: Mini art, Title, and Artist moved to top left (similar to lyric mode).
+- **Playlist Area**: A `LazyColumn` showing the remaining songs in the queue.
+- **List Item**: 
+    - Small album art.
+    - Title and Artist.
+    - Drag handle (placeholder icon).
+    - Highlighting for the current song.
+- **Controls**: Same as cover/lyric mode, but with the Playlist button highlighted.
+
+### Transitions:
+- Clicking the Playlist button fades out the current center content (Cover or Lyrics) and fades in the Playlist.
+- The top header (Art/Title/Artist) follows the same interpolation logic as Lyric mode.

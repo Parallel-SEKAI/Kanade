@@ -338,24 +338,25 @@ private fun FullScreenContent(
     }
 
     var showLyrics by remember { mutableStateOf(false) }
+    var showPlaylist by remember { mutableStateOf(false) }
     var controlsVisible by remember { mutableStateOf(true) }
     val density = LocalDensity.current
     
     // 新增：歌词模式切换动画进度
     val lyricTransitionFraction by animateFloatAsState(
-        targetValue = if (showLyrics) 1f else 0f,
+        targetValue = if (showLyrics || showPlaylist) 1f else 0f,
         animationSpec = spring(stiffness = Spring.StiffnessLow),
         label = "LyricTransition"
     )
 
-    // 仅在显示歌词且正在播放时，5秒后自动隐藏控件
-    LaunchedEffect(controlsVisible, state.isPlaying, showLyrics) {
-        if (showLyrics && controlsVisible && state.isPlaying) {
+    // 仅在显示歌词或列表且正在播放时，5秒后自动隐藏控件
+    LaunchedEffect(controlsVisible, state.isPlaying, showLyrics, showPlaylist) {
+        if ((showLyrics || showPlaylist) && controlsVisible && state.isPlaying) {
             kotlinx.coroutines.delay(5000)
             controlsVisible = false
         }
         // 如果切回封面模式，确保控件立即显示
-        if (!showLyrics) {
+        if (!showLyrics && !showPlaylist) {
             controlsVisible = true
         }
     }
@@ -367,8 +368,8 @@ private fun FullScreenContent(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) { 
-                // 仅在歌词模式下允许手动切换控件可见性
-                if (showLyrics) {
+                // 仅在歌词或列表模式下允许手动切换控件可见性
+                if (showLyrics || showPlaylist) {
                     controlsVisible = !controlsVisible 
                 } else {
                     controlsVisible = true
@@ -403,7 +404,7 @@ private fun FullScreenContent(
             val fullCoverArtistY = screenHeight - 340.dp
             val fullCoverTextX = fullCoverArtX
 
-            // 全屏歌词模式 (Full Lyric)
+            // 全屏歌词/列表模式 (Full Lyric/Playlist)
             val fullLyricArtSize = 42.dp
             val fullLyricArtX = 24.dp
             val fullLyricArtY = 66.dp
@@ -506,7 +507,7 @@ private fun FullScreenContent(
                         )
                     }
                     .width(currentTextWidth)
-                    .alpha(if (showLyrics || expansionFraction < 1f) 1f else controlsAlpha)
+                    .alpha(if (showLyrics || showPlaylist || expansionFraction < 1f) 1f else controlsAlpha)
             )
 
             Text(
@@ -525,7 +526,7 @@ private fun FullScreenContent(
                         )
                     }
                     .width(currentTextWidth)
-                    .alpha(if (showLyrics || expansionFraction < 1f) 1f else controlsAlpha)
+                    .alpha(if (showLyrics || showPlaylist || expansionFraction < 1f) 1f else controlsAlpha)
             )
 
             // Apple Music 风格的三点按钮
@@ -536,7 +537,7 @@ private fun FullScreenContent(
                     .clip(CircleShape)
                     .background(Color.White.copy(alpha = 0.1f * expansionFraction))
                     .clickable { /* More actions */ }
-                    .alpha(if (showLyrics || expansionFraction < 1f) 1f else controlsAlpha),
+                    .alpha(if (showLyrics || showPlaylist || expansionFraction < 1f) 1f else controlsAlpha),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -590,8 +591,16 @@ private fun FullScreenContent(
                     ) {
                         LyricContent(state, onIntent)
                     }
+
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = showPlaylist && expansionFraction > 0.9f,
+                        enter = fadeIn(tween(500)) + expandVertically(expandFrom = Alignment.CenterVertically),
+                        exit = fadeOut(tween(500)) + shrinkVertically(shrinkTowards = Alignment.CenterVertically)
+                    ) {
+                        PlaylistContent(state, onIntent)
+                    }
                     
-                    if (!showLyrics) {
+                    if (!showLyrics && !showPlaylist) {
                         Box(modifier = Modifier
                             .offset { 
                                 IntOffset(
@@ -623,15 +632,23 @@ private fun FullScreenContent(
                             .padding(horizontal = 24.dp)
                     ) {
                         val dynamicSpacerHeight by animateDpAsState(
-                            targetValue = if (showLyrics) 0.dp else 160.dp,
+                            targetValue = if (showLyrics || showPlaylist) 0.dp else 160.dp,
                             animationSpec = tween(500, easing = FastOutSlowInEasing),
                             label = "LyricAreaHeightAnimation"
                         )
                         Spacer(modifier = Modifier.height(dynamicSpacerHeight))
-                        PlayerControlsSection(state, onIntent, showLyrics) { 
-                            showLyrics = it
-                            controlsVisible = true
-                        }
+                        PlayerControlsSection(state, onIntent, showLyrics, showPlaylist,
+                            onToggleLyrics = { 
+                                showLyrics = it
+                                if (it) showPlaylist = false
+                                controlsVisible = true
+                            },
+                            onTogglePlaylist = {
+                                showPlaylist = it
+                                if (it) showLyrics = false
+                                controlsVisible = true
+                            }
+                        )
                     }
                 }
                 
@@ -664,7 +681,9 @@ private fun PlayerControlsSection(
     state: PlayerState,
     onIntent: (PlayerIntent) -> Unit,
     showLyrics: Boolean,
-    onToggleLyrics: (Boolean) -> Unit
+    showPlaylist: Boolean,
+    onToggleLyrics: (Boolean) -> Unit,
+    onTogglePlaylist: (Boolean) -> Unit
 ) {
     var sliderPosition by remember { mutableFloatStateOf(state.progress.toFloat()) }
     val isDragging = remember { mutableStateOf(false) }
@@ -726,8 +745,8 @@ private fun PlayerControlsSection(
         IconButton(onClick = { }) {
             Icon(Icons.Default.Airplay, contentDescription = null, tint = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
         }
-        IconButton(onClick = { }) {
-            Icon(Icons.Default.QueueMusic, contentDescription = null, tint = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
+        IconButton(onClick = { onTogglePlaylist(!showPlaylist) }) {
+            Icon(imageVector = Icons.Default.QueueMusic, contentDescription = null, tint = if (showPlaylist) Color.White else Color.White.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -736,6 +755,156 @@ private fun formatTime(millis: Long): String {
     val minutes = TimeUnit.MILLISECONDS.toMinutes(millis)
     val seconds = TimeUnit.MILLISECONDS.toSeconds(millis) % 60
     return String.format("%d:%02d", minutes, seconds)
+}
+
+@Composable
+fun PlaylistContent(
+    state: PlayerState,
+    onIntent: (PlayerIntent) -> Unit
+) {
+    val listState = rememberLazyListState()
+    
+    LaunchedEffect(state.currentSong) {
+        val index = state.musicList.indexOf(state.currentSong)
+        if (index >= 0) {
+            listState.animateScrollToItem(index)
+        }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp)
+        ) {
+            // 缩减顶部占位，标题紧贴上方信息
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Playing Next",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                Row {
+                    IconButton(
+                        onClick = { onIntent(PlayerIntent.ToggleShuffle) },
+                        modifier = Modifier
+                            .padding(horizontal = 4.dp)
+                            .size(36.dp)
+                            .background(
+                                if (state.shuffleModeEnabled) Color.White.copy(alpha = 0.2f) 
+                                else Color.Transparent,
+                                RoundedCornerShape(8.dp)
+                            )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Shuffle,
+                            contentDescription = "Shuffle",
+                            tint = if (state.shuffleModeEnabled) Color.White else Color.White.copy(alpha = 0.5f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = { onIntent(PlayerIntent.ToggleRepeat) },
+                        modifier = Modifier
+                            .padding(horizontal = 4.dp)
+                            .size(36.dp)
+                            .background(
+                                if (state.repeatMode != RepeatMode.OFF) Color.White.copy(alpha = 0.2f) 
+                                else Color.Transparent,
+                                RoundedCornerShape(8.dp)
+                            )
+                    ) {
+                        Icon(
+                            imageVector = when (state.repeatMode) {
+                                RepeatMode.ONE -> Icons.Default.RepeatOne
+                                else -> Icons.Default.Repeat
+                            },
+                            contentDescription = "Repeat",
+                            tint = if (state.repeatMode != RepeatMode.OFF) Color.White else Color.White.copy(alpha = 0.5f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+                    .drawWithContent {
+                        drawContent()
+                        val fadingBrush = Brush.verticalGradient(
+                            0f to Color.Transparent,
+                            0.05f to Color.Black,
+                            0.95f to Color.Black,
+                            1f to Color.Transparent
+                        )
+                        drawRect(brush = fadingBrush, blendMode = BlendMode.DstIn)
+                    },
+                contentPadding = PaddingValues(bottom = 100.dp)
+            ) {
+                itemsIndexed(state.musicList) { index, music ->
+                    val isCurrent = music.id == state.currentSong?.id
+                    
+                    Surface(
+                        onClick = { onIntent(PlayerIntent.SelectSong(music)) },
+                        color = if (isCurrent) Color.White.copy(alpha = 0.1f) else Color.Transparent,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AsyncImage(
+                                model = music.coverUrl,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(4.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                            Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                                Text(
+                                    text = music.title,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = if (isCurrent) MaterialTheme.colorScheme.primary else Color.White,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = music.artist,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.6f),
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                            }
+                            Icon(
+                                imageVector = Icons.Default.DragHandle,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.3f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -749,7 +918,7 @@ private fun KaraokeWord(
     modifier: Modifier = Modifier
 ) {
     val duration = endTime - startTime
-    val shouldGlow = duration > 500 // 超过0.5s
+    val shouldGlow = duration > 500
 
     val fillProgress = remember(currentProgress, startTime, endTime) {
         if (currentProgress >= endTime) 1f
@@ -764,7 +933,6 @@ private fun KaraokeWord(
         label = "WordScale"
     )
 
-    // 恒定发光：仅在正在唱的时候显示，不带呼吸效果
     val glowRadius by animateFloatAsState(
         targetValue = if (isActiveLine && isWordActive && shouldGlow) 20f else 0f,
         animationSpec = tween(300),
@@ -781,7 +949,6 @@ private fun KaraokeWord(
                 transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.5f)
             }
     ) {
-        // 底层：基础色
         Text(
             text = text,
             style = textStyle,
@@ -790,9 +957,7 @@ private fun KaraokeWord(
             softWrap = false
         )
 
-        // 顶层：填充层 + 发光效果
         if (isActiveLine && fillProgress > 0f) {
-            // 只要动画半径 > 0，就保留 Shadow 以实现淡出过渡
             val shadow = if (shouldGlow && glowRadius > 0f) {
                 Shadow(
                     color = Color.White.copy(alpha = (glowRadius / 20f) * 0.7f),

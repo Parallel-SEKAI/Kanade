@@ -1,33 +1,23 @@
-# Implementation Plan - Karaoke Word-by-Word Progress Filling
+# Implementation Plan - Fullscreen Player Playlist
 
-Implement a horizontal linear gradient fill effect for lyrics, where the "current word" fills smoothly based on playback progress instead of changing color instantly.
+Implement a playlist (Up Next) feature for the fullscreen player with a UI style inspired by Apple Music.
 
-## User Review Required
+## User Interface (UI.md)
+- [ ] Create `PlaylistContent` component in `PlayerComponents.kt`.
+- [ ] Implement Apple Music-style list items for the playlist.
+- [ ] Add transition animations between Cover, Lyrics, and Playlist views.
 
-> [!IMPORTANT]
-> This change will replace the current alpha-based word animation with a continuous color-filling effect. Is this transition style what you're looking for?
+## Logic & State
+- [ ] Add `showPlaylist` state in `FullScreenContent`.
+- [ ] Handle mutual exclusivity between Lyrics and Playlist views.
+- [ ] Connect the `QueueMusic` button to toggle the playlist.
 
-## Proposed Changes
-
-### UI Components (`app/src/main/java/org/parallel_sekai/kanade/ui/screens/player/PlayerComponents.kt`)
-
-- [x] **Create `KaraokeWord` Composable**: 
-    - A specialized text component that renders a single word.
-    - Uses `drawWithContent` and `BlendMode.SrcIn` to achieve partial filling.
-    - Calculates horizontal fill percentage based on `(currentProgress - startTime) / duration`.
-- [x] **Update `WordByWordLine`**:
-    - Replace the standard `Text` within the `FlowRow` with `KaraokeWord`.
-    - Retain existing scale animations for the active word to enhance the "singing" feel.
-- [ ] **Optimize Performance**:
-    - Ensure `KaraokeWord` uses `CompositingStrategy.Offscreen` to handle blend modes correctly without affecting other UI elements.
-
-## Verification Plan
-
-### Automated Tests
-- N/A (Visual effect verification)
-
-### Manual Verification
-- Play a track with enhanced LRC/TTML lyrics (word-by-word data).
-- Observe the active word as it's being sung.
-- Verify the filling is smooth and matches the singing pace.
-- Check that previous words remain fully filled and upcoming words remain dimmed.
+## Tasks
+- [x] Analyze existing player code.
+- [/] Update `PLAN.md` and `UI.md`.
+- [ ] Implement `PlaylistContent` in `PlayerComponents.kt`.
+- [ ] Update `FullScreenContent` to support playlist mode.
+- [ ] Add logic to highlight the currently playing song in the playlist.
+- [x] Enable clicking a song in the playlist to play it.
+- [/] Add Shuffle and Repeat buttons to the playlist view.
+- [ ] Verify by building and running the app.
