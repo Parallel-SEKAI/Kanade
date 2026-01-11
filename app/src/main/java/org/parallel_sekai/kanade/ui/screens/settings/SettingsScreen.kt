@@ -11,12 +11,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLyricsSettings: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -33,6 +37,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(scrollState)
         ) {
             SettingsSectionHeader(title = "界面")
             
@@ -53,6 +58,9 @@ fun SettingsScreen(
                 headlineContent = { Text("Audio Quality") },
                 supportingContent = { Text("High") }
             )
+
+            // 为底部的 MiniPlayer 留出空间
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }

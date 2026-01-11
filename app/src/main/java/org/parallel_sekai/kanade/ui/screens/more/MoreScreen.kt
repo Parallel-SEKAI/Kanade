@@ -30,7 +30,8 @@ fun MoreScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
+            contentPadding = PaddingValues(bottom = 80.dp)
         ) {
             item {
                 MoreItem(

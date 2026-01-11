@@ -16,6 +16,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LyricsSettingsScreen(
@@ -23,6 +26,7 @@ fun LyricsSettingsScreen(
     onNavigateBack: () -> Unit
 ) {
     val settings by viewModel.lyricsSettings.collectAsState()
+    val scrollState = rememberScrollState()
     val previewTextAlign = when (settings.alignment) {
         0 -> TextAlign.Start
         1 -> TextAlign.Center
@@ -50,6 +54,7 @@ fun LyricsSettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(scrollState)
         ) {
             // Preview Section
             Text(
@@ -171,6 +176,9 @@ fun LyricsSettingsScreen(
                     }
                 }
             }
+
+            // 为底部的 MiniPlayer 留出空间
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }

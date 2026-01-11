@@ -81,10 +81,8 @@ app/src/main/java/org/parallel_sekai/kanade/
     - Upon change, it fetches lyrics and extracts theme colors from the album art via `Palette`.
     - The UI highlights the active `LyricLine` based on `progressFlow`.
     - `PlaylistContent` allows users to view and interact with the current queue, supporting shuffle and repeat modes.
-4. **State Persistence & UI Safety**: 
-    - `MediaController` ensures state synchronization.
-    - `KanadePlayerContainer` handles its visibility and touch events carefully to ensure underlying components like the `NavigationBar` remain interactive when the player is collapsed.
-## 8. Agent Development Instructions (AI Context)
+4. **State Persistence**: `MediaController` ensures that playback state is synchronized between the UI and the `KanadePlaybackService` even when the app is backgrounded.
+5. **Predictive Back**: The app supports Android 14+ predictive back gestures. The `NavHost` handles screen transitions, and the `KanadePlayerContainer` implements a custom `PredictiveBackHandler` to provide visual feedback (scaling and offset) when dismissing the full-screen player.## 8. Agent Development Instructions (AI Context)
 - **State Management**: Always use `MutableStateFlow` in ViewModels. UI must be stateless and react only to the `state` flow.
 - **Lyric Handling**: When extending lyric features, ensure compatibility with both `LrcParser` and `TtmlParser`. Use `LyricUtils.parseTimestamp` for consistent time handling.
 - **Repository Pattern**: Never interact with `MediaController` directly in the UI. All actions must be encapsulated in `PlaybackRepository`.

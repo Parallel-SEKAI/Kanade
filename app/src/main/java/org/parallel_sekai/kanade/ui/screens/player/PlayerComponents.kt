@@ -191,13 +191,37 @@ fun KanadePlayerContainer(
         ((collapsedOffset - offsetY.value) / (collapsedOffset - expandedOffset)).coerceIn(0f, 1f)
     } else 0f
 
+    var predictiveBackProgress by remember { mutableFloatStateOf(0f) }
+
+    PredictiveBackHandler(enabled = state.isExpanded) { progressFlow ->
+        try {
+            progressFlow.collect { backEvent ->
+                predictiveBackProgress = backEvent.progress
+            }
+            onIntent(PlayerIntent.Collapse)
+        } catch (e: Exception) {
+            // Cancelled
+        } finally {
+            predictiveBackProgress = 0f
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         // 这是一个随 offsetY 移动的包装器，它承载了手势和内容
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(lerp(80.dp, configuration.screenHeightDp.dp, fraction))
-                .offset { IntOffset(0, offsetY.value.roundToInt()) }
+                .offset { 
+                    val backOffset = (predictiveBackProgress * 100.dp.toPx()).roundToInt()
+                    IntOffset(0, offsetY.value.roundToInt() + backOffset) 
+                }
+                .graphicsLayer {
+                    val scale = 1f - (predictiveBackProgress * 0.05f)
+                    scaleX = scale
+                    scaleY = scale
+                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+                }
                 .draggable(
                     orientation = Orientation.Vertical,
                     state = rememberDraggableState { delta ->
@@ -338,14 +362,6 @@ private fun FullScreenContent(
     expansionFraction: Float,
     offsetY: Float
 ) {
-    PredictiveBackHandler(enabled = state.isExpanded) { progressFlow ->
-        try {
-            progressFlow.collect { /* handle back progress */ }
-            onIntent(PlayerIntent.Collapse)
-        } catch (e: Exception) {
-        }
-    }
-
     var showLyrics by remember { mutableStateOf(false) }
     var showPlaylist by remember { mutableStateOf(false) }
     var controlsVisible by remember { mutableStateOf(true) }
