@@ -2,6 +2,7 @@ package org.parallel_sekai.kanade.ui.screens.player
 
 import androidx.compose.ui.graphics.Color
 import org.parallel_sekai.kanade.data.source.MusicModel
+import org.parallel_sekai.kanade.data.repository.LyricsSettings
 
 enum class RepeatMode {
     OFF, ONE, ALL
@@ -21,6 +22,7 @@ data class PlayerState(
     val shuffleModeEnabled: Boolean = false,
     val lyrics: String? = null,
     val lyricData: LyricData? = null,
+    val lyricsSettings: LyricsSettings = LyricsSettings(),
     val gradientColors: List<Color> = listOf(Color(0xFF1A1A1A), Color(0xFF000000))
 )
 

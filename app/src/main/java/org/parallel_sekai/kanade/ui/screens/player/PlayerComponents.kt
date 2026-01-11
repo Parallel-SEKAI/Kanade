@@ -54,6 +54,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import org.parallel_sekai.kanade.data.repository.LyricsSettings
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
@@ -635,12 +640,12 @@ private fun FullScreenContent(
                             .padding(bottom = 24.dp)
                             .padding(horizontal = 24.dp)
                     ) {
-                        val dynamicSpacerHeight by animateDpAsState(
-                            targetValue = if (showLyrics || showPlaylist) 0.dp else 160.dp,
+                        val dynamicSpacerHeightValue by animateFloatAsState(
+                            targetValue = if (showLyrics || showPlaylist) 0f else 160f,
                             animationSpec = tween(500, easing = FastOutSlowInEasing),
                             label = "LyricAreaHeightAnimation"
                         )
-                        Spacer(modifier = Modifier.height(dynamicSpacerHeight))
+                        Spacer(modifier = Modifier.height(dynamicSpacerHeightValue.dp))
                         PlayerControlsSection(state, onIntent, showLyrics, showPlaylist,
                             onToggleLyrics = { 
                                 showLyrics = it
@@ -656,12 +661,12 @@ private fun FullScreenContent(
                     }
                 }
                 
-                val bottomSafeMargin by animateDpAsState(
-                    targetValue = if (controlsVisible) 0.dp else 24.dp,
+                val bottomSafeMarginValue by animateFloatAsState(
+                    targetValue = if (controlsVisible) 0f else 24f,
                     animationSpec = tween(500),
                     label = "BottomSafeMarginAnimation"
                 )
-                Spacer(modifier = Modifier.height(bottomSafeMargin))
+                Spacer(modifier = Modifier.height(bottomSafeMarginValue.dp))
             }
         }
     }
@@ -957,7 +962,6 @@ private fun KaraokeWord(
             text = text,
             style = textStyle,
             color = Color.White.copy(alpha = baseAlpha),
-            fontWeight = FontWeight.ExtraBold,
             softWrap = false
         )
 
@@ -974,7 +978,6 @@ private fun KaraokeWord(
                 text = text,
                 style = textStyle.copy(shadow = shadow),
                 color = Color.White,
-                fontWeight = FontWeight.ExtraBold,
                 softWrap = false,
                 modifier = Modifier.drawWithContent {
                     clipRect(right = size.width * fillProgress) {
@@ -988,15 +991,22 @@ private fun KaraokeWord(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun WordByWordLine(
+fun WordByWordLine(
     words: List<WordInfo>,
     currentProgress: Long,
     isActive: Boolean,
+    textStyle: TextStyle,
     modifier: Modifier = Modifier
 ) {
+    val horizontalArrangement = when (textStyle.textAlign) {
+        TextAlign.Center -> Arrangement.Center
+        TextAlign.End -> Arrangement.End
+        else -> Arrangement.Start
+    }
+
     FlowRow(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.Start
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = horizontalArrangement
     ) {
         words.forEach { word ->
             KaraokeWord(
@@ -1005,11 +1015,121 @@ private fun WordByWordLine(
                 endTime = word.endTime,
                 currentProgress = currentProgress,
                 isActiveLine = isActive,
-                textStyle = MaterialTheme.typography.headlineLarge.copy(
-                    lineHeight = MaterialTheme.typography.headlineLarge.lineHeight * 1.2f
-                )
+                textStyle = textStyle
             )
         }
+    }
+}
+
+@Composable
+fun BalancedLyricView(
+    line: LyricLine,
+    currentProgress: Long,
+    isActive: Boolean,
+    baseTextStyle: TextStyle,
+    translationTextStyle: TextStyle,
+    settings: LyricsSettings,
+    textAlign: TextAlign,
+    horizontalAlignment: Alignment.Horizontal,
+    modifier: Modifier = Modifier
+) {
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    
+    BoxWithConstraints(modifier = modifier) {
+        val maxWidthPx = with(density) { maxWidth.toPx() }
+        val horizontalPaddingPx = with(density) { 64.dp.toPx() } // 32.dp * 2
+        val availableWidthPx = (maxWidthPx - horizontalPaddingPx).coerceAtLeast(0f)
+        
+        // 缓存计算结果
+        val splitResult = remember(line.content, availableWidthPx, settings.balanceLines, baseTextStyle) {
+            if (!settings.balanceLines) return@remember null
+            
+            val layoutResult = textMeasurer.measure(
+                text = line.content,
+                style = baseTextStyle,
+                constraints = androidx.compose.ui.unit.Constraints(maxWidth = availableWidthPx.toInt())
+            )
+            
+            // 如果行数 > 1，或者单行长度超过可用宽度的 80%，则尝试平衡（为了视觉整齐）
+            if (layoutResult.lineCount > 1 || layoutResult.size.width > availableWidthPx * 0.8f) {
+                LyricSplitter.findBestSplit(line.content, line.words.ifEmpty { null })
+            } else {
+                null
+            }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = horizontalAlignment,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            if (splitResult != null) {
+                RenderLyricLine(
+                    content = splitResult.line1,
+                    words = splitResult.words1 ?: emptyList(),
+                    currentProgress = currentProgress,
+                    isActive = isActive,
+                    textStyle = baseTextStyle,
+                    textAlign = textAlign
+                )
+                RenderLyricLine(
+                    content = splitResult.line2,
+                    words = splitResult.words2 ?: emptyList(),
+                    currentProgress = currentProgress,
+                    isActive = isActive,
+                    textStyle = baseTextStyle,
+                    textAlign = textAlign
+                )
+            } else {
+                RenderLyricLine(
+                    content = line.content,
+                    words = line.words,
+                    currentProgress = currentProgress,
+                    isActive = isActive,
+                    textStyle = baseTextStyle,
+                    textAlign = textAlign
+                )
+            }
+
+            if (settings.showTranslation && !line.translation.isNullOrBlank()) {
+                Text(
+                    text = line.translation,
+                    style = translationTextStyle,
+                    color = Color.White.copy(alpha = 0.8f),
+                    textAlign = textAlign,
+                    modifier = Modifier.padding(top = 4.dp).padding(horizontal = 32.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RenderLyricLine(
+    content: String,
+    words: List<WordInfo>,
+    currentProgress: Long,
+    isActive: Boolean,
+    textStyle: TextStyle,
+    textAlign: TextAlign
+) {
+    if (words.isNotEmpty()) {
+        WordByWordLine(
+            words = words,
+            currentProgress = currentProgress,
+            isActive = isActive,
+            textStyle = textStyle.copy(textAlign = textAlign),
+            modifier = Modifier.padding(horizontal = 32.dp)
+        )
+    } else {
+        Text(
+            text = content,
+            style = textStyle,
+            color = Color.White,
+            textAlign = textAlign,
+            modifier = Modifier.padding(horizontal = 32.dp)
+        )
     }
 }
 
@@ -1021,6 +1141,7 @@ fun LyricContent(
     val lyricData = state.lyricData
     val currentProgress = state.progress
     val haptic = LocalHapticFeedback.current
+    val settings = state.lyricsSettings
     
     val activeLineIndex = remember(lyricData, currentProgress) {
         lyricData?.lines?.indexOfLast { it.startTime <= currentProgress } ?: -1
@@ -1038,6 +1159,30 @@ fun LyricContent(
             val offset = with(density) { -(screenHeightDp * 0.10f).roundToPx() }
             listState.animateScrollToItem(activeLineIndex, scrollOffset = offset)
         }
+    }
+
+    val baseTextStyle = MaterialTheme.typography.headlineLarge.copy(
+        fontSize = settings.fontSize.sp,
+        fontWeight = FontWeight(settings.fontWeight),
+        lineHeight = settings.fontSize.sp * 1.3f
+    )
+
+    val translationTextStyle = MaterialTheme.typography.titleLarge.copy(
+        fontSize = (settings.fontSize * 0.75f).sp,
+        fontWeight = FontWeight(settings.fontWeight),
+        lineHeight = (settings.fontSize * 0.75f).sp * 1.3f
+    )
+
+    val lyricTextAlign = when (settings.alignment) {
+        0 -> TextAlign.Start
+        1 -> TextAlign.Center
+        else -> TextAlign.End
+    }
+
+    val lyricHorizontalAlignment = when (settings.alignment) {
+        0 -> Alignment.Start
+        1 -> Alignment.CenterHorizontally
+        else -> Alignment.End
     }
 
     Box(
@@ -1067,7 +1212,8 @@ fun LyricContent(
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 40.dp, bottom = 500.dp)
+                contentPadding = PaddingValues(top = 40.dp, bottom = 500.dp),
+                horizontalAlignment = lyricHorizontalAlignment
             ) {
                 itemsIndexed(lyricData.lines) { index, line ->
                     val isActive = index == activeLineIndex
@@ -1085,7 +1231,10 @@ fun LyricContent(
                         label = "LyricScale"
                     )
                     
-                    val targetBlur = if (isActive || isDragged) 0.dp else (distance.toFloat() * 4f).dp.coerceAtMost(16.dp)
+                    val targetBlur = if (settings.blurEnabled && (isActive || isDragged).not()) {
+                        (distance.toFloat() * 4f).dp.coerceAtMost(16.dp)
+                    } else 0.dp
+                    
                     val blurRadius by animateDpAsState(
                         targetValue = targetBlur,
                         animationSpec = tween(600),
@@ -1093,7 +1242,15 @@ fun LyricContent(
                     )
 
                     Box(modifier = Modifier.fillMaxWidth()) {
-                        Column(
+                        BalancedLyricView(
+                            line = line,
+                            currentProgress = currentProgress,
+                            isActive = isActive,
+                            baseTextStyle = baseTextStyle,
+                            translationTextStyle = translationTextStyle,
+                            settings = settings,
+                            textAlign = lyricTextAlign,
+                            horizontalAlignment = lyricHorizontalAlignment,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 20.dp)
@@ -1102,40 +1259,16 @@ fun LyricContent(
                                     this.alpha = alpha
                                     this.scaleX = scale
                                     this.scaleY = scale
-                                    this.transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0.5f)
-                                },
-                            horizontalAlignment = Alignment.Start
-                        ) {
-                            if (line.words.isNotEmpty()) {
-                                WordByWordLine(
-                                    words = line.words,
-                                    currentProgress = currentProgress,
-                                    isActive = isActive,
-                                    modifier = Modifier.padding(horizontal = 32.dp)
-                                )
-                            } else {
-                                Text(
-                                    text = line.content,
-                                    style = MaterialTheme.typography.headlineLarge,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color.White,
-                                    textAlign = TextAlign.Start,
-                                    lineHeight = MaterialTheme.typography.headlineLarge.lineHeight * 1.2f,
-                                    modifier = Modifier.padding(horizontal = 32.dp)
-                                )
-                            }
-                            
-                            if (!line.translation.isNullOrBlank()) {
-                                Text(
-                                    text = line.translation,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White.copy(alpha = 0.8f),
-                                    textAlign = TextAlign.Start,
-                                    modifier = Modifier.padding(top = 8.dp).padding(horizontal = 32.dp)
-                                )
-                            }
-                        }
+                                    this.transformOrigin = androidx.compose.ui.graphics.TransformOrigin(
+                                        when (settings.alignment) {
+                                            0 -> 0f
+                                            1 -> 0.5f
+                                            else -> 1f
+                                        }, 
+                                        0.5f
+                                    )
+                                }
+                        )
 
                         Box(
                             modifier = Modifier

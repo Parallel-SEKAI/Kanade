@@ -15,10 +15,12 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
+import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.data.source.MusicModel
 
 class PlayerViewModel(
     private val playbackRepository: PlaybackRepository,
+    private val settingsRepository: SettingsRepository,
     private val context: Context // 需要 Context 来初始化 Coil Request
 ) : ViewModel() {
 
@@ -27,6 +29,13 @@ class PlayerViewModel(
     private val imageLoader = ImageLoader(context)
 
     init {
+        // 监听歌词设置
+        settingsRepository.lyricsSettingsFlow
+            .onEach { settings ->
+                _state.update { it.copy(lyricsSettings = settings) }
+            }
+            .launchIn(viewModelScope)
+
         // 加载初始音乐列表
         viewModelScope.launch {
             val list = playbackRepository.fetchMusicList()

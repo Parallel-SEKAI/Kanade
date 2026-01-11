@@ -43,3 +43,59 @@
 ### Transitions:
 - Clicking the Playlist button fades out the current center content (Cover or Lyrics) and fades in the Playlist.
 - The top header (Art/Title/Artist) follows the same interpolation logic as Lyric mode.
+
+## More Screen
+
+```text
++---------------------------------------+
+|  More                                 |
+|                                       |
+|  +---------------------------------+  |
+|  | [Settings Icon] Settings    [>] |  |
+|  +---------------------------------+  |
+|  | [About Icon] About          [>] |  |
+|  +---------------------------------+  |
+|                                       |
++---------------------------------------+
+```
+
+### Components:
+- **Title**: Large title "More".
+- **List Items**:
+    - Icon.
+    - Title.
+    - Trailing arrow indicator.
+    - Clickable area for navigation.
+
+## Settings Screen
+
+```text
++---------------------------------------+
+|  [<] Settings                         |
+|                                       |
+|  UI (Header)                          |
+|  +---------------------------------+  |
+|  | Lyrics UI                   [>] |  |
+|  +---------------------------------+  |
+|                                       |
+|  Audio (Header)                       |
+|  +---------------------------------+  |
+|  | Audio Quality               [>] |  |
+|  +---------------------------------+  |
++---------------------------------------+
+```
+
+## Lyrics Settings Screen
+
+```text
++---------------------------------------+
+|  [<] Lyrics UI                        |
+|                                       |
+|  Display (Header)                     |
+|  +---------------------------------+  |
+|  | Show Translation         [Toggle]|  |
+|  +---------------------------------+  |
+|  | Font Size                [Slider]|  |
+|  +---------------------------------+  |
++---------------------------------------+
+```

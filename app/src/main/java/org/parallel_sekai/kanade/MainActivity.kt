@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -29,16 +30,23 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
+import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.ui.screens.library.LibraryScreen
+import org.parallel_sekai.kanade.ui.screens.more.MoreScreen
+import org.parallel_sekai.kanade.ui.screens.settings.SettingsScreen
+import org.parallel_sekai.kanade.ui.screens.settings.LyricsSettingsScreen
+import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
 import org.parallel_sekai.kanade.ui.screens.player.KanadePlayerContainer
 import org.parallel_sekai.kanade.ui.screens.player.PlayerIntent
 import org.parallel_sekai.kanade.ui.screens.player.PlayerViewModel
 import org.parallel_sekai.kanade.ui.theme.KanadeTheme
 
-sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    object Library : Screen("library", "Library", Icons.Filled.Settings)
+sealed class Screen(val route: String, val label: String, val icon: ImageVector?) {
+    object Library : Screen("library", "Library", Icons.Filled.Home)
     object Search : Screen("search", "Search", Icons.Filled.Search)
     object More : Screen("more", "More", Icons.Filled.Info)
+    object Settings : Screen("settings", "Settings", null)
+    object LyricsSettings : Screen("lyrics_settings", "Lyrics Settings", null)
 }
 
 val items = listOf(
@@ -55,7 +63,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val playbackRepository = PlaybackRepository(applicationContext)
-        val viewModel = PlayerViewModel(playbackRepository, applicationContext)
+        val settingsRepository = SettingsRepository(applicationContext)
+        val viewModel = PlayerViewModel(playbackRepository, settingsRepository, applicationContext)
+        val settingsViewModel = SettingsViewModel(settingsRepository)
 
         setContent {
             KanadeTheme {
@@ -92,7 +102,7 @@ class MainActivity : ComponentActivity() {
                             NavigationBar {
                                 items.forEach { screen ->
                                     NavigationBarItem(
-                                        icon = { Icon(screen.icon, contentDescription = screen.label) },
+                                        icon = { screen.icon?.let { Icon(it, contentDescription = screen.label) } },
                                         label = { Text(screen.label) },
                                         selected = currentRoute == screen.route,
                                         onClick = {
@@ -135,10 +145,26 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                             composable(Screen.Search.route) {
-                                Text("Search Screen", modifier = Modifier.fillMaxSize())
+                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text("Search Screen")
+                                }
                             }
                             composable(Screen.More.route) {
-                                Text("More Screen", modifier = Modifier.fillMaxSize())
+                                MoreScreen(
+                                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                                )
+                            }
+                            composable(Screen.Settings.route) {
+                                SettingsScreen(
+                                    onNavigateBack = { navController.popBackStack() },
+                                    onNavigateToLyricsSettings = { navController.navigate(Screen.LyricsSettings.route) }
+                                )
+                            }
+                            composable(Screen.LyricsSettings.route) {
+                                LyricsSettingsScreen(
+                                    viewModel = settingsViewModel,
+                                    onNavigateBack = { navController.popBackStack() }
+                                )
                             }
                         }
                     }

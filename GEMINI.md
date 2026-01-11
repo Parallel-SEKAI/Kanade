@@ -26,13 +26,16 @@ app/src/main/java/org/parallel_sekai/kanade/
 │       ├── IMusicSource.kt         # Interface for music data providers
 │       └── local/
 │           └── LocalMusicSource.kt # MediaStore implementation; handles file scanning and lyric fetching
-├── service/
-│   └── KanadePlaybackService.kt    # Media3 MediaSessionService for robust background playback
-├── ui/
-│   ├── screens/
-│   │   ├── library/                # UI for browsing music library
-│   │   └── player/                 # MVI components for player and lyrics
-│   │       ├── LyricModels.kt      # Data classes for lyrics, lines, and words
+├───service/
+│   └───KanadePlaybackService.kt    # Media3 MediaSessionService for robust background playback
+├───ui/
+│   ├───screens/
+│   │   ├───library/                # UI for browsing music library
+│   │   ├───more/                   # More screen with settings entry
+│   │   ├───settings/               # Settings screen
+│   │   └───player/                 # MVI components for player and lyrics
+│   │       ├───LyricModels.kt      # Data classes for lyrics, lines, and words
+
 │   │       ├── LyricParsers.kt     # LRC and TTML parser implementations
 │   │       ├── PlayerContract.kt   # Defines MVI State, Intent, and Effect
 │   │       ├── PlayerViewModel.kt  # Orchestrates logic, playback, and lyric syncing
