@@ -1,22 +1,34 @@
 package org.parallel_sekai.kanade.ui.screens.player
 
 import android.content.Context
-import android.graphics.Bitmap
-import androidx.compose.ui.graphics.Color
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.palette.graphics.Palette
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import androidx.palette.graphics.Palette
+import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.drawable.toBitmap
+import org.parallel_sekai.kanade.data.repository.ArtistParsingSettings
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.data.source.MusicModel
+import org.parallel_sekai.kanade.data.source.MusicUtils
+import org.parallel_sekai.kanade.data.source.ArtistModel
+import org.parallel_sekai.kanade.ui.screens.player.LyricParserFactory
+import org.parallel_sekai.kanade.ui.screens.player.PlayerIntent
+import org.parallel_sekai.kanade.ui.screens.player.PlayerState
+import org.parallel_sekai.kanade.ui.screens.player.RepeatMode
+import org.parallel_sekai.kanade.ui.screens.player.DetailType
 
 class PlayerViewModel(
     private val playbackRepository: PlaybackRepository,
@@ -28,11 +40,22 @@ class PlayerViewModel(
     val state = _state.asStateFlow()
     private val imageLoader = ImageLoader(context)
 
+    // 新增：用于存储和传递艺术家解析设置
+    private val _artistParsingSettings = MutableStateFlow(ArtistParsingSettings())
+
     init {
         // 监听歌词设置
         settingsRepository.lyricsSettingsFlow
             .onEach { settings ->
                 _state.update { it.copy(lyricsSettings = settings) }
+            }
+            .launchIn(viewModelScope)
+
+        // 监听艺术家解析设置并更新 PlayerState
+        settingsRepository.artistParsingSettingsFlow
+            .onEach { settings ->
+                _artistParsingSettings.value = settings
+                _state.update { it.copy(artistJoinString = settings.joinString) } // 更新 PlayerState 中的 joinString
             }
             .launchIn(viewModelScope)
 
@@ -51,7 +74,10 @@ class PlayerViewModel(
                     MusicModel(
                         id = item.mediaId,
                         title = item.mediaMetadata.title?.toString() ?: "",
-                        artist = item.mediaMetadata.artist?.toString() ?: "",
+                        artists = MusicUtils.parseArtists(
+                            artistString = item.mediaMetadata.artist?.toString(),
+                            settings = _artistParsingSettings.value // 传入设置
+                        ),
                         album = item.mediaMetadata.albumTitle?.toString() ?: "",
                         coverUrl = item.mediaMetadata.artworkUri?.toString() ?: "",
                         mediaUri = item.requestMetadata.mediaUri?.toString() ?: "",
@@ -71,7 +97,9 @@ class PlayerViewModel(
             val folders = playbackRepository.fetchFolderList()
             val playlists = playbackRepository.fetchPlaylistList()
             
-            val initialSong = list.firstOrNull()
+            // 确保 initialSong 始终是 MusicModel? 类型
+            val initialSong: MusicModel? = list.firstOrNull() 
+
             _state.update { it.copy(
                 allMusicList = list,
                 currentPlaylist = list, // 初始时将全部音乐设为当前队列
@@ -79,9 +107,12 @@ class PlayerViewModel(
                 albumList = albums,
                 folderList = folders,
                 playlistList = playlists,
-                currentSong = initialSong
+                currentSong = it.currentSong ?: initialSong // 使用明确类型的 initialSong
             ) }
-            initialSong?.let { extractColors(it) }
+            
+            initialSong?.let {
+                extractColors(it)
+            }
         }
 
         // 监听播放状态并同步到 UI State
@@ -162,7 +193,11 @@ class PlayerViewModel(
             }
             is PlayerIntent.RefreshList -> {
                 viewModelScope.launch {
-                    val list = playbackRepository.fetchMusicList()
+                    val currentArtistParsingSettings = _artistParsingSettings.value // 获取最新设置
+                    // fetchMusicList 和 fetchAlbumList 内部的 MusicUtils.parseArtists 调用也需要更新
+                    // 由于 MusicUtils.parseArtists 已经修改为带默认参数的，因此这里无需显式传入
+                    // 但为了保持一致性，还是通过传入参数来明确指定
+                    val list = playbackRepository.fetchMusicList() // fetchMusicList 内部会使用 MusicUtils.parseArtists
                     val artists = playbackRepository.fetchArtistList()
                     val albums = playbackRepository.fetchAlbumList()
                     val folders = playbackRepository.fetchFolderList()

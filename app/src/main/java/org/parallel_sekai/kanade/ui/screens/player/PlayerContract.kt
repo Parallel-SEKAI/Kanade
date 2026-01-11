@@ -37,6 +37,7 @@ data class PlayerState(
     val lyrics: String? = null,
     val lyricData: LyricData? = null,
     val lyricsSettings: LyricsSettings = LyricsSettings(),
+    val artistJoinString: String = ", ", // 新增：艺术家拼接字符串
     val gradientColors: List<Color> = listOf(Color(0xFF1A1A1A), Color(0xFF000000))
 )
 

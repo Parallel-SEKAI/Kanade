@@ -18,7 +18,13 @@ data class LyricsSettings(
     val balanceLines: Boolean = false
 )
 
-class SettingsRepository(private val context: Context) {
+data class ArtistParsingSettings(
+    val separators: List<String> = listOf("/", ";", "|", " & ", " feat. ", " ft. ", ","),
+    val whitelist: List<String> = listOf("Leo/need"),
+    val joinString: String = ", "
+)
+
+open class SettingsRepository(private val context: Context) {
     private val SHOW_TRANSLATION = booleanPreferencesKey("show_translation")
     private val FONT_SIZE = floatPreferencesKey("font_size")
     private val FONT_WEIGHT = intPreferencesKey("font_weight")
@@ -29,7 +35,11 @@ class SettingsRepository(private val context: Context) {
     private val SEARCH_RESULT_AS_PLAYLIST = booleanPreferencesKey("search_result_as_playlist")
     private val EXCLUDED_FOLDERS = stringSetPreferencesKey("excluded_folders")
 
-    val lyricsSettingsFlow: Flow<LyricsSettings> = context.dataStore.data
+    private val ARTIST_SEPARATORS = stringSetPreferencesKey("artist_separators")
+    private val ARTIST_WHITELIST = stringSetPreferencesKey("artist_whitelist")
+    private val ARTIST_JOIN_STRING = stringPreferencesKey("artist_join_string")
+
+    open val lyricsSettingsFlow: Flow<LyricsSettings> = context.dataStore.data
         .map { preferences ->
             LyricsSettings(
                 showTranslation = preferences[SHOW_TRANSLATION] ?: true,
@@ -41,42 +51,69 @@ class SettingsRepository(private val context: Context) {
             )
         }
 
-    val searchResultAsPlaylistFlow: Flow<Boolean> = context.dataStore.data
+    open val searchResultAsPlaylistFlow: Flow<Boolean> = context.dataStore.data
         .map { preferences ->
             preferences[SEARCH_RESULT_AS_PLAYLIST] ?: true
         }
 
-    val excludedFoldersFlow: Flow<Set<String>> = context.dataStore.data
+    open val excludedFoldersFlow: Flow<Set<String>> = context.dataStore.data
         .map { preferences ->
             preferences[EXCLUDED_FOLDERS] ?: emptySet()
         }
 
-    suspend fun addExcludedFolder(path: String) {
+    open val artistParsingSettingsFlow: Flow<ArtistParsingSettings> = context.dataStore.data
+        .map { preferences ->
+            ArtistParsingSettings(
+                separators = preferences[ARTIST_SEPARATORS]?.toList() ?: listOf("/", ";", "|", " & ", " feat. ", " ft. ", ","),
+                whitelist = preferences[ARTIST_WHITELIST]?.toList() ?: listOf("Leo/need"),
+                joinString = preferences[ARTIST_JOIN_STRING] ?: ", "
+            )
+        }
+
+    open suspend fun updateArtistSeparators(separators: List<String>) {
+        context.dataStore.edit { preferences ->
+            preferences[ARTIST_SEPARATORS] = separators.toSet()
+        }
+    }
+
+    open suspend fun updateArtistWhitelist(whitelist: List<String>) {
+        context.dataStore.edit { preferences ->
+            preferences[ARTIST_WHITELIST] = whitelist.toSet()
+        }
+    }
+
+    open suspend fun updateArtistJoinString(joinString: String) {
+        context.dataStore.edit { preferences ->
+            preferences[ARTIST_JOIN_STRING] = joinString
+        }
+    }
+
+    open suspend fun addExcludedFolder(path: String) {
         context.dataStore.edit { preferences ->
             val current = preferences[EXCLUDED_FOLDERS] ?: emptySet()
             preferences[EXCLUDED_FOLDERS] = current + path
         }
     }
 
-    suspend fun removeExcludedFolder(path: String) {
+    open suspend fun removeExcludedFolder(path: String) {
         context.dataStore.edit { preferences ->
             val current = preferences[EXCLUDED_FOLDERS] ?: emptySet()
             preferences[EXCLUDED_FOLDERS] = current - path
         }
     }
 
-    suspend fun updateSearchResultAsPlaylist(enabled: Boolean) {
+    open suspend fun updateSearchResultAsPlaylist(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[SEARCH_RESULT_AS_PLAYLIST] = enabled
         }
     }
 
-    val searchHistoryFlow: Flow<List<String>> = context.dataStore.data
+    open val searchHistoryFlow: Flow<List<String>> = context.dataStore.data
         .map { preferences ->
             preferences[SEARCH_HISTORY]?.toList() ?: emptyList()
         }
 
-    suspend fun addSearchHistory(query: String) {
+    open suspend fun addSearchHistory(query: String) {
         if (query.isBlank()) return
         context.dataStore.edit { preferences ->
             val current = preferences[SEARCH_HISTORY] ?: emptySet()
@@ -89,50 +126,50 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
-    suspend fun removeSearchHistory(query: String) {
+    open suspend fun removeSearchHistory(query: String) {
         context.dataStore.edit { preferences ->
             val current = preferences[SEARCH_HISTORY] ?: emptySet()
             preferences[SEARCH_HISTORY] = current.filter { it != query }.toSet()
         }
     }
 
-    suspend fun clearSearchHistory() {
+    open suspend fun clearSearchHistory() {
         context.dataStore.edit { preferences ->
             preferences.remove(SEARCH_HISTORY)
         }
     }
 
-    suspend fun updateShowTranslation(show: Boolean) {
+    open suspend fun updateShowTranslation(show: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[SHOW_TRANSLATION] = show
         }
     }
 
-    suspend fun updateFontSize(size: Float) {
+    open suspend fun updateFontSize(size: Float) {
         context.dataStore.edit { preferences ->
             preferences[FONT_SIZE] = size
         }
     }
 
-    suspend fun updateFontWeight(weight: Int) {
+    open suspend fun updateFontWeight(weight: Int) {
         context.dataStore.edit { preferences ->
             preferences[FONT_WEIGHT] = weight
         }
     }
 
-    suspend fun updateBlurEnabled(enabled: Boolean) {
+    open suspend fun updateBlurEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[BLUR_ENABLED] = enabled
         }
     }
 
-    suspend fun updateAlignment(alignment: Int) {
+    open suspend fun updateAlignment(alignment: Int) {
         context.dataStore.edit { preferences ->
             preferences[ALIGNMENT] = alignment
         }
     }
 
-    suspend fun updateBalanceLines(balance: Boolean) {
+    open suspend fun updateBalanceLines(balance: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[BALANCE_LINES] = balance
         }

@@ -21,7 +21,8 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToLyricsSettings: () -> Unit,
-    onNavigateToExcludedFolders: () -> Unit
+    onNavigateToExcludedFolders: () -> Unit,
+    onNavigateToArtistParsingSettings: () -> Unit // 新增：导航到艺术家解析设置
 ) {
     val scrollState = rememberScrollState()
     val searchAsPlaylist = viewModel.searchResultAsPlaylist.collectAsState()
@@ -50,6 +51,13 @@ fun SettingsScreen(
                 headlineContent = { Text("歌词界面") },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
                 modifier = Modifier.clickable(onClick = onNavigateToLyricsSettings)
+            )
+
+            ListItem(
+                headlineContent = { Text("艺术家解析") }, // 新增入口
+                supportingContent = { Text("自定义艺术家分隔符和显示方式") },
+                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+                modifier = Modifier.clickable(onClick = onNavigateToArtistParsingSettings)
             )
 
             Spacer(modifier = Modifier.height(16.dp))

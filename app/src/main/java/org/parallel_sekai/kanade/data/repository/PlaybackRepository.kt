@@ -17,11 +17,16 @@ import org.parallel_sekai.kanade.data.source.PlaylistModel
 import org.parallel_sekai.kanade.data.source.MusicModel
 import org.parallel_sekai.kanade.data.source.local.LocalMusicSource
 import org.parallel_sekai.kanade.service.KanadePlaybackService
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.launchIn
 
 /**
  * 播放控制仓库，桥接 MVI ViewModel 与 Media3 Service
  */
-class PlaybackRepository(context: Context) {
+open class PlaybackRepository(
+    context: Context,
+    private val settingsRepository: SettingsRepository // 注入 SettingsRepository
+) {
 
     private val localMusicSource = LocalMusicSource(context)
     private val sessionToken = SessionToken(context, ComponentName(context, KanadePlaybackService::class.java))
@@ -41,6 +46,9 @@ class PlaybackRepository(context: Context) {
 
     private val _currentPlaylist = MutableStateFlow<List<MediaItem>>(emptyList())
     val currentPlaylist = _currentPlaylist.asStateFlow()
+
+    private val _artistJoinString = MutableStateFlow(", ") // 默认值
+    val artistJoinString = _artistJoinString.asStateFlow()
 
     /**
      * 根据屏幕刷新率动态计算延迟时间
@@ -101,6 +109,12 @@ class PlaybackRepository(context: Context) {
                 updatePlaylist(controller)
             }
         }, MoreExecutors.directExecutor())
+
+        // 监听 artistParsingSettingsFlow
+        settingsRepository.artistParsingSettingsFlow
+            .onEach { settings ->
+                _artistJoinString.value = settings.joinString
+            }.launchIn(MainScope())
     }
 
     private fun updatePlaylist(controller: MediaController) {
@@ -181,7 +195,7 @@ class PlaybackRepository(context: Context) {
                     .setMediaMetadata(
                         MediaMetadata.Builder()
                             .setTitle(music.title)
-                            .setArtist(music.artist)
+                            .setArtist(music.artists.joinToString(_artistJoinString.value))
                             .setAlbumTitle(music.album)
                             .setArtworkUri(android.net.Uri.parse(music.coverUrl))
                             .setExtras(extras)

@@ -36,6 +36,13 @@ class SearchViewModel(
             }
         }
 
+        // Observe artist parsing settings for join string
+        viewModelScope.launch {
+            settingsRepository.artistParsingSettingsFlow.collect { settings ->
+                _state.update { it.copy(artistJoinString = settings.joinString) }
+            }
+        }
+
         // Debounced search logic
         viewModelScope.launch {
             _state.map { it.searchQuery }

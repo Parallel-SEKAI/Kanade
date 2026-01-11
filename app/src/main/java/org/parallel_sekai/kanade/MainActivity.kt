@@ -49,6 +49,7 @@ import org.parallel_sekai.kanade.ui.screens.search.SearchViewModel
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.LyricsSettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ExcludedFoldersScreen
+import org.parallel_sekai.kanade.ui.screens.settings.ArtistParsingSettingsScreen // New
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
 import org.parallel_sekai.kanade.ui.screens.player.KanadePlayerContainer
 import org.parallel_sekai.kanade.ui.screens.player.PlayerIntent
@@ -62,7 +63,8 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector?
     object Settings : Screen("settings", "Settings", null)
     object LyricsSettings : Screen("lyrics_settings", "Lyrics Settings", null)
     object ExcludedFolders : Screen("excluded_folders", "Excluded Folders", null)
-    
+    object ArtistParsingSettings : Screen("artist_parsing_settings", "Artist Parsing Settings", null) // New
+
     // Library sub-screens
     object Artists : Screen("artists", "Artists", null)
     object Albums : Screen("albums", "Albums", null)
@@ -97,8 +99,8 @@ class MainActivity : ComponentActivity() {
         
         enableEdgeToEdge()
 
-        val playbackRepository = PlaybackRepository(applicationContext)
         val settingsRepository = SettingsRepository(applicationContext)
+        val playbackRepository = PlaybackRepository(applicationContext, settingsRepository)
         val viewModel = PlayerViewModel(playbackRepository, settingsRepository, applicationContext)
         val settingsViewModel = SettingsViewModel(settingsRepository)
         val searchViewModel = SearchViewModel(playbackRepository, settingsRepository)
@@ -279,7 +281,8 @@ class MainActivity : ComponentActivity() {
                                     viewModel = settingsViewModel,
                                     onNavigateBack = { navController.popBackStack() },
                                     onNavigateToLyricsSettings = { navController.navigate(Screen.LyricsSettings.route) },
-                                    onNavigateToExcludedFolders = { navController.navigate(Screen.ExcludedFolders.route) }
+                                    onNavigateToExcludedFolders = { navController.navigate(Screen.ExcludedFolders.route) },
+                                    onNavigateToArtistParsingSettings = { navController.navigate(Screen.ArtistParsingSettings.route) } // New
                                 )
                             }
                             composable(Screen.LyricsSettings.route) {
@@ -292,6 +295,12 @@ class MainActivity : ComponentActivity() {
                                 ExcludedFoldersScreen(
                                     viewModel = settingsViewModel,
                                     allFolders = state.folderList,
+                                    onNavigateBack = { navController.popBackStack() }
+                                )
+                            }
+                            composable(Screen.ArtistParsingSettings.route) { // New
+                                ArtistParsingSettingsScreen(
+                                    viewModel = settingsViewModel,
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }

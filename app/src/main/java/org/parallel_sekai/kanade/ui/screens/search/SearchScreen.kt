@@ -122,7 +122,8 @@ fun SearchScreen(
                     items(state.searchResults) { song ->
                         SearchSongListItem(
                             song = song,
-                            onClick = { viewModel.handleIntent(SearchIntent.PlayMusic(song, state.searchResults)) }
+                            onClick = { viewModel.handleIntent(SearchIntent.PlayMusic(song, state.searchResults)) },
+                            artistJoinString = state.artistJoinString // 传入 artistJoinString
                         )
                     }
                 }
@@ -170,7 +171,8 @@ fun HistoryItem(
 @Composable
 fun SearchSongListItem(
     song: MusicModel,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    artistJoinString: String // 新增参数
 ) {
     Row(
         modifier = Modifier
@@ -195,7 +197,7 @@ fun SearchSongListItem(
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "${song.artist} • ${song.album}",
+                text = "${song.artists.joinToString(artistJoinString)} • ${song.album}", // 使用传入的参数
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1

@@ -1,70 +1,33 @@
-# UI Design - Library Detail Screens
+# Artist Parsing Settings UI Layout
 
-## Artist Detail Screen
-```text
-+---------------------------------------+
-| < [Artist Name]                       |
-+---------------------------------------+
-|  [Play All Button] [Shuffle Button]   |
-+---------------------------------------+
-| Songs                                 |
-|                                       |
-| ( ) Song 1 (from Album A)             |
-| ( ) Song 2 (from Album B)             |
-| ...                                   |
-+---------------------------------------+
-```
+## ArtistParsingSettingsScreen
 
-## Album Detail Screen
-```text
-+---------------------------------------+
-| <                                     |
-+---------------------------------------+
-|        [ ALBUM ART IMAGE ]            |
-|        (Dominant Color BG)            |
-|                                       |
-|          Album Title                  |
-|          Artist Name                  |
-+---------------------------------------+
-|  [Play All]      [Shuffle]            |
-+---------------------------------------+
-| 1. Track 1                            |
-| 2. Track 2                            |
-| ...                                   |
-+---------------------------------------+
-```
+### Header
+- App bar with title "Artist Parsing Settings" and back button.
 
-## Folder Detail Screen
-```text
-+---------------------------------------+
-| < [Folder Name]                       |
-|   /path/to/folder                     |
-+---------------------------------------+
-| ( ) Song A                            |
-| ( ) Song B                            |
-| ...                                   |
-+---------------------------------------+
-```
+### Content
+- Scrollable Column
 
-## Playlist Screens
-### List Screen
-```text
-+---------------------------------------+
-| < Playlists                           |
-+---------------------------------------+
-| [Fav Icon] Favorites (50)              |
-| [Playlist Icon] Party Mix (12)        |
-| ...                                   |
-+---------------------------------------+
-```
+    #### Separators Section
+    - Title: "Artist Separators (Priority Order)"
+    - Description: "Artists will be split using the first matching separator from this list. Drag to reorder."
+    - `LazyColumn` for separators:
+        - Each item:
+            - `Row` with `DragHandle` (for reordering).
+            - `TextField` for the separator string.
+            - `IconButton` (Delete icon) to remove.
+        - Button: "Add New Separator"
 
-### Detail Screen
-Same as Album Detail or a simpler version:
-```text
-+---------------------------------------+
-| < [Playlist Title]                    |
-+---------------------------------------+
-| ( ) Song 1                            |
-| ( ) Song 2                            |
-+---------------------------------------+
-```
+    #### Whitelist Section
+    - Title: "Artist Whitelist"
+    - Description: "Artist names in this list will not be split, even if they contain separators."
+    - `LazyColumn` for whitelist items:
+        - Each item:
+            - `TextField` for the whitelisted artist name.
+            - `IconButton` (Delete icon) to remove.
+        - Button: "Add New Whitelist Entry"
+
+    #### Join String Section
+    - Title: "Display Join String"
+    - Description: "Used to combine multiple artists for display (e.g., 'Artist A & Artist B')."
+    - `TextField` for `joinString` (e.g., default: ", ").

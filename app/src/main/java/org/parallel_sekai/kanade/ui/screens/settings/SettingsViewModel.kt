@@ -6,10 +6,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.parallel_sekai.kanade.data.repository.ArtistParsingSettings
 import org.parallel_sekai.kanade.data.repository.LyricsSettings
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
 
-class SettingsViewModel(private val repository: SettingsRepository) : ViewModel() {
+open class SettingsViewModel(private val repository: SettingsRepository) : ViewModel() {
     val lyricsSettings: StateFlow<LyricsSettings> = repository.lyricsSettingsFlow
         .stateIn(
             scope = viewModelScope,
@@ -29,6 +30,13 @@ class SettingsViewModel(private val repository: SettingsRepository) : ViewModel(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptySet()
+        )
+
+    val artistParsingSettings: StateFlow<ArtistParsingSettings> = repository.artistParsingSettingsFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ArtistParsingSettings()
         )
 
     fun addExcludedFolder(path: String) {
@@ -82,6 +90,24 @@ class SettingsViewModel(private val repository: SettingsRepository) : ViewModel(
     fun updateBalanceLines(balance: Boolean) {
         viewModelScope.launch {
             repository.updateBalanceLines(balance)
+        }
+    }
+
+    fun updateArtistSeparators(separators: List<String>) {
+        viewModelScope.launch {
+            repository.updateArtistSeparators(separators)
+        }
+    }
+
+    fun updateArtistWhitelist(whitelist: List<String>) {
+        viewModelScope.launch {
+            repository.updateArtistWhitelist(whitelist)
+        }
+    }
+
+    fun updateArtistJoinString(joinString: String) {
+        viewModelScope.launch {
+            repository.updateArtistJoinString(joinString)
         }
     }
 }

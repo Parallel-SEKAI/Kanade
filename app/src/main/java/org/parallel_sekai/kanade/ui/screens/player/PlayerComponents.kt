@@ -337,8 +337,8 @@ private fun MiniPlayerContent(
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                     Text(
-                        text = state.currentSong?.artist ?: "",
-                        style = MaterialTheme.typography.bodySmall,
+                        text = state.currentSong?.artists?.joinToString(state.artistJoinString) ?: "",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
@@ -536,7 +536,7 @@ private fun FullScreenContent(
             )
 
             Text(
-                text = state.currentSong?.artist ?: "",
+                text = state.currentSong?.artists?.joinToString(state.artistJoinString) ?: "",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = currentArtistSize,
                     color = currentArtistColor
@@ -911,7 +911,7 @@ fun PlaylistContent(
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    text = music.artist,
+                                    text = music.artists.joinToString(state.artistJoinString),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color.White.copy(alpha = 0.6f),
                                     maxLines = 1,

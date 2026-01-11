@@ -8,6 +8,7 @@ import android.provider.MediaStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.parallel_sekai.kanade.data.source.*
+import org.parallel_sekai.kanade.data.source.MusicUtils
 import java.io.File
 import java.io.InputStream
 import java.nio.ByteBuffer
@@ -78,7 +79,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                     MusicModel(
                         id = id.toString(),
                         title = cursor.getString(titleColumn),
-                        artist = cursor.getString(artistColumn),
+                        artists = MusicUtils.parseArtists(cursor.getString(artistColumn)),
                         album = cursor.getString(albumColumn),
                         coverUrl = albumArtUri,
                         mediaUri = contentUri.toString(), // 填充 content:// URI
@@ -93,7 +94,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
         // 如果有搜索词，进行简单的内存过滤
         if (query.isNotEmpty()) {
             return@withContext musicList.filter { 
-                it.title.contains(query, ignoreCase = true) || it.artist.contains(query, ignoreCase = true)
+                it.title.contains(query, ignoreCase = true) || it.artists.any { artist -> artist.contains(query, ignoreCase = true) }
             }
         }
 
@@ -167,7 +168,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                     AlbumModel(
                         id = id.toString(),
                         title = cursor.getString(titleColumn),
-                        artist = cursor.getString(artistColumn),
+                        artists = MusicUtils.parseArtists(cursor.getString(artistColumn)),
                         coverUrl = albumArtUri,
                         songCount = cursor.getInt(songsColumn)
                     )
@@ -292,7 +293,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                     MusicModel(
                         id = id.toString(),
                         title = cursor.getString(titleColumn),
-                        artist = cursor.getString(artistColumn),
+                        artists = MusicUtils.parseArtists(cursor.getString(artistColumn)),
                         album = cursor.getString(albumColumn),
                         coverUrl = albumArtUri,
                         mediaUri = contentUri.toString(),
@@ -330,22 +331,23 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
             val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
             val albumIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
-            val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+            val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA) // Added dataColumn
 
             while (cursor.moveToNext()) {
-                val path = cursor.getString(dataColumn)
-                if (excludedFolders.any { path.startsWith(it) }) continue
-
                 val id = cursor.getLong(idColumn)
                 val albumId = cursor.getLong(albumIdColumn)
                 val contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
                 val albumArtUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), albumId).toString()
+                val path = cursor.getString(dataColumn) // Added path
+
+                // 排除文件夹过滤
+                if (excludedFolders.any { path.startsWith(it) }) continue
 
                 musicList.add(
                     MusicModel(
                         id = id.toString(),
                         title = cursor.getString(titleColumn),
-                        artist = cursor.getString(artistColumn),
+                        artists = MusicUtils.parseArtists(cursor.getString(artistColumn)),
                         album = cursor.getString(albumColumn),
                         coverUrl = albumArtUri,
                         mediaUri = contentUri.toString(),

@@ -6,6 +6,8 @@
 - **Background Playback**: Leveraging Android Media3 to ensure seamless audio sessions across the system.
 - **Modern UI/UX**: A reactive interface built with Jetpack Compose following Material 3 guidelines, featuring a floating MiniPlayer, a fullscreen immersive player with rich lyric sync and an Apple Music-style playlist (Up Next) view.
 - **Search Capability**: Integrated search for local music with history support and debounced querying.
+- **Multi-Artist Support**: Robust parsing of artist strings into lists, supporting various separators and whitelisting specific artist names.
+- **Configurable Artist Parsing**: Allows users to customize artist parsing separators, whitelist, and display join string via settings.
 
 ## 2. Tech Stack
 - **Language**: [Kotlin](https://kotlinlang.org/) (JVM 17)
@@ -23,9 +25,10 @@ app/src/main/java/org/parallel_sekai/kanade/
 ├── data/
 │   ├── repository/
 │   │   ├── PlaybackRepository.kt   # Bridges UI with Media3; manages playback lifecycle and state flows
-│   │   └── SettingsRepository.kt   # Manages user preferences and search history
+│   │   └── SettingsRepository.kt   # Manages user preferences, search history, and now artist parsing settings
 │   └── source/
 │       ├── IMusicSource.kt         # Interface for music data providers
+│       ├── MusicUtils.kt           # Utilities for music data processing, e.g., configurable artist parsing
 │       └── local/
 │           └── LocalMusicSource.kt # MediaStore implementation; handles file scanning and lyric fetching
 ├── service/
@@ -39,12 +42,17 @@ app/src/main/java/org/parallel_sekai/kanade/
 │   │   │   └── SearchScreen.kt     # UI for search screen
 │   │   ├── more/                   # More screen with settings entry
 │   │   ├── settings/               # Settings screen
+│   │   │   ├── ArtistParsingSettingsScreen.kt # New screen for artist parsing configuration
+│   │   │   ├── ExcludedFoldersScreen.kt
+│   │   │   ├── LyricsSettingsScreen.kt
+│   │   │   ├── SettingsScreen.kt   # Entry point for settings, now includes artist parsing settings
+│   │   │   └── SettingsViewModel.kt # ViewModel for all settings
 │   │   └── player/                 # MVI components for player and lyrics
 │   │       ├── LyricModels.kt      # Data classes for lyrics, lines, and words
 │   │       ├── LyricParsers.kt     # LRC and TTML parser implementations
 │   │       ├── PlayerContract.kt   # Defines MVI State, Intent, and Effect
-│   │       ├── PlayerViewModel.kt  # Orchestrates logic, playback, and lyric syncing
-│   │       └── PlayerComponents.kt # Stateless UI components (MiniPlayer, LyricView, etc.)
+│   │       ├── PlayerViewModel.kt  # Orchestrates logic, playback, and lyric syncing, uses artist parsing settings
+│   │       └── PlayerComponents.kt # Stateless UI components (MiniPlayer, LyricView, etc.), uses artist join string
 │   └── theme/                      # Material 3 Design system (Colors, Typography, Theme)
 └── MainActivity.kt                 # Entry point, permission handling, and navigation
 ```
@@ -68,16 +76,19 @@ app/src/main/java/org/parallel_sekai/kanade/
 - **Clean Architecture**: Strict separation between Data (`IMusicSource`), Domain/Logic (`PlaybackRepository`), and Presentation (`ViewModel`/`Compose`).
 
 ## 6. Core Classes & Functions Index
-- `PlaybackRepository`: The source of truth for playback state. Exposes `isPlaying`, `currentMediaId`, and a high-frequency `progressFlow` for smooth UI updates.
+- `MusicUtils`: Provides utility functions for music data, including robust artist string parsing into a list of strings, handling various separators and specific whitelisted artist names. Now uses `ArtistParsingSettings` for configuration.
+- `PlaybackRepository`: The source of truth for playback state. Exposes `isPlaying`, `currentMediaId`, and a high-frequency `progressFlow` for smooth UI updates. Now handles `List<String>` for artists.
 - `LrcParser` & `TtmlParser`: Specialized parsers for handling various lyric formats. Supports `WordInfo` for granular word-by-word animation.
 - `PlaylistContent`: Displays the current playback queue with smooth transitions, allowing users to browse and select songs directly from the fullscreen player.
-- `PlayerViewModel`: Manages the current playlist, handles playback intents, and fetches/parses lyrics when the track changes.
-- `SearchViewModel`: Handles debounced search queries and manages search history persistence.
-- `LocalMusicSource`: Uses `ContentResolver` to query `MediaStore`. Attempts to find `.lrc` or `.ttml` files in the same directory as the audio file.
+- `PlayerViewModel`: Orchestrates logic, playback, and lyric syncing. Now handles `List<String>` for artists when mapping `MediaItem` to `MusicModel`, and observes `ArtistParsingSettings` to update UI display.
+- `SearchViewModel`: Handles debounced search queries and manages search history persistence. Now observes `ArtistParsingSettings` for the join string.
+- `SettingsRepository`: Manages user preferences. Now includes `ArtistParsingSettings` for artist parsing behavior.
+- `SettingsViewModel`: Provides access to various settings flows and update functions for the UI, including `artistParsingSettings`.
+- `LocalMusicSource`: Uses `ContentResolver` to query `MediaStore`. Attempts to find `.lrc` or `.ttml` files in the same directory as the audio file. Now uses `MusicUtils` for artist parsing.
 
 ## 7. Implementation Logic
 1. **Startup**: `MainActivity` requests media permissions. `PlayerViewModel` initializes and refreshes the library via `PlaybackRepository`.
-2. **Playback Initiation**: When a user selects a song, `PlaybackRepository` builds a `MediaItem` list, sets it in `MediaController`, and begins playback.
+2. **Playback Initiation**: When a user selects a song, `PlaybackRepository` builds a `MediaItem` list, sets it in `MediaController`, and begins playback. Artist information is now correctly parsed into `List<String>`.
 3. **Gesture-driven Expansion**: 
     - `KanadePlayerContainer` uses `AnchoredDraggable` to handle swipe-to-expand gestures.
     - Transitions are driven by a continuous `expansionFraction` (0.0 to 1.0), enabling "hand-following" morphing between MiniPlayer and FullScreen views.
@@ -89,10 +100,12 @@ app/src/main/java/org/parallel_sekai/kanade/
     - `PlaylistContent` allows users to view and interact with the current queue, supporting shuffle and repeat modes.
 4. **Search Flow**: 
     - `SearchViewModel` uses `debounce` to minimize unnecessary queries.
-    - Results are displayed in a standard `MusicItem` list.
+    - Results are displayed in a standard `MusicItem` list, now correctly showing joined artist names based on user settings.
     - Search history is persisted using `DataStore`.
 5. **State Persistence**: `MediaController` ensures that playback state is synchronized between the UI and the `KanadePlaybackService` even when the app is backgrounded.
 6. **Predictive Back**: The app supports Android 14+ predictive back gestures. The `NavHost` handles screen transitions, and the `KanadePlayerContainer` implements a custom `PredictiveBackHandler` to provide visual feedback (scaling and offset) when dismissing the full-screen player.
+7. **Configurable Artist Parsing**:
+    - Users can now configure artist parsing separators, whitelist entries, and the display join string through a dedicated settings screen. These settings are persisted and dynamically applied by `MusicUtils`.
 
 ## Current Status
 - [x] Basic playback functionality with Media3.
@@ -100,6 +113,8 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Rich lyric support (LRC/TTML).
 - [x] Search Page implementation with history support.
 - [x] Enhanced Library Page with Artists, Albums, and Folders support.
+- [x] Multi-artist parsing and display implemented across the application.
+- [x] Configurable artist parsing settings UI and logic implemented.
 
 ## 8. Agent Development Instructions (AI Context)
 - **State Management**: Always use `MutableStateFlow` in ViewModels. UI must be stateless and react only to the `state` flow.

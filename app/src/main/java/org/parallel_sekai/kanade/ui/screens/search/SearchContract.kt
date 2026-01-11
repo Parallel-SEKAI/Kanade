@@ -16,7 +16,8 @@ data class SearchState(
     val searchHistory: List<String> = emptyList(),
     val isLoading: Boolean = false,
     val isSearching: Boolean = false,
-    val searchResultAsPlaylist: Boolean = true
+    val searchResultAsPlaylist: Boolean = true,
+    val artistJoinString: String = ", "
 )
 
 sealed interface SearchEffect {

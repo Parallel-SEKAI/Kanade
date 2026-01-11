@@ -59,19 +59,19 @@ fun LibraryScreen(
             SectionHeader("All Music")
         }
 
-        items(state.allMusicList) { song ->
-            SongListItem(
-                song = song,
-                isSelected = state.currentSong?.id == song.id,
-                onClick = { onSongClick(song) }
-            )
-        }
-    }
-}
-
-@Composable
-fun LibraryGrid(
-    onNavigateToArtists: () -> Unit,
+                        items(state.allMusicList) { song ->
+                            SongListItem(
+                                song = song,
+                                isSelected = state.currentSong?.id == song.id,
+                                onClick = { onSongClick(song) },
+                                artistJoinString = state.artistJoinString // 传入 artistJoinString
+                            )
+                        }
+                    }
+                }
+        
+        @Composable
+        fun LibraryGrid(    onNavigateToArtists: () -> Unit,
     onNavigateToAlbums: () -> Unit,
     onNavigateToPlaylists: () -> Unit,
     onNavigateToFolders: () -> Unit
@@ -131,7 +131,8 @@ fun SectionHeader(title: String) {
 fun SongListItem(
     song: MusicModel,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    artistJoinString: String // 新增参数
 ) {
     Row(
         modifier = Modifier
@@ -152,7 +153,7 @@ fun SongListItem(
         Column(modifier = Modifier.padding(start = 16.dp).weight(1f)) {
             val color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
             Text(text = song.title, style = MaterialTheme.typography.bodyLarge, color = color, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, maxLines = 1)
-            Text(text = song.artist, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            Text(text = song.artists.joinToString(artistJoinString), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
         }
     }
 }
@@ -224,7 +225,7 @@ fun AlbumListScreen(
             items(state.albumList) { album ->
                 ListItem(
                     headlineContent = { Text(album.title) },
-                    supportingContent = { Text("${album.artist} • ${album.songCount} songs") },
+                    supportingContent = { Text("${album.artists.joinToString(state.artistJoinString)} • ${album.songCount} songs") },
                     leadingContent = {
                         AsyncImage(
                             model = album.coverUrl,
@@ -330,6 +331,7 @@ fun MusicListDetailScreen(
     coverUrl: String? = null,
     songs: List<MusicModel>,
     currentSong: MusicModel?,
+    artistJoinString: String, // 新增参数
     onBackClick: () -> Unit,
     onSongClick: (MusicModel, List<MusicModel>) -> Unit
 ) {
@@ -410,7 +412,8 @@ fun MusicListDetailScreen(
                 SongListItem(
                     song = song,
                     isSelected = currentSong?.id == song.id,
-                    onClick = { onSongClick(song, songs) }
+                    onClick = { onSongClick(song, songs) },
+                    artistJoinString = artistJoinString // 传入 artistJoinString
                 )
             }
         }
@@ -429,6 +432,7 @@ fun ArtistDetailScreen(
         subtitle = "${state.detailMusicList.size} songs",
         songs = state.detailMusicList,
         currentSong = state.currentSong,
+        artistJoinString = state.artistJoinString,
         onBackClick = onBackClick,
         onSongClick = onSongClick
     )
@@ -443,7 +447,7 @@ fun AlbumDetailScreen(
     onSongClick: (MusicModel, List<MusicModel>) -> Unit
 ) {
     val coverUrl = state.detailMusicList.firstOrNull()?.coverUrl
-    val artist = state.detailMusicList.firstOrNull()?.artist ?: ""
+    val artist = state.detailMusicList.firstOrNull()?.artists?.joinToString(state.artistJoinString) ?: ""
 
     MusicListDetailScreen(
         title = title,
@@ -451,6 +455,7 @@ fun AlbumDetailScreen(
         coverUrl = coverUrl,
         songs = state.detailMusicList,
         currentSong = state.currentSong,
+        artistJoinString = state.artistJoinString,
         onBackClick = onBackClick,
         onSongClick = onSongClick
     )
@@ -468,6 +473,7 @@ fun FolderDetailScreen(
         subtitle = path,
         songs = state.detailMusicList,
         currentSong = state.currentSong,
+        artistJoinString = state.artistJoinString,
         onBackClick = onBackClick,
         onSongClick = onSongClick
     )
@@ -485,6 +491,7 @@ fun PlaylistDetailScreen(
         title = title,
         songs = state.detailMusicList,
         currentSong = state.currentSong,
+        artistJoinString = state.artistJoinString,
         onBackClick = onBackClick,
         onSongClick = onSongClick
     )

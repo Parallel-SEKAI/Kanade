@@ -64,7 +64,10 @@ fun ExcludedFoldersScreen(
                     )
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 80.dp) // Added bottom padding
+                ) {
                     item {
                         Text(
                             text = "Music in these folders will be hidden from your library.",

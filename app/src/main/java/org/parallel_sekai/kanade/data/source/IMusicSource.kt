@@ -68,7 +68,7 @@ interface IMusicSource {
 data class MusicModel(
     val id: String,
     val title: String,
-    val artist: String,
+    val artists: List<String>,
     val album: String,
     val coverUrl: String,
     val mediaUri: String, // 真实的播放 URI
@@ -87,7 +87,7 @@ data class ArtistModel(
 data class AlbumModel(
     val id: String,
     val title: String,
-    val artist: String,
+    val artists: List<String>,
     val coverUrl: String,
     val songCount: Int
 )
