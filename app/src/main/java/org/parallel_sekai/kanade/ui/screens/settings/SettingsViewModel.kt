@@ -24,6 +24,25 @@ class SettingsViewModel(private val repository: SettingsRepository) : ViewModel(
             initialValue = true
         )
 
+    val excludedFolders: StateFlow<Set<String>> = repository.excludedFoldersFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptySet()
+        )
+
+    fun addExcludedFolder(path: String) {
+        viewModelScope.launch {
+            repository.addExcludedFolder(path)
+        }
+    }
+
+    fun removeExcludedFolder(path: String) {
+        viewModelScope.launch {
+            repository.removeExcludedFolder(path)
+        }
+    }
+
     fun updateSearchResultAsPlaylist(enabled: Boolean) {
         viewModelScope.launch {
             repository.updateSearchResultAsPlaylist(enabled)

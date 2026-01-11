@@ -1,39 +1,37 @@
-# Plan - Library Page Enhancements
+# Plan - Complete Library Sub-Screens
 
-## 1. Data Layer: Support for Artists, Albums, and Folders
+## 1. Data Layer Enhancements
 - [ ] **Define Models**:
-    - [ ] Add `ArtistModel(id, name, albumCount, songCount)` to `IMusicSource.kt`.
-    - [ ] Add `AlbumModel(id, title, artist, coverUrl, songCount)` to `IMusicSource.kt`.
-    - [ ] Add `FolderModel(name, path, songCount)` to `IMusicSource.kt`.
+    - [ ] Add `PlaylistModel(id, name, coverUrl, songCount)` to `IMusicSource.kt`.
 - [ ] **Update IMusicSource Interface**:
-    - [ ] Add `suspend fun getArtistList(): List<ArtistModel>`.
-    - [ ] Add `suspend fun getAlbumList(): List<AlbumModel>`.
-    - [ ] Add `suspend fun getFolderList(): List<FolderModel>`.
+    - [ ] `suspend fun getSongsByArtist(artistName: String): List<MusicModel>`
+    - [ ] `suspend fun getSongsByAlbum(albumId: String): List<MusicModel>`
+    - [ ] `suspend fun getSongsByFolder(path: String): List<MusicModel>`
+    - [ ] `suspend fun getPlaylistList(): List<PlaylistModel>`
+    - [ ] `suspend fun getSongsByPlaylist(playlistId: String): List<MusicModel>`
 - [ ] **Implement in LocalMusicSource**:
-    - [ ] Query `MediaStore.Audio.Artists` for artist info.
-    - [ ] Query `MediaStore.Audio.Albums` for album info.
-    - [ ] Group `MediaStore.Audio.Media` results by parent directory for folder info.
-- [ ] **Update PlaybackRepository**:
-    - [ ] Expose the above methods to ViewModels.
+    - [ ] Use `MediaStore.Audio.Media.ARTIST` selection for artist songs.
+    - [ ] Use `MediaStore.Audio.Media.ALBUM_ID` selection for album songs.
+    - [ ] Use `MediaStore.Audio.Media.DATA` (LIKE path/%) for folder songs.
+    - [ ] Query `MediaStore.Audio.Playlists` for playlist support.
 
-## 2. UI Layer: Library Screen Modification
-- [ ] **Modify LibraryScreen**:
-    - [ ] Add a grid or list of 5 buttons at the top:
-        1. **All Music** (全部音乐)
-        2. **Artists** (艺术家)
-        3. **Albums** (专辑)
-        4. **Playlists** (播放列表 - Placeholder)
-        5. **Folders** (文件夹)
-    - [ ] Re-organize the "Your Library" header and content.
-- [ ] **Create Sub-Screens**:
-    - [ ] `ArtistListScreen`: Displays a list of artists.
-    - [ ] `AlbumListScreen`: Displays a list of albums.
-    - [ ] `FolderListScreen`: Displays a list of folders.
-- [ ] **Update Navigation**:
-    - [ ] Define routes for `Library_AllMusic`, `Library_Artists`, `Library_Albums`, `Library_Folders` in `MainActivity`.
-    - [ ] Implement navigation from `LibraryScreen` buttons to these sub-screens.
+## 2. Navigation & ViewModels
+- [ ] **Navigation Routes**:
+    - [ ] `artist_detail/{artistName}`
+    - [ ] `album_detail/{albumId}/{title}`
+    - [ ] `folder_detail/{path}`
+    - [ ] `playlist_detail/{playlistId}/{title}`
+- [ ] **PlayerContract & ViewModel**:
+    - [ ] Add `selectedMusicList` to `PlayerState` for detail views.
+    - [ ] Add `FetchDetailList(type, id)` intent to load songs for the detail screen.
 
-## 3. Verification
-- [ ] Verify artist and album counts are correct.
-- [ ] Ensure folder navigation correctly lists music within selected directories.
-- [ ] Check UI consistency with Material 3.
+## 3. UI Implementation
+- [ ] **PlaylistListScreen**: Implementation of the "Playlists" grid entry.
+- [ ] **ArtistDetailScreen**: List of songs by a specific artist.
+- [ ] **AlbumDetailScreen**: Immersive header with album art and tracklist.
+- [ ] **FolderDetailScreen**: List of songs in a specific file system directory.
+- [ ] **PlaylistDetailScreen**: Songs within a selected playlist.
+
+## 4. Polishing
+- [ ] Ensure "Play All" functionality in detail screens correctly sets the playlist.
+- [ ] Add shared element transitions (if feasible) or smooth fade-ins for album art.

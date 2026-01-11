@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.*
 import org.parallel_sekai.kanade.data.source.AlbumModel
 import org.parallel_sekai.kanade.data.source.ArtistModel
 import org.parallel_sekai.kanade.data.source.FolderModel
+import org.parallel_sekai.kanade.data.source.PlaylistModel
 import org.parallel_sekai.kanade.data.source.MusicModel
 import org.parallel_sekai.kanade.data.source.local.LocalMusicSource
 import org.parallel_sekai.kanade.service.KanadePlaybackService
@@ -118,6 +119,10 @@ class PlaybackRepository(context: Context) {
         if (controllerFuture.isDone) controllerFuture.get().shuffleModeEnabled = enabled
     }
 
+    fun setExcludedFolders(folders: Set<String>) {
+        localMusicSource.excludedFolders = folders
+    }
+
     suspend fun fetchMusicList(query: String = ""): List<MusicModel> {
         return localMusicSource.getMusicList(query)
     }
@@ -132,6 +137,26 @@ class PlaybackRepository(context: Context) {
 
     suspend fun fetchFolderList(): List<FolderModel> {
         return localMusicSource.getFolderList()
+    }
+
+    suspend fun fetchSongsByArtist(artistName: String): List<MusicModel> {
+        return localMusicSource.getSongsByArtist(artistName)
+    }
+
+    suspend fun fetchSongsByAlbum(albumId: String): List<MusicModel> {
+        return localMusicSource.getSongsByAlbum(albumId)
+    }
+
+    suspend fun fetchSongsByFolder(path: String): List<MusicModel> {
+        return localMusicSource.getSongsByFolder(path)
+    }
+
+    suspend fun fetchPlaylistList(): List<PlaylistModel> {
+        return localMusicSource.getPlaylistList()
+    }
+
+    suspend fun fetchSongsByPlaylist(playlistId: String): List<MusicModel> {
+        return localMusicSource.getSongsByPlaylist(playlistId)
     }
 
     suspend fun fetchLyrics(musicId: String): String? {

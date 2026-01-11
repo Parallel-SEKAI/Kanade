@@ -20,6 +20,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
 
     override val sourceId: String = "local_storage"
     override val sourceName: String = "Local Music"
+    var excludedFolders: Set<String> = emptySet()
 
     override suspend fun getMusicList(query: String): List<MusicModel> = withContext(Dispatchers.IO) {
         val musicList = mutableListOf<MusicModel>()
@@ -51,8 +52,13 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
             val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
             val albumIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
+            val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
 
             while (cursor.moveToNext()) {
+                val path = cursor.getString(dataColumn)
+                // 排除文件夹过滤
+                if (excludedFolders.any { path.startsWith(it) }) continue
+
                 val id = cursor.getLong(idColumn)
                 val albumId = cursor.getLong(albumIdColumn)
                 
@@ -197,7 +203,159 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                 path = path,
                 songCount = count
             )
+        }.filter { folder ->
+            !excludedFolders.any { excluded -> folder.path.startsWith(excluded) }
         }.sortedBy { it.name }
+    }
+
+    override suspend fun getSongsByArtist(artistName: String): List<MusicModel> {
+        val selection = "${MediaStore.Audio.Media.ARTIST} = ?"
+        return getMusicListWithSelection(selection, arrayOf(artistName))
+    }
+
+    override suspend fun getSongsByAlbum(albumId: String): List<MusicModel> {
+        val selection = "${MediaStore.Audio.Media.ALBUM_ID} = ?"
+        return getMusicListWithSelection(selection, arrayOf(albumId))
+    }
+
+    override suspend fun getSongsByFolder(path: String): List<MusicModel> {
+        val selection = "${MediaStore.Audio.Media.DATA} LIKE ?"
+        return getMusicListWithSelection(selection, arrayOf("$path/%"))
+    }
+
+    override suspend fun getPlaylistList(): List<PlaylistModel> = withContext(Dispatchers.IO) {
+        val playlistList = mutableListOf<PlaylistModel>()
+        val projection = arrayOf(
+            MediaStore.Audio.Playlists._ID,
+            MediaStore.Audio.Playlists.NAME
+        )
+
+        context.contentResolver.query(
+            MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
+            projection,
+            null,
+            null,
+            "${MediaStore.Audio.Playlists.NAME} ASC"
+        )?.use { cursor ->
+            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists._ID)
+            val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.NAME)
+
+            while (cursor.moveToNext()) {
+                val id = cursor.getLong(idColumn)
+                playlistList.add(
+                    PlaylistModel(
+                        id = id.toString(),
+                        name = cursor.getString(nameColumn),
+                        coverUrl = null, // Playlists usually don't have a direct cover in MediaStore
+                        songCount = 0 // Needs separate query or updated in UI
+                    )
+                )
+            }
+        }
+        playlistList
+    }
+
+    override suspend fun getSongsByPlaylist(playlistId: String): List<MusicModel> = withContext(Dispatchers.IO) {
+        val musicList = mutableListOf<MusicModel>()
+        val uri = MediaStore.Audio.Playlists.Members.getContentUri("external", playlistId.toLong())
+        
+        val projection = arrayOf(
+            MediaStore.Audio.Playlists.Members.AUDIO_ID,
+            MediaStore.Audio.Playlists.Members.TITLE,
+            MediaStore.Audio.Playlists.Members.ARTIST,
+            MediaStore.Audio.Playlists.Members.ALBUM,
+            MediaStore.Audio.Playlists.Members.DURATION,
+            MediaStore.Audio.Playlists.Members.ALBUM_ID
+        )
+
+        context.contentResolver.query(
+            uri,
+            projection,
+            null,
+            null,
+            MediaStore.Audio.Playlists.Members.PLAY_ORDER + " ASC"
+        )?.use { cursor ->
+            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.AUDIO_ID)
+            val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.TITLE)
+            val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.ARTIST)
+            val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.ALBUM)
+            val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.DURATION)
+            val albumIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.ALBUM_ID)
+
+            while (cursor.moveToNext()) {
+                val id = cursor.getLong(idColumn)
+                val albumId = cursor.getLong(albumIdColumn)
+                val contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
+                val albumArtUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), albumId).toString()
+
+                musicList.add(
+                    MusicModel(
+                        id = id.toString(),
+                        title = cursor.getString(titleColumn),
+                        artist = cursor.getString(artistColumn),
+                        album = cursor.getString(albumColumn),
+                        coverUrl = albumArtUri,
+                        mediaUri = contentUri.toString(),
+                        duration = cursor.getLong(durationColumn),
+                        sourceId = sourceId
+                    )
+                )
+            }
+        }
+        musicList
+    }
+
+    private suspend fun getMusicListWithSelection(selection: String, selectionArgs: Array<String>): List<MusicModel> = withContext(Dispatchers.IO) {
+        val musicList = mutableListOf<MusicModel>()
+        val projection = arrayOf(
+            MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.TITLE,
+            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.ALBUM,
+            MediaStore.Audio.Media.DURATION,
+            MediaStore.Audio.Media.ALBUM_ID,
+            MediaStore.Audio.Media.DATA
+        )
+
+        context.contentResolver.query(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            projection,
+            selection,
+            selectionArgs,
+            "${MediaStore.Audio.Media.TITLE} ASC"
+        )?.use { cursor ->
+            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+            val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
+            val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+            val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+            val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+            val albumIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
+            val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+
+            while (cursor.moveToNext()) {
+                val path = cursor.getString(dataColumn)
+                if (excludedFolders.any { path.startsWith(it) }) continue
+
+                val id = cursor.getLong(idColumn)
+                val albumId = cursor.getLong(albumIdColumn)
+                val contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
+                val albumArtUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), albumId).toString()
+
+                musicList.add(
+                    MusicModel(
+                        id = id.toString(),
+                        title = cursor.getString(titleColumn),
+                        artist = cursor.getString(artistColumn),
+                        album = cursor.getString(albumColumn),
+                        coverUrl = albumArtUri,
+                        mediaUri = contentUri.toString(),
+                        duration = cursor.getLong(durationColumn),
+                        sourceId = sourceId
+                    )
+                )
+            }
+        }
+        musicList
     }
 
     override suspend fun getPlayUrl(musicId: String): String {

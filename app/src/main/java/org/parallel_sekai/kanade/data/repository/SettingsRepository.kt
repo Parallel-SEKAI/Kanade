@@ -27,6 +27,7 @@ class SettingsRepository(private val context: Context) {
     private val BALANCE_LINES = booleanPreferencesKey("balance_lines")
     private val SEARCH_HISTORY = stringSetPreferencesKey("search_history")
     private val SEARCH_RESULT_AS_PLAYLIST = booleanPreferencesKey("search_result_as_playlist")
+    private val EXCLUDED_FOLDERS = stringSetPreferencesKey("excluded_folders")
 
     val lyricsSettingsFlow: Flow<LyricsSettings> = context.dataStore.data
         .map { preferences ->
@@ -44,6 +45,25 @@ class SettingsRepository(private val context: Context) {
         .map { preferences ->
             preferences[SEARCH_RESULT_AS_PLAYLIST] ?: true
         }
+
+    val excludedFoldersFlow: Flow<Set<String>> = context.dataStore.data
+        .map { preferences ->
+            preferences[EXCLUDED_FOLDERS] ?: emptySet()
+        }
+
+    suspend fun addExcludedFolder(path: String) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[EXCLUDED_FOLDERS] ?: emptySet()
+            preferences[EXCLUDED_FOLDERS] = current + path
+        }
+    }
+
+    suspend fun removeExcludedFolder(path: String) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[EXCLUDED_FOLDERS] ?: emptySet()
+            preferences[EXCLUDED_FOLDERS] = current - path
+        }
+    }
 
     suspend fun updateSearchResultAsPlaylist(enabled: Boolean) {
         context.dataStore.edit { preferences ->

@@ -20,7 +20,8 @@ import androidx.compose.foundation.verticalScroll
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
-    onNavigateToLyricsSettings: () -> Unit
+    onNavigateToLyricsSettings: () -> Unit,
+    onNavigateToExcludedFolders: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     val searchAsPlaylist = viewModel.searchResultAsPlaylist.collectAsState()
@@ -63,6 +64,13 @@ fun SettingsScreen(
                         onCheckedChange = { viewModel.updateSearchResultAsPlaylist(it) }
                     )
                 }
+            )
+
+            ListItem(
+                headlineContent = { Text("排除文件夹") },
+                supportingContent = { Text("隐藏特定文件夹中的音乐") },
+                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+                modifier = Modifier.clickable(onClick = onNavigateToExcludedFolders)
             )
 
             ListItem(

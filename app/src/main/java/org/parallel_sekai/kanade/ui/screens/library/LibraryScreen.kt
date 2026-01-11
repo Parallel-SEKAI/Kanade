@@ -4,12 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -17,7 +15,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -31,6 +32,7 @@ fun LibraryScreen(
     onSongClick: (MusicModel) -> Unit,
     onNavigateToArtists: () -> Unit,
     onNavigateToAlbums: () -> Unit,
+    onNavigateToPlaylists: () -> Unit,
     onNavigateToFolders: () -> Unit
 ) {
     LazyColumn(
@@ -48,6 +50,7 @@ fun LibraryScreen(
             LibraryGrid(
                 onNavigateToArtists = onNavigateToArtists,
                 onNavigateToAlbums = onNavigateToAlbums,
+                onNavigateToPlaylists = onNavigateToPlaylists,
                 onNavigateToFolders = onNavigateToFolders
             )
         }
@@ -70,12 +73,13 @@ fun LibraryScreen(
 fun LibraryGrid(
     onNavigateToArtists: () -> Unit,
     onNavigateToAlbums: () -> Unit,
+    onNavigateToPlaylists: () -> Unit,
     onNavigateToFolders: () -> Unit
 ) {
     val items = listOf(
         LibraryGridItem("Artists", Icons.Default.Person, onNavigateToArtists),
         LibraryGridItem("Albums", Icons.Default.Album, onNavigateToAlbums),
-        LibraryGridItem("Playlists", Icons.Default.PlaylistPlay, {}),
+        LibraryGridItem("Playlists", Icons.Default.PlaylistPlay, onNavigateToPlaylists),
         LibraryGridItem("Folders", Icons.Default.Folder, onNavigateToFolders)
     )
 
@@ -124,27 +128,6 @@ fun SectionHeader(title: String) {
 }
 
 @Composable
-fun RecentSongCard(song: MusicModel) {
-    Column(modifier = Modifier.width(120.dp)) {
-        AsyncImage(
-            model = song.coverUrl,
-            contentDescription = null,
-            modifier = Modifier
-                .size(120.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentScale = androidx.compose.ui.layout.ContentScale.Crop
-        )
-        Text(
-            text = song.title,
-            style = MaterialTheme.typography.labelLarge,
-            maxLines = 1,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-    }
-}
-
-@Composable
 fun SongListItem(
     song: MusicModel,
     isSelected: Boolean,
@@ -164,7 +147,7 @@ fun SongListItem(
                 .size(56.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            contentScale = ContentScale.Crop
         )
         Column(modifier = Modifier.padding(start = 16.dp).weight(1f)) {
             val color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
@@ -176,43 +159,10 @@ fun SongListItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AllMusicScreen(
-    state: PlayerState,
-    onBackClick: () -> Unit,
-    onSongClick: (MusicModel) -> Unit
-) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("All Music") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 80.dp)
-        ) {
-            items(state.allMusicList) { song ->
-                SongListItem(
-                    song = song,
-                    isSelected = state.currentSong?.id == song.id,
-                    onClick = { onSongClick(song) }
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 fun ArtistListScreen(
     state: PlayerState,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onArtistClick: (String) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -220,7 +170,7 @@ fun ArtistListScreen(
                 title = { Text("Artists") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -241,7 +191,7 @@ fun ArtistListScreen(
                             modifier = Modifier.size(40.dp).clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(8.dp)
                         )
                     },
-                    modifier = Modifier.clickable { /* TODO: Navigate to artist detail */ }
+                    modifier = Modifier.clickable { onArtistClick(artist.name) }
                 )
             }
         }
@@ -252,7 +202,8 @@ fun ArtistListScreen(
 @Composable
 fun AlbumListScreen(
     state: PlayerState,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onAlbumClick: (String, String) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -260,7 +211,7 @@ fun AlbumListScreen(
                 title = { Text("Albums") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -279,10 +230,51 @@ fun AlbumListScreen(
                             model = album.coverUrl,
                             contentDescription = null,
                             modifier = Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            contentScale = ContentScale.Crop
                         )
                     },
-                    modifier = Modifier.clickable { /* TODO: Navigate to album detail */ }
+                    modifier = Modifier.clickable { onAlbumClick(album.id, album.title) }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PlaylistListScreen(
+    state: PlayerState,
+    onBackClick: () -> Unit,
+    onPlaylistClick: (String, String) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Playlists") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            contentPadding = PaddingValues(bottom = 80.dp)
+        ) {
+            items(state.playlistList) { playlist ->
+                ListItem(
+                    headlineContent = { Text(playlist.name) },
+                    supportingContent = { Text("${playlist.songCount} songs") },
+                    leadingContent = {
+                        Icon(
+                            Icons.Default.PlaylistPlay,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(8.dp)
+                        )
+                    },
+                    modifier = Modifier.clickable { onPlaylistClick(playlist.id, playlist.name) }
                 )
             }
         }
@@ -293,7 +285,8 @@ fun AlbumListScreen(
 @Composable
 fun FolderListScreen(
     state: PlayerState,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onFolderClick: (String) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -301,7 +294,7 @@ fun FolderListScreen(
                 title = { Text("Folders") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -322,9 +315,177 @@ fun FolderListScreen(
                             modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(8.dp)
                         )
                     },
-                    modifier = Modifier.clickable { /* TODO: Navigate to folder content */ }
+                    modifier = Modifier.clickable { onFolderClick(folder.path) }
                 )
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MusicListDetailScreen(
+    title: String,
+    subtitle: String? = null,
+    coverUrl: String? = null,
+    songs: List<MusicModel>,
+    currentSong: MusicModel?,
+    onBackClick: () -> Unit,
+    onSongClick: (MusicModel, List<MusicModel>) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(title) },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                )
+            )
+        }
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            contentPadding = PaddingValues(bottom = 80.dp)
+        ) {
+            if (coverUrl != null) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(280.dp)
+                    ) {
+                        AsyncImage(
+                            model = coverUrl,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(Color.Transparent, MaterialTheme.colorScheme.surface)
+                                    )
+                                )
+                        )
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (subtitle != null) {
+                                Text(
+                                    text = subtitle,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            } else if (subtitle != null) {
+                item {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            items(songs) { song ->
+                SongListItem(
+                    song = song,
+                    isSelected = currentSong?.id == song.id,
+                    onClick = { onSongClick(song, songs) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ArtistDetailScreen(
+    name: String,
+    state: PlayerState,
+    onBackClick: () -> Unit,
+    onSongClick: (MusicModel, List<MusicModel>) -> Unit
+) {
+    MusicListDetailScreen(
+        title = name,
+        subtitle = "${state.detailMusicList.size} songs",
+        songs = state.detailMusicList,
+        currentSong = state.currentSong,
+        onBackClick = onBackClick,
+        onSongClick = onSongClick
+    )
+}
+
+@Composable
+fun AlbumDetailScreen(
+    id: String,
+    title: String,
+    state: PlayerState,
+    onBackClick: () -> Unit,
+    onSongClick: (MusicModel, List<MusicModel>) -> Unit
+) {
+    val coverUrl = state.detailMusicList.firstOrNull()?.coverUrl
+    val artist = state.detailMusicList.firstOrNull()?.artist ?: ""
+
+    MusicListDetailScreen(
+        title = title,
+        subtitle = artist,
+        coverUrl = coverUrl,
+        songs = state.detailMusicList,
+        currentSong = state.currentSong,
+        onBackClick = onBackClick,
+        onSongClick = onSongClick
+    )
+}
+
+@Composable
+fun FolderDetailScreen(
+    path: String,
+    state: PlayerState,
+    onBackClick: () -> Unit,
+    onSongClick: (MusicModel, List<MusicModel>) -> Unit
+) {
+    MusicListDetailScreen(
+        title = path.split("/").last(),
+        subtitle = path,
+        songs = state.detailMusicList,
+        currentSong = state.currentSong,
+        onBackClick = onBackClick,
+        onSongClick = onSongClick
+    )
+}
+
+@Composable
+fun PlaylistDetailScreen(
+    id: String,
+    title: String,
+    state: PlayerState,
+    onBackClick: () -> Unit,
+    onSongClick: (MusicModel, List<MusicModel>) -> Unit
+) {
+    MusicListDetailScreen(
+        title = title,
+        songs = state.detailMusicList,
+        currentSong = state.currentSong,
+        onBackClick = onBackClick,
+        onSongClick = onSongClick
+    )
 }

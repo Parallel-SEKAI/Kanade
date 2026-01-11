@@ -32,15 +32,23 @@ import com.google.accompanist.permissions.rememberPermissionState
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.ui.screens.library.LibraryScreen
-import org.parallel_sekai.kanade.ui.screens.library.AllMusicScreen
 import org.parallel_sekai.kanade.ui.screens.library.ArtistListScreen
+import org.parallel_sekai.kanade.ui.screens.library.ArtistDetailScreen
 import org.parallel_sekai.kanade.ui.screens.library.AlbumListScreen
+import org.parallel_sekai.kanade.ui.screens.library.AlbumDetailScreen
+import org.parallel_sekai.kanade.ui.screens.library.PlaylistListScreen
+import org.parallel_sekai.kanade.ui.screens.library.PlaylistDetailScreen
 import org.parallel_sekai.kanade.ui.screens.library.FolderListScreen
+import org.parallel_sekai.kanade.ui.screens.library.FolderDetailScreen
 import org.parallel_sekai.kanade.ui.screens.more.MoreScreen
+import org.parallel_sekai.kanade.ui.screens.player.DetailType
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import org.parallel_sekai.kanade.ui.screens.search.SearchScreen
 import org.parallel_sekai.kanade.ui.screens.search.SearchViewModel
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.LyricsSettingsScreen
+import org.parallel_sekai.kanade.ui.screens.settings.ExcludedFoldersScreen
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
 import org.parallel_sekai.kanade.ui.screens.player.KanadePlayerContainer
 import org.parallel_sekai.kanade.ui.screens.player.PlayerIntent
@@ -53,12 +61,27 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector?
     object More : Screen("more", "More", Icons.Filled.Info)
     object Settings : Screen("settings", "Settings", null)
     object LyricsSettings : Screen("lyrics_settings", "Lyrics Settings", null)
+    object ExcludedFolders : Screen("excluded_folders", "Excluded Folders", null)
     
     // Library sub-screens
-    object AllMusic : Screen("all_music", "All Music", null)
     object Artists : Screen("artists", "Artists", null)
     object Albums : Screen("albums", "Albums", null)
+    object Playlists : Screen("playlists", "Playlists", null)
     object Folders : Screen("folders", "Folders", null)
+
+    // Detail screens
+    object ArtistDetail : Screen("artist_detail/{name}", "Artist Detail", null) {
+        fun createRoute(name: String) = "artist_detail/$name"
+    }
+    object AlbumDetail : Screen("album_detail/{id}/{title}", "Album Detail", null) {
+        fun createRoute(id: String, title: String) = "album_detail/$id/$title"
+    }
+    object FolderDetail : Screen("folder_detail/{path}", "Folder Detail", null) {
+        fun createRoute(path: String) = "folder_detail/${java.net.URLEncoder.encode(path, "UTF-8")}"
+    }
+    object PlaylistDetail : Screen("playlist_detail/{id}/{title}", "Playlist Detail", null) {
+        fun createRoute(id: String, title: String) = "playlist_detail/$id/$title"
+    }
 }
 
 val items = listOf(
@@ -148,6 +171,7 @@ class MainActivity : ComponentActivity() {
                                         onSongClick = { song -> viewModel.handleIntent(PlayerIntent.SelectSong(song)) },
                                         onNavigateToArtists = { navController.navigate(Screen.Artists.route) },
                                         onNavigateToAlbums = { navController.navigate(Screen.Albums.route) },
+                                        onNavigateToPlaylists = { navController.navigate(Screen.Playlists.route) },
                                         onNavigateToFolders = { navController.navigate(Screen.Folders.route) }
                                     )
                                 } else {
@@ -159,29 +183,84 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             }
-                            composable(Screen.AllMusic.route) {
-                                AllMusicScreen(
-                                    state = state,
-                                    onBackClick = { navController.popBackStack() },
-                                    onSongClick = { song -> viewModel.handleIntent(PlayerIntent.SelectSong(song)) }
-                                )
-                            }
                             composable(Screen.Artists.route) {
                                 ArtistListScreen(
                                     state = state,
-                                    onBackClick = { navController.popBackStack() }
+                                    onBackClick = { navController.popBackStack() },
+                                    onArtistClick = { name ->
+                                        viewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.ARTIST, name))
+                                        navController.navigate(Screen.ArtistDetail.createRoute(name))
+                                    }
                                 )
                             }
                             composable(Screen.Albums.route) {
                                 AlbumListScreen(
                                     state = state,
-                                    onBackClick = { navController.popBackStack() }
+                                    onBackClick = { navController.popBackStack() },
+                                    onAlbumClick = { id, title ->
+                                        viewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.ALBUM, id))
+                                        navController.navigate(Screen.AlbumDetail.createRoute(id, title))
+                                    }
+                                )
+                            }
+                            composable(Screen.Playlists.route) {
+                                PlaylistListScreen(
+                                    state = state,
+                                    onBackClick = { navController.popBackStack() },
+                                    onPlaylistClick = { id, title ->
+                                        viewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.PLAYLIST, id))
+                                        navController.navigate(Screen.PlaylistDetail.createRoute(id, title))
+                                    }
                                 )
                             }
                             composable(Screen.Folders.route) {
                                 FolderListScreen(
                                     state = state,
-                                    onBackClick = { navController.popBackStack() }
+                                    onBackClick = { navController.popBackStack() },
+                                    onFolderClick = { path ->
+                                        viewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.FOLDER, path))
+                                        navController.navigate(Screen.FolderDetail.createRoute(path))
+                                    }
+                                )
+                            }
+                            composable(Screen.ArtistDetail.route) { backStackEntry ->
+                                val name = backStackEntry.arguments?.getString("name") ?: ""
+                                ArtistDetailScreen(
+                                    name = name,
+                                    state = state,
+                                    onBackClick = { navController.popBackStack() },
+                                    onSongClick = { song, list -> viewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
+                                )
+                            }
+                            composable(Screen.AlbumDetail.route) { backStackEntry ->
+                                val id = backStackEntry.arguments?.getString("id") ?: ""
+                                val title = backStackEntry.arguments?.getString("title") ?: ""
+                                AlbumDetailScreen(
+                                    id = id,
+                                    title = title,
+                                    state = state,
+                                    onBackClick = { navController.popBackStack() },
+                                    onSongClick = { song, list -> viewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
+                                )
+                            }
+                            composable(Screen.PlaylistDetail.route) { backStackEntry ->
+                                val id = backStackEntry.arguments?.getString("id") ?: ""
+                                val title = backStackEntry.arguments?.getString("title") ?: ""
+                                PlaylistDetailScreen(
+                                    id = id,
+                                    title = title,
+                                    state = state,
+                                    onBackClick = { navController.popBackStack() },
+                                    onSongClick = { song, list -> viewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
+                                )
+                            }
+                            composable(Screen.FolderDetail.route) { backStackEntry ->
+                                val path = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("path") ?: "", "UTF-8")
+                                FolderDetailScreen(
+                                    path = path,
+                                    state = state,
+                                    onBackClick = { navController.popBackStack() },
+                                    onSongClick = { song, list -> viewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
                                 )
                             }
                             composable(Screen.Search.route) {
@@ -199,12 +278,20 @@ class MainActivity : ComponentActivity() {
                                 SettingsScreen(
                                     viewModel = settingsViewModel,
                                     onNavigateBack = { navController.popBackStack() },
-                                    onNavigateToLyricsSettings = { navController.navigate(Screen.LyricsSettings.route) }
+                                    onNavigateToLyricsSettings = { navController.navigate(Screen.LyricsSettings.route) },
+                                    onNavigateToExcludedFolders = { navController.navigate(Screen.ExcludedFolders.route) }
                                 )
                             }
                             composable(Screen.LyricsSettings.route) {
                                 LyricsSettingsScreen(
                                     viewModel = settingsViewModel,
+                                    onNavigateBack = { navController.popBackStack() }
+                                )
+                            }
+                            composable(Screen.ExcludedFolders.route) {
+                                ExcludedFoldersScreen(
+                                    viewModel = settingsViewModel,
+                                    allFolders = state.folderList,
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }

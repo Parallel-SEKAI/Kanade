@@ -1,81 +1,70 @@
-# UI Design - Library Page Enhancements
+# UI Design - Library Detail Screens
 
-## Library Main Screen
-
-The top of the Library screen will feature 5 primary entry points.
-
+## Artist Detail Screen
 ```text
 +---------------------------------------+
-|              Your Library             |
+| < [Artist Name]                       |
 +---------------------------------------+
-|                                       |
-|  [ All Music ]      [ Artists   ]     |  <-- 2x3 Grid or Vertical List
-|  [ Albums    ]      [ Playlists ]     |
-|  [ Folders   ]                        |
-|                                       |
+|  [Play All Button] [Shuffle Button]   |
 +---------------------------------------+
-|           Recently Played             |
+| Songs                                 |
 |                                       |
-|  [Song A]  [Song B]  [Song C]         |
-|                                       |
-+---------------------------------------+
-|             All Songs                 |
-|                                       |
-|  ( ) Song 1                           |
-|  ( ) Song 2                           |
-|  ...                                  |
+| ( ) Song 1 (from Album A)             |
+| ( ) Song 2 (from Album B)             |
+| ...                                   |
 +---------------------------------------+
 ```
 
-### Entry Button Style (Material 3 Card)
-Each button will be a `Surface` or `ElevatedCard` with an icon and text.
-
-```text
-+-------------------+
-|  (Icon)           |
-|  All Music        |
-+-------------------+
-```
-
-## Artist List Screen
+## Album Detail Screen
 ```text
 +---------------------------------------+
-| < Artists                             |
+| <                                     |
 +---------------------------------------+
-| Search Artists...                     |
-+---------------------------------------+
-| Artist A                              |
-| 5 Albums, 20 Songs                    |
+|        [ ALBUM ART IMAGE ]            |
+|        (Dominant Color BG)            |
 |                                       |
-| Artist B                              |
-| 2 Albums, 10 Songs                    |
+|          Album Title                  |
+|          Artist Name                  |
++---------------------------------------+
+|  [Play All]      [Shuffle]            |
++---------------------------------------+
+| 1. Track 1                            |
+| 2. Track 2                            |
+| ...                                   |
 +---------------------------------------+
 ```
 
-## Album List Screen
+## Folder Detail Screen
 ```text
 +---------------------------------------+
-| < Albums                              |
+| < [Folder Name]                       |
+|   /path/to/folder                     |
 +---------------------------------------+
-| Search Albums...                      |
-+---------------------------------------+
-| [Cover] Album Title                   |
-|         Artist Name                   |
-|                                       |
-| [Cover] Album Title 2                 |
-|         Artist Name                   |
+| ( ) Song A                            |
+| ( ) Song B                            |
+| ...                                   |
 +---------------------------------------+
 ```
 
-## Folder List Screen
+## Playlist Screens
+### List Screen
 ```text
 +---------------------------------------+
-| < Folders                             |
+| < Playlists                           |
 +---------------------------------------+
-| /storage/emulated/0/Music             |
-| 50 Songs                              |
-|                                       |
-| /storage/emulated/0/Download          |
-| 10 Songs                              |
+| [Fav Icon] Favorites (50)              |
+| [Playlist Icon] Party Mix (12)        |
+| ...                                   |
++---------------------------------------+
+```
+
+### Detail Screen
+Same as Album Detail or a simpler version:
+```text
++---------------------------------------+
+| < [Playlist Title]                    |
++---------------------------------------+
+| ( ) Song 1                            |
+| ( ) Song 2                            |
 +---------------------------------------+
 ```

@@ -36,6 +36,14 @@ class PlayerViewModel(
             }
             .launchIn(viewModelScope)
 
+        // 监听排除文件夹
+        settingsRepository.excludedFoldersFlow
+            .onEach { folders ->
+                playbackRepository.setExcludedFolders(folders)
+                handleIntent(PlayerIntent.RefreshList)
+            }
+            .launchIn(viewModelScope)
+
         // 监听播放队列变化并同步到 UI
         playbackRepository.currentPlaylist
             .onEach { mediaItems ->
@@ -61,6 +69,7 @@ class PlayerViewModel(
             val artists = playbackRepository.fetchArtistList()
             val albums = playbackRepository.fetchAlbumList()
             val folders = playbackRepository.fetchFolderList()
+            val playlists = playbackRepository.fetchPlaylistList()
             
             val initialSong = list.firstOrNull()
             _state.update { it.copy(
@@ -69,6 +78,7 @@ class PlayerViewModel(
                 artistList = artists,
                 albumList = albums,
                 folderList = folders,
+                playlistList = playlists,
                 currentSong = initialSong
             ) }
             initialSong?.let { extractColors(it) }
@@ -156,14 +166,27 @@ class PlayerViewModel(
                     val artists = playbackRepository.fetchArtistList()
                     val albums = playbackRepository.fetchAlbumList()
                     val folders = playbackRepository.fetchFolderList()
+                    val playlists = playbackRepository.fetchPlaylistList()
                     
                     _state.update { it.copy(
                         allMusicList = list,
                         artistList = artists,
                         albumList = albums,
                         folderList = folders,
+                        playlistList = playlists,
                         currentSong = it.currentSong ?: list.firstOrNull()
                     ) }
+                }
+            }
+            is PlayerIntent.FetchDetailList -> {
+                viewModelScope.launch {
+                    val list = when (intent.type) {
+                        DetailType.ARTIST -> playbackRepository.fetchSongsByArtist(intent.id)
+                        DetailType.ALBUM -> playbackRepository.fetchSongsByAlbum(intent.id)
+                        DetailType.FOLDER -> playbackRepository.fetchSongsByFolder(intent.id)
+                        DetailType.PLAYLIST -> playbackRepository.fetchSongsByPlaylist(intent.id)
+                    }
+                    _state.update { it.copy(detailMusicList = list) }
                 }
             }
             is PlayerIntent.SelectSong -> {
@@ -180,9 +203,10 @@ class PlayerViewModel(
                         lyricData = lyricData
                     ) }
                 }
-                // 当从“全部音乐”点击时，我们将整个“全部音乐”列表作为播放队列
-                val index = state.value.allMusicList.indexOf(intent.song).coerceAtLeast(0)
-                playbackRepository.setPlaylist(state.value.allMusicList, index)
+                
+                val listToPlay = intent.customList ?: state.value.allMusicList
+                val index = listToPlay.indexOf(intent.song).coerceAtLeast(0)
+                playbackRepository.setPlaylist(listToPlay, index)
             }
             is PlayerIntent.Next -> {
                 playbackRepository.next()

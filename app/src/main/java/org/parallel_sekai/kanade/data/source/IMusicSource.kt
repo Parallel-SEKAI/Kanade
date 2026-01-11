@@ -38,6 +38,31 @@ interface IMusicSource {
      * 获取文件夹列表
      */
     suspend fun getFolderList(): List<FolderModel> = emptyList()
+
+    /**
+     * 获取特定艺术家的歌曲
+     */
+    suspend fun getSongsByArtist(artistName: String): List<MusicModel> = emptyList()
+
+    /**
+     * 获取特定专辑的歌曲
+     */
+    suspend fun getSongsByAlbum(albumId: String): List<MusicModel> = emptyList()
+
+    /**
+     * 获取特定文件夹的歌曲
+     */
+    suspend fun getSongsByFolder(path: String): List<MusicModel> = emptyList()
+
+    /**
+     * 获取播放列表列表
+     */
+    suspend fun getPlaylistList(): List<PlaylistModel> = emptyList()
+
+    /**
+     * 获取特定播放列表的歌曲
+     */
+    suspend fun getSongsByPlaylist(playlistId: String): List<MusicModel> = emptyList()
 }
 
 data class MusicModel(
@@ -70,6 +95,13 @@ data class AlbumModel(
 data class FolderModel(
     val name: String,
     val path: String,
+    val songCount: Int
+)
+
+data class PlaylistModel(
+    val id: String,
+    val name: String,
+    val coverUrl: String?,
     val songCount: Int
 )
 
