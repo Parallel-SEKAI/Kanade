@@ -1,14 +1,7 @@
-- [x] Update `SongListItem` in `LibraryScreen.kt` to accept `showCover: Boolean = true` and `showArtist: Boolean = true`.
-- [x] Update `MusicListDetailScreen` in `LibraryScreen.kt` to accept `showSongCover: Boolean = true` and `showSongArtist: Boolean = true`.
-- [x] Refactor `AlbumDetailScreen` in `LibraryScreen.kt`:
-    - Calculate the intersection of artists for all songs in the album.
-    - If the intersection is non-empty, use it as the subtitle.
-    - If all songs in the album share the exact same set of artists (equal to the intersection), set `showSongArtist = false`.
-    - Set `showSongCover = false`.
-- [x] Verify `ArtistDetailScreen`, `PlaylistDetailScreen`, and `FolderDetailScreen` still work correctly (passing default `true` values implicit or explicit).
-- [x] Add `various_artists` string resource.
-- [x] Refactor `LocalMusicSource.getAlbumList` to aggregate from `MediaStore.Audio.Media` (Songs) instead of `MediaStore.Audio.Albums`.
-    - Apply `excludedFolders` filter (fixing a hidden bug).
-    - Group by `ALBUM_ID`.
-    - Calculate artist intersection for each album.
-    - If intersection is empty, use "Various Artists".
+- [x] Create GitHub Actions workflow file `.github/workflows/android_build.yml`.
+- [x] Configure workflow to:
+    - Trigger on `push`.
+    - Set up JDK 17.
+    - Grant execution permission to `gradlew`.
+    - Run `./gradlew assembleDebug`.
+    - Upload APK artifact.

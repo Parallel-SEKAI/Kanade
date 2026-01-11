@@ -103,6 +103,7 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Rich lyric support (LRC/TTML).
 - [x] Search Page implementation with history support.
 - [x] Album detail page optimization (smart artist display, hidden track covers).
+- [x] CI Setup (GitHub Actions).
 
 ## 8. Agent Development Instructions (AI Context)
 - **State Management**: Always use `MutableStateFlow` in ViewModels. UI must be stateless and react only to the `state` flow.
