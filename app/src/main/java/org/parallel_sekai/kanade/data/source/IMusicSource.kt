@@ -64,6 +64,11 @@ interface IMusicSource {
      * 获取特定播放列表的歌曲
      */
     suspend fun getSongsByPlaylist(playlistId: String): List<MusicModel> = emptyList()
+
+    /**
+     * 根据 ID 列表获取歌曲
+     */
+    suspend fun getMusicListByIds(ids: List<String>): List<MusicModel> = emptyList()
 }
 
 /**

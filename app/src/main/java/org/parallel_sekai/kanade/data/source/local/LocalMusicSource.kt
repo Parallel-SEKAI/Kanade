@@ -353,6 +353,19 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
         musicList
     }
 
+    override suspend fun getMusicListByIds(ids: List<String>): List<MusicModel> {
+        if (ids.isEmpty()) return emptyList()
+        // 验证 ID 是否为纯数字，防止 SQL 注入（MediaStore ID 为 Long 类型）
+        val safeIds = ids.filter { it.all { char -> char.isDigit() } }
+        if (safeIds.isEmpty()) return emptyList()
+        
+        val selection = "${MediaStore.Audio.Media._ID} IN (${safeIds.joinToString(",")})"
+        val musicList = getMusicListWithSelection(selection, emptyArray())
+        // Preserve order
+        val idToMusic = musicList.associateBy { it.id }
+        return ids.mapNotNull { idToMusic[it] }
+    }
+
     private suspend fun getMusicListWithSelection(selection: String, selectionArgs: Array<String>): List<MusicModel> = withContext(Dispatchers.IO) {
         val musicList = mutableListOf<MusicModel>()
         val projection = arrayOf(

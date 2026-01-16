@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import coil.ImageLoader
@@ -138,11 +141,13 @@ class PlayerViewModel(
             }
             .launchIn(viewModelScope)
 
-        // 监听当前播放的 MediaId 并更新 currentSong
-        playbackRepository.currentMediaId
-            .onEach { mediaId ->
-                val song = state.value.allMusicList.find { it.id == mediaId }
-                if (song != null) {
+        // 监听当前播放的 MediaId 并更新 currentSong (联动 allMusicList)
+        combine(playbackRepository.currentMediaId, _state.map { it.allMusicList }.distinctUntilChanged()) { mediaId, allMusic ->
+            mediaId to allMusic
+        }
+            .onEach { (mediaId, allMusic) ->
+                val song = allMusic.find { it.id == mediaId }
+                if (song != null && song.id != state.value.currentSong?.id) {
                     _state.update { it.copy(
                         currentSong = song,
                         lyrics = null // 重置旧歌词

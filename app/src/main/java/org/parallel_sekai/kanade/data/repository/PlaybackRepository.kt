@@ -10,6 +10,9 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import org.parallel_sekai.kanade.data.model.*
 import org.parallel_sekai.kanade.data.source.IMusicSource
 import org.parallel_sekai.kanade.data.source.local.LocalMusicSource
@@ -22,7 +25,8 @@ import kotlinx.coroutines.flow.launchIn
  */
 open class PlaybackRepository(
     context: Context,
-    private val settingsRepository: SettingsRepository // 注入 SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val scope: kotlinx.coroutines.CoroutineScope // 注入外部作用域（通常是 applicationScope）
 ) {
 
     private val localMusicSource = LocalMusicSource(context)
@@ -79,39 +83,118 @@ open class PlaybackRepository(
     }
 
     init {
+        setupControllerListener()
+        setupSettingsObservers()
+        setupPeriodicTasks()
+    }
+
+    private fun setupControllerListener() {
         controllerFuture.addListener({
             if (controllerFuture.isDone) {
                 val controller = controllerFuture.get()
                 controller.addListener(object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         _isPlaying.value = isPlaying
+                        if (!isPlaying) {
+                            scope.launch {
+                                settingsRepository.updateLastPlayedPosition(controller.currentPosition)
+                            }
+                        }
                     }
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                         _currentMediaId.value = mediaItem?.mediaId
+                        scope.launch {
+                            settingsRepository.updateLastPlayedMediaId(mediaItem?.mediaId)
+                            settingsRepository.updateLastPlayedPosition(controller.currentPosition)
+                        }
                     }
                     override fun onRepeatModeChanged(repeatMode: Int) {
                         _repeatMode.value = repeatMode
+                        scope.launch {
+                            settingsRepository.updateRepeatMode(repeatMode)
+                        }
                     }
                     override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
                         _shuffleModeEnabled.value = shuffleModeEnabled
+                        scope.launch {
+                            settingsRepository.updateShuffleMode(shuffleModeEnabled)
+                        }
                     }
 
                     override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
                         updatePlaylist(controller)
+                        val ids = (0 until controller.mediaItemCount).map {
+                            controller.getMediaItemAt(it).mediaId
+                        }
+                        scope.launch {
+                            settingsRepository.updateLastPlaylistIds(ids)
+                        }
                     }
                 })
                 // 初始化状态
                 _repeatMode.value = controller.repeatMode
                 _shuffleModeEnabled.value = controller.shuffleModeEnabled
+                _currentMediaId.value = controller.currentMediaItem?.mediaId
                 updatePlaylist(controller)
+
+                // 恢复播放状态 (如果当前没有播放内容)
+                if (controller.mediaItemCount == 0) {
+                    scope.launch {
+                        restorePlaybackState(controller)
+                    }
+                }
             }
         }, MoreExecutors.directExecutor())
+    }
 
+    private fun setupSettingsObservers() {
         // 监听 artistParsingSettingsFlow
         settingsRepository.artistParsingSettingsFlow
             .onEach { settings ->
                 _artistJoinString.value = settings.joinString
-            }.launchIn(MainScope())
+            }.launchIn(scope)
+
+        // 监听 excludedFoldersFlow
+        settingsRepository.excludedFoldersFlow
+            .onEach { folders ->
+                localMusicSource.excludedFolders = folders
+            }.launchIn(scope)
+    }
+
+    private fun setupPeriodicTasks() {
+        // 周期性保存播放进度
+        flow {
+            while (true) {
+                emit(Unit)
+                delay(10000) // 每 10 秒保存一次
+            }
+        }.onEach {
+            if (controllerFuture.isDone) {
+                val controller = controllerFuture.get()
+                if (controller.isPlaying) {
+                    settingsRepository.updateLastPlayedPosition(controller.currentPosition)
+                }
+            }
+        }.launchIn(scope)
+    }
+
+    private suspend fun restorePlaybackState(controller: MediaController) {
+        val state = settingsRepository.playbackStateFlow.first()
+        if (state.lastPlaylistIds.isNotEmpty()) {
+            val musicList = localMusicSource.getMusicListByIds(state.lastPlaylistIds)
+            if (musicList.isNotEmpty()) {
+                val mediaItems = musicList.map { music ->
+                    createMediaItem(music)
+                }
+                val startIndex = state.lastPlaylistIds.indexOf(state.lastMediaId).coerceAtLeast(0)
+                controller.setMediaItems(mediaItems, startIndex, state.lastPosition)
+                controller.repeatMode = state.repeatMode
+                controller.shuffleModeEnabled = state.shuffleMode
+                controller.prepare()
+                // 手动更新一次 ID，确保 UI 在恢复后立即响应
+                _currentMediaId.value = controller.currentMediaItem?.mediaId
+            }
+        }
     }
 
     private fun updatePlaylist(controller: MediaController) {
@@ -178,33 +261,37 @@ open class PlaybackRepository(
         if (controllerFuture.isDone) {
             val controller = controllerFuture.get()
             val mediaItems = list.map { music ->
-                val extras = android.os.Bundle().apply {
-                    putString("source_id", music.sourceId)
-                }
-                MediaItem.Builder()
-                    .setMediaId(music.id)
-                    .setUri(music.mediaUri)
-                    .setRequestMetadata(
-                        androidx.media3.common.MediaItem.RequestMetadata.Builder()
-                            .setMediaUri(android.net.Uri.parse(music.mediaUri))
-                            .build()
-                    )
-                    .setMediaMetadata(
-                        MediaMetadata.Builder()
-                            .setTitle(music.title)
-                            .setArtist(music.artists.joinToString(_artistJoinString.value))
-                            .setAlbumTitle(music.album)
-                            .setArtworkUri(android.net.Uri.parse(music.coverUrl))
-                            .setExtras(extras)
-                            .build()
-                    )
-                    .build()
+                createMediaItem(music)
             }
             
             controller.setMediaItems(mediaItems, startIndex, 0L)
             controller.prepare()
             controller.play()
         }
+    }
+
+    private fun createMediaItem(music: MusicModel): MediaItem {
+        val extras = android.os.Bundle().apply {
+            putString("source_id", music.sourceId)
+        }
+        return MediaItem.Builder()
+            .setMediaId(music.id)
+            .setUri(music.mediaUri)
+            .setRequestMetadata(
+                androidx.media3.common.MediaItem.RequestMetadata.Builder()
+                    .setMediaUri(android.net.Uri.parse(music.mediaUri))
+                    .build()
+            )
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(music.title)
+                    .setArtist(music.artists.joinToString(_artistJoinString.value))
+                    .setAlbumTitle(music.album)
+                    .setArtworkUri(android.net.Uri.parse(music.coverUrl))
+                    .setExtras(extras)
+                    .build()
+            )
+            .build()
     }
 
     fun play() {

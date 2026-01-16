@@ -107,6 +107,7 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Lyric-Getter-API & SuperLyricApi integration for system-wide lyric sharing.
 - [x] CI Setup (GitHub Actions).
 - [x] Multi-language support (EN/ZH).
+- [x] Playback state persistence (playlist, track, position, modes).
 - [x] Code structure and file organization optimization.
 - [x] Show full-screen player when clicking media notification.
 - [x] Improved robustness for lyric sharing (SuperLyricApi integration).

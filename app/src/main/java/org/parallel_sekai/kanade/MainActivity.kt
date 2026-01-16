@@ -63,6 +63,8 @@ import androidx.compose.ui.res.stringResource
 import org.parallel_sekai.kanade.ui.theme.Dimens
 import coil.ImageLoader
 import org.parallel_sekai.kanade.data.utils.LyricGetterManager
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 
 sealed class Screen(val route: String, val labelResId: Int, val icon: ImageVector?) {
     object Library : Screen("library", R.string.title_library, Icons.Filled.Home)
@@ -127,7 +129,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val settingsRepository = SettingsRepository(applicationContext)
-        val playbackRepository = PlaybackRepository(applicationContext, settingsRepository)
+        val playbackRepository = PlaybackRepository(
+            context = applicationContext,
+            settingsRepository = settingsRepository,
+            scope = ProcessLifecycleOwner.get().lifecycleScope
+        )
         val imageLoader = ImageLoader(applicationContext)
         val lyricGetterManager = LyricGetterManager(applicationContext)
         

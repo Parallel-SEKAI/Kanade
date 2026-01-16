@@ -25,6 +25,14 @@ data class ArtistParsingSettings(
     val joinString: String = ", "
 )
 
+data class PlaybackState(
+    val repeatMode: Int = 0,
+    val shuffleMode: Boolean = false,
+    val lastMediaId: String? = null,
+    val lastPosition: Long = 0L,
+    val lastPlaylistIds: List<String> = emptyList()
+)
+
 open class SettingsRepository(private val context: Context) {
     private val SHOW_TRANSLATION = booleanPreferencesKey("show_translation")
     private val FONT_SIZE = floatPreferencesKey("font_size")
@@ -40,6 +48,13 @@ open class SettingsRepository(private val context: Context) {
     private val ARTIST_SEPARATORS = stringSetPreferencesKey("artist_separators")
     private val ARTIST_WHITELIST = stringSetPreferencesKey("artist_whitelist")
     private val ARTIST_JOIN_STRING = stringPreferencesKey("artist_join_string")
+
+    // Playback state keys
+    private val REPEAT_MODE = intPreferencesKey("playback_repeat_mode")
+    private val SHUFFLE_MODE = booleanPreferencesKey("playback_shuffle_mode")
+    private val LAST_PLAYED_MEDIA_ID = stringPreferencesKey("last_played_media_id")
+    private val LAST_PLAYED_POSITION = longPreferencesKey("last_played_position")
+    private val LAST_PLAYLIST_IDS = stringPreferencesKey("last_playlist_ids")
 
     open val lyricsSettingsFlow: Flow<LyricsSettings> = context.dataStore.data
         .map { preferences ->
@@ -181,6 +196,51 @@ open class SettingsRepository(private val context: Context) {
     open suspend fun updateLyricSharingEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[LYRIC_SHARING_ENABLED] = enabled
+        }
+    }
+
+    open val playbackStateFlow: Flow<PlaybackState> = context.dataStore.data
+        .map { preferences ->
+            PlaybackState(
+                repeatMode = preferences[REPEAT_MODE] ?: 0,
+                shuffleMode = preferences[SHUFFLE_MODE] ?: false,
+                lastMediaId = preferences[LAST_PLAYED_MEDIA_ID],
+                lastPosition = preferences[LAST_PLAYED_POSITION] ?: 0L,
+                lastPlaylistIds = preferences[LAST_PLAYLIST_IDS]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+            )
+        }
+
+    open suspend fun updateRepeatMode(mode: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[REPEAT_MODE] = mode
+        }
+    }
+
+    open suspend fun updateShuffleMode(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[SHUFFLE_MODE] = enabled
+        }
+    }
+
+    open suspend fun updateLastPlayedMediaId(mediaId: String?) {
+        context.dataStore.edit { preferences ->
+            if (mediaId == null) {
+                preferences.remove(LAST_PLAYED_MEDIA_ID)
+            } else {
+                preferences[LAST_PLAYED_MEDIA_ID] = mediaId
+            }
+        }
+    }
+
+    open suspend fun updateLastPlayedPosition(position: Long) {
+        context.dataStore.edit { preferences ->
+            preferences[LAST_PLAYED_POSITION] = position
+        }
+    }
+
+    open suspend fun updateLastPlaylistIds(ids: List<String>) {
+        context.dataStore.edit { preferences ->
+            preferences[LAST_PLAYLIST_IDS] = ids.joinToString(",")
         }
     }
 }
