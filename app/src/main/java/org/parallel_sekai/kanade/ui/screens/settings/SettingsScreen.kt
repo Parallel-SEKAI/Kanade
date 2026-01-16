@@ -26,7 +26,8 @@ fun SettingsScreen(
     onNavigateToLyricsSettings: () -> Unit,
     onNavigateToExcludedFolders: () -> Unit,
     onNavigateToArtistParsingSettings: () -> Unit,
-    onNavigateToLyricsGetter: () -> Unit
+    onNavigateToLyricsGetterApi: () -> Unit,
+    onNavigateToSuperLyricApi: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     val searchAsPlaylist = viewModel.searchResultAsPlaylist.collectAsState()
@@ -71,7 +72,14 @@ fun SettingsScreen(
                 headlineContent = { Text(stringResource(R.string.pref_lyrics_getter)) },
                 supportingContent = { Text(stringResource(R.string.desc_lyrics_getter)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onNavigateToLyricsGetter)
+                modifier = Modifier.clickable(onClick = onNavigateToLyricsGetterApi)
+            )
+
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.pref_super_lyric)) },
+                supportingContent = { Text(stringResource(R.string.desc_super_lyric)) },
+                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+                modifier = Modifier.clickable(onClick = onNavigateToSuperLyricApi)
             )
 
             ListItem(

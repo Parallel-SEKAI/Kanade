@@ -15,7 +15,7 @@
 - **Architecture**: **MVI (Model-View-Intent)** + Clean Architecture
 - **Concurrency**: Kotlin Coroutines & Flow
 - **Image Loading**: [Coil](https://coil-kt.github.io/coil/)
-- **Minimum SDK**: API 24 (Android 7.0)
+- **Minimum SDK**: API 26 (Android 8.0)
 - **Target SDK**: API 36 (Android 16)
 
 ## 3. File Directory & Responsibilities
@@ -72,6 +72,9 @@ app/src/main/java/org/parallel_sekai/kanade/
 - `PlayerViewModel`: Manages the current playlist, handles playback intents, and fetches/parses lyrics when the track changes.
 - `SearchViewModel`: Handles debounced search queries and manages search history persistence.
 - `LocalMusicSource`: Uses `ContentResolver` to query `MediaStore`. Attempts to find `.lrc` or `.ttml` files in the same directory as the audio file.
+- `LyricGetterManager`: Unified manager for external lyric broadcasting. Supports both `Lyric-Getter-API` and `SuperLyricApi`, providing translations and word-by-word sync to system-wide providers.
+
+## 4. Dependencies & Modules
 
 ## 7. Implementation Logic
 1. **Startup**: `MainActivity` requests media permissions. `PlayerViewModel` initializes and refreshes the library via `PlaybackRepository`.
@@ -101,10 +104,12 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Rich lyric support (LRC/TTML).
 - [x] Search Page implementation with history support.
 - [x] Album detail page optimization (smart artist display, hidden track covers).
-- [x] Lyric-Getter-API integration for system-wide lyric sharing.
+- [x] Lyric-Getter-API & SuperLyricApi integration for system-wide lyric sharing.
 - [x] CI Setup (GitHub Actions).
 - [x] Multi-language support (EN/ZH).
 - [x] Code structure and file organization optimization.
+- [x] Improved robustness for lyric sharing (SuperLyricApi integration).
+- [x] Enhanced permission handling with user feedback.
 
 ## 8. Agent Development Instructions (AI Context)
 - **State Management**: Always use `MutableStateFlow` in ViewModels. UI must be stateless and react only to the `state` flow.

@@ -29,6 +29,7 @@ import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.ui.screens.library.LibraryScreen
@@ -48,7 +49,8 @@ import org.parallel_sekai.kanade.ui.screens.search.SearchScreen
 import org.parallel_sekai.kanade.ui.screens.search.SearchViewModel
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.LyricsSettingsScreen
-import org.parallel_sekai.kanade.ui.screens.settings.LyricsGetterScreen
+import org.parallel_sekai.kanade.ui.screens.settings.LyricsGetterApiScreen
+import org.parallel_sekai.kanade.ui.screens.settings.SuperLyricApiScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ExcludedFoldersScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ArtistParsingSettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
@@ -67,7 +69,8 @@ sealed class Screen(val route: String, val labelResId: Int, val icon: ImageVecto
     object More : Screen("more", R.string.title_more, Icons.Filled.Info)
     object Settings : Screen("settings", R.string.title_settings, null)
     object LyricsSettings : Screen("lyrics_settings", R.string.title_lyrics_settings, null)
-    object LyricsGetter : Screen("lyrics_getter", R.string.pref_lyrics_getter, null)
+    object LyricsGetterApi : Screen("lyrics_getter_api", R.string.pref_lyrics_getter, null)
+    object SuperLyricApi : Screen("super_lyric_api", R.string.pref_super_lyric, null)
     object ExcludedFolders : Screen("excluded_folders", R.string.title_excluded_folders, null)
     object ArtistParsingSettings : Screen("artist_parsing_settings", R.string.title_artist_parsing, null)
 
@@ -126,30 +129,54 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
+                val snackbarHostState = remember { SnackbarHostState() }
 
                 // 记录底部内边距以便播放器定位
                 var bottomPadding by remember { mutableStateOf<Dp>(0.dp) }
 
                 // 权限处理
-                val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    Manifest.permission.READ_MEDIA_AUDIO
-                } else {
-                    Manifest.permission.READ_EXTERNAL_STORAGE
+                val permissions = mutableListOf<String>().apply {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        add(Manifest.permission.READ_MEDIA_AUDIO)
+                        add(Manifest.permission.POST_NOTIFICATIONS)
+                    } else {
+                        add(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    }
                 }
 
-                val permissionState = rememberPermissionState(permission)
+                val multiplePermissionsState = rememberMultiplePermissionsState(permissions)
 
-                LaunchedEffect(permissionState.status.isGranted) {
-                    if (permissionState.status.isGranted) {
+                val audioPermissionGranted = multiplePermissionsState.permissions.any { 
+                    (it.permission == Manifest.permission.READ_MEDIA_AUDIO || it.permission == Manifest.permission.READ_EXTERNAL_STORAGE) && it.status.isGranted 
+                }
+
+                val notificationPermissionDenied = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    multiplePermissionsState.permissions.any { it.permission == Manifest.permission.POST_NOTIFICATIONS && !it.status.isGranted }
+                } else {
+                    false
+                }
+
+                LaunchedEffect(Unit) {
+                    multiplePermissionsState.launchMultiplePermissionRequest()
+                }
+
+                val msgNotificationPermission = stringResource(R.string.msg_grant_notification_permission)
+                LaunchedEffect(notificationPermissionDenied) {
+                    if (notificationPermissionDenied) {
+                        snackbarHostState.showSnackbar(msgNotificationPermission)
+                    }
+                }
+
+                LaunchedEffect(audioPermissionGranted) {
+                    if (audioPermissionGranted) {
                         viewModel.handleIntent(PlayerIntent.RefreshList)
-                    } else {
-                        permissionState.launchPermissionRequest()
                     }
                 }
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
+                        snackbarHost = { SnackbarHost(snackbarHostState) },
                         bottomBar = {
                             // 底部导航栏
                             NavigationBar {
@@ -183,7 +210,7 @@ class MainActivity : ComponentActivity() {
                                 .padding(bottom = bottomPadding)
                         ) {
                             composable(Screen.Library.route) {
-                                if (permissionState.status.isGranted) {
+                                if (audioPermissionGranted) {
                                     LibraryScreen(
                                         state = state,
                                         onSongClick = { song -> viewModel.handleIntent(PlayerIntent.SelectSong(song)) },
@@ -299,7 +326,8 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToLyricsSettings = { navController.navigate(Screen.LyricsSettings.route) },
                                     onNavigateToExcludedFolders = { navController.navigate(Screen.ExcludedFolders.route) },
                                     onNavigateToArtistParsingSettings = { navController.navigate(Screen.ArtistParsingSettings.route) },
-                                    onNavigateToLyricsGetter = { navController.navigate(Screen.LyricsGetter.route) }
+                                    onNavigateToLyricsGetterApi = { navController.navigate(Screen.LyricsGetterApi.route) },
+                                    onNavigateToSuperLyricApi = { navController.navigate(Screen.SuperLyricApi.route) }
                                 )
                             }
                             composable(Screen.LyricsSettings.route) {
@@ -308,8 +336,14 @@ class MainActivity : ComponentActivity() {
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }
-                            composable(Screen.LyricsGetter.route) {
-                                LyricsGetterScreen(
+                            composable(Screen.LyricsGetterApi.route) {
+                                LyricsGetterApiScreen(
+                                    viewModel = settingsViewModel,
+                                    onNavigateBack = { navController.popBackStack() }
+                                )
+                            }
+                            composable(Screen.SuperLyricApi.route) {
+                                SuperLyricApiScreen(
                                     viewModel = settingsViewModel,
                                     onNavigateBack = { navController.popBackStack() }
                                 )

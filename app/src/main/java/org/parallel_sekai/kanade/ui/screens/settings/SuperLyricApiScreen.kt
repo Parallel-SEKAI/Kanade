@@ -15,18 +15,18 @@ import org.parallel_sekai.kanade.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LyricsGetterScreen(
+fun SuperLyricApiScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit
 ) {
     val settings by viewModel.lyricsSettings.collectAsState()
-    val isActivated = viewModel.isLyricsGetterActivated
+    val isSuperLyricActivated = viewModel.isSuperLyricActivated
     val scrollState = rememberScrollState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.pref_lyrics_getter), fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.label_super_lyric_api), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
@@ -44,24 +44,24 @@ fun LyricsGetterScreen(
             SettingsSectionHeader(title = stringResource(R.string.label_activation_status))
             
             ListItem(
-                headlineContent = { Text(stringResource(R.string.label_activation_status)) },
+                headlineContent = { Text(stringResource(R.string.label_super_lyric_api)) },
                 trailingContent = {
                     Text(
-                        text = if (isActivated) stringResource(R.string.status_activated) else stringResource(R.string.status_not_activated),
-                        color = if (isActivated) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        text = if (isSuperLyricActivated) stringResource(R.string.status_activated) else stringResource(R.string.status_not_activated),
+                        color = if (isSuperLyricActivated) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                         fontWeight = FontWeight.Bold
                     )
                 }
             )
 
             Text(
-                text = stringResource(R.string.desc_lyrics_getter_info),
+                text = stringResource(R.string.desc_super_lyric_api_info), // Reuse info desc or create specific one
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(Dimens.PaddingMedium)
             )
 
-            Divider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
 
             SettingsSectionHeader(title = stringResource(R.string.header_general))
 

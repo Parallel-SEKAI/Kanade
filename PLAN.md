@@ -18,5 +18,9 @@
     - [x] Create `data/utils` package and move `LyricSplitter.kt` there.
     - [x] Create `ui/preview` package and move `FakeSettingsRepository`/`FakeSettingsViewModel` there.
     - [x] Update all imports to reflect new structure.
-- [ ] Verification
-    - [ ] Run `./gradlew assembleDebug` to check for compilation errors.
+- [x] Support `SuperLyricApi` for system-wide lyric sharing.
+    - [x] Add `com.github.HChenX:SuperLyricApi:2.4` dependency to `app/build.gradle.kts`.
+    - [x] Update `LyricGetterManager` to support `SuperLyricPush`.
+    - [x] Provide track metadata, translations, and word-by-word data to `SuperLyricApi`.
+- [x] Verification
+    - [x] Run `./gradlew assembleDebug` to check for compilation errors.

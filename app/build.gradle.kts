@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "org.parallel_sekai.kanade"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.google.accompanist.permissions)
     implementation(libs.coil.compose)
     implementation("com.github.xiaowine:Lyric-Getter-Api:6.0.0")
+    implementation("com.github.HChenX:SuperLyricApi:2.4")
 
     implementation(platform(libs.androidx.compose.bom))
     implementation("androidx.compose.material3:material3") // 明确指定

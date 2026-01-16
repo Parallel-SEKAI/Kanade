@@ -27,6 +27,7 @@
     <string name="label_folders">文件夹</string>
     <string name="label_search">搜索</string>
     <string name="msg_grant_permission">请授予存储权限以扫描音乐。</string>
+    <string name="msg_grant_notification_permission">请授予通知权限以显示播放控制。</string>
     <string name="fmt_albums_songs">%1$d 张专辑 • %2$d 首歌</string>
     <string name="fmt_songs_count">%d 首歌</string>
     <string name="fmt_item_info_songs">%1$s • %2$d 首歌</string>
@@ -108,10 +109,15 @@
     <string name="desc_excluded_folders_screen">这些文件夹中的音乐将从您的资料库中隐藏。</string>
     <string name="title_exclude_folder_dialog">排除文件夹</string>
     <string name="msg_no_more_folders">资料库中没有更多可用文件夹。</string>
-    <string name="pref_lyrics_getter">Lyrics Getter</string>
-    <string name="desc_lyrics_getter">配置歌词共享并检查激活状态</string>
+    <string name="pref_lyrics_getter">Lyric Getter API</string>
+    <string name="desc_lyrics_getter">配置 Lyric Getter API 并检查激活状态</string>
+    <string name="pref_super_lyric">Super Lyric API</string>
+    <string name="desc_super_lyric">配置 Super Lyric API 并检查激活状态</string>
     <string name="label_activation_status">激活状态</string>
+    <string name="label_lyric_getter_api">Lyric Getter API</string>
+    <string name="label_super_lyric_api">Super Lyric API</string>
     <string name="status_activated">已激活</string>
     <string name="status_not_activated">未激活</string>
-    <string name="desc_lyrics_getter_info">Lyrics Getter API 允许第三方应用接收并显示来自 Kanade 的歌词。如果显示已激活，则表示系统中存在兼容的 Hook 或模块正在运行。</string>
+    <string name="desc_lyric_getter_api_info">Lyric Getter API 允许第三方应用（如状态栏歌词应用）通过标准广播接收并显示来自 Kanade 的歌词。如果显示已激活，则表示系统中存在兼容的 Hook 或模块正在运行。</string>
+    <string name="desc_super_lyric_api_info">Super Lyric API 是一种高性能的歌词共享协议。它允许 Kanade 将丰富的歌词数据（包括逐词同步和翻译）推送到兼容的系统模块或应用。</string>
 </resources>

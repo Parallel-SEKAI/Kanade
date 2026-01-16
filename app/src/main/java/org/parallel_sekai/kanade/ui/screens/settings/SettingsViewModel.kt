@@ -16,7 +16,9 @@ open class SettingsViewModel(
     private val lyricGetterManager: LyricGetterManager
 ) : ViewModel() {
     
-    val isLyricsGetterActivated: Boolean get() = lyricGetterManager.isActivated
+    val isLyricsGetterActivated: Boolean get() = lyricGetterManager.isLyricGetterActivated
+    val isSuperLyricActivated: Boolean get() = lyricGetterManager.isSuperLyricActivated
+    val isAnyLyricApiActivated: Boolean get() = lyricGetterManager.isActivated
 
     val lyricsSettings: StateFlow<LyricsSettings> = repository.lyricsSettingsFlow
         .stateIn(

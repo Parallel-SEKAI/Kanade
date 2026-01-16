@@ -196,10 +196,28 @@ class PlayerViewModel(
                 if (now - lastLyricUpdateTimestamp >= 200) { // 200ms 节流，避免频繁 IPC
                     lastLyricUpdateTimestamp = now
                     if (state.value.isPlaying && state.value.lyricsSettings.isSharingEnabled) {
-                        val currentLine = state.value.lyricData?.lines?.findLast { it.startTime <= pos }
+                        val lines = state.value.lyricData?.lines
+                        val currentLineIndex = lines?.indexOfLast { it.startTime <= pos } ?: -1
+                        val currentLine = lines?.getOrNull(currentLineIndex)
                         val lyricContent = currentLine?.content ?: ""
+                        
                         if (lyricContent != lastSentLyric) {
-                            lyricGetterManager.sendLyric(lyricContent, state.value.currentSong)
+                            val nextLine = lines?.getOrNull(currentLineIndex + 1)
+                            val delay = if (currentLine != null && nextLine != null) {
+                                nextLine.startTime - currentLine.startTime
+                            } else if (currentLine != null && state.value.duration > 0) {
+                                (state.value.duration - currentLine.startTime).coerceAtLeast(0L)
+                            } else {
+                                0L
+                            }
+
+                            lyricGetterManager.sendLyric(
+                                lyric = lyricContent,
+                                translation = currentLine?.translation,
+                                song = state.value.currentSong,
+                                delay = delay,
+                                words = currentLine?.words ?: emptyList()
+                            )
                             lastSentLyric = lyricContent
                         }
                     }

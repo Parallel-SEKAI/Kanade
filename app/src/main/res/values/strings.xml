@@ -27,6 +27,7 @@
     <string name="label_folders">Folders</string>
     <string name="label_search">Search</string>
     <string name="msg_grant_permission">Please grant storage permission to scan music.</string>
+    <string name="msg_grant_notification_permission">Please grant notification permission to show playback controls.</string>
     <string name="fmt_albums_songs">%1$d albums • %2$d songs</string>
     <string name="fmt_songs_count">%d songs</string>
     <string name="fmt_item_info_songs">%1$s • %2$d songs</string>
@@ -108,10 +109,15 @@
     <string name="desc_excluded_folders_screen">Music in these folders will be hidden from your library.</string>
     <string name="title_exclude_folder_dialog">Exclude Folder</string>
     <string name="msg_no_more_folders">No more folders available in library.</string>
-    <string name="pref_lyrics_getter">Lyrics Getter</string>
-    <string name="desc_lyrics_getter">Configure lyric sharing and check activation status</string>
+    <string name="pref_lyrics_getter">Lyric Getter API</string>
+    <string name="desc_lyrics_getter">Configure Lyric Getter API and check activation status</string>
+    <string name="pref_super_lyric">Super Lyric API</string>
+    <string name="desc_super_lyric">Configure Super Lyric API and check activation status</string>
     <string name="label_activation_status">Activation Status</string>
+    <string name="label_lyric_getter_api">Lyric Getter API</string>
+    <string name="label_super_lyric_api">Super Lyric API</string>
     <string name="status_activated">Activated</string>
     <string name="status_not_activated">Not Activated</string>
-    <string name="desc_lyrics_getter_info">Lyrics Getter API allows third-party apps to receive and display lyrics from Kanade. If activated, it means a compatible hook or module is currently active on your system.</string>
+    <string name="desc_lyric_getter_api_info">Lyric Getter API allows third-party apps (e.g. status bar lyric apps) to receive and display lyrics from Kanade via standard broadcast. If activated, it means a compatible hook or module is currently active on your system.</string>
+    <string name="desc_super_lyric_api_info">Super Lyric API is a high-performance lyric sharing protocol. It allows Kanade to push rich lyric data (including word-by-word sync and translations) to compatible system modules or apps.</string>
 </resources>
