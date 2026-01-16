@@ -55,33 +55,35 @@ import org.parallel_sekai.kanade.ui.screens.player.KanadePlayerContainer
 import org.parallel_sekai.kanade.ui.screens.player.PlayerIntent
 import org.parallel_sekai.kanade.ui.screens.player.PlayerViewModel
 import org.parallel_sekai.kanade.ui.theme.KanadeTheme
+import androidx.compose.ui.res.stringResource
+import org.parallel_sekai.kanade.ui.theme.Dimens
 
-sealed class Screen(val route: String, val label: String, val icon: ImageVector?) {
-    object Library : Screen("library", "Library", Icons.Filled.Home)
-    object Search : Screen("search", "Search", Icons.Filled.Search)
-    object More : Screen("more", "More", Icons.Filled.Info)
-    object Settings : Screen("settings", "Settings", null)
-    object LyricsSettings : Screen("lyrics_settings", "Lyrics Settings", null)
-    object ExcludedFolders : Screen("excluded_folders", "Excluded Folders", null)
-    object ArtistParsingSettings : Screen("artist_parsing_settings", "Artist Parsing Settings", null) // New
+sealed class Screen(val route: String, val labelResId: Int, val icon: ImageVector?) {
+    object Library : Screen("library", R.string.title_library, Icons.Filled.Home)
+    object Search : Screen("search", R.string.label_search, Icons.Filled.Search)
+    object More : Screen("more", R.string.title_more, Icons.Filled.Info)
+    object Settings : Screen("settings", R.string.title_settings, null)
+    object LyricsSettings : Screen("lyrics_settings", R.string.title_lyrics_settings, null)
+    object ExcludedFolders : Screen("excluded_folders", R.string.title_excluded_folders, null)
+    object ArtistParsingSettings : Screen("artist_parsing_settings", R.string.title_artist_parsing, null)
 
     // Library sub-screens
-    object Artists : Screen("artists", "Artists", null)
-    object Albums : Screen("albums", "Albums", null)
-    object Playlists : Screen("playlists", "Playlists", null)
-    object Folders : Screen("folders", "Folders", null)
+    object Artists : Screen("artists", R.string.label_artists, null)
+    object Albums : Screen("albums", R.string.label_albums, null)
+    object Playlists : Screen("playlists", R.string.label_playlists, null)
+    object Folders : Screen("folders", R.string.label_folders, null)
 
     // Detail screens
-    object ArtistDetail : Screen("artist_detail/{name}", "Artist Detail", null) {
+    object ArtistDetail : Screen("artist_detail/{name}", R.string.title_artists, null) {
         fun createRoute(name: String) = "artist_detail/$name"
     }
-    object AlbumDetail : Screen("album_detail/{id}/{title}", "Album Detail", null) {
+    object AlbumDetail : Screen("album_detail/{id}/{title}", R.string.label_albums, null) {
         fun createRoute(id: String, title: String) = "album_detail/$id/$title"
     }
-    object FolderDetail : Screen("folder_detail/{path}", "Folder Detail", null) {
+    object FolderDetail : Screen("folder_detail/{path}", R.string.label_folders, null) {
         fun createRoute(path: String) = "folder_detail/${java.net.URLEncoder.encode(path, "UTF-8")}"
     }
-    object PlaylistDetail : Screen("playlist_detail/{id}/{title}", "Playlist Detail", null) {
+    object PlaylistDetail : Screen("playlist_detail/{id}/{title}", R.string.label_playlists, null) {
         fun createRoute(id: String, title: String) = "playlist_detail/$id/$title"
     }
 }
@@ -139,9 +141,10 @@ class MainActivity : ComponentActivity() {
                             // 底部导航栏
                             NavigationBar {
                                 items.forEach { screen ->
+                                    val label = stringResource(screen.labelResId)
                                     NavigationBarItem(
-                                        icon = { screen.icon?.let { Icon(it, contentDescription = screen.label) } },
-                                        label = { Text(screen.label) },
+                                        icon = { screen.icon?.let { Icon(it, contentDescription = label) } },
+                                        label = { Text(label) },
                                         selected = currentRoute == screen.route,
                                         onClick = {
                                             navController.navigate(screen.route) {
@@ -181,7 +184,7 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.fillMaxSize(),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text(text = "Please grant storage permission to scan music.")
+                                        Text(text = stringResource(R.string.msg_grant_permission))
                                     }
                                 }
                             }

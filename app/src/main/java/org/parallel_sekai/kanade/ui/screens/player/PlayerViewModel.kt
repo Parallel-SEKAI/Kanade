@@ -21,10 +21,11 @@ import androidx.core.graphics.drawable.toBitmap
 import org.parallel_sekai.kanade.data.repository.ArtistParsingSettings
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
-import org.parallel_sekai.kanade.data.source.MusicModel
+import org.parallel_sekai.kanade.data.model.*
+import org.parallel_sekai.kanade.data.parser.*
 import org.parallel_sekai.kanade.data.source.MusicUtils
-import org.parallel_sekai.kanade.data.source.ArtistModel
-import org.parallel_sekai.kanade.ui.screens.player.LyricParserFactory
+import org.parallel_sekai.kanade.ui.theme.PlayerGradientEnd
+import org.parallel_sekai.kanade.ui.theme.PlayerGradientStart
 import org.parallel_sekai.kanade.ui.screens.player.PlayerIntent
 import org.parallel_sekai.kanade.ui.screens.player.PlayerState
 import org.parallel_sekai.kanade.ui.screens.player.RepeatMode

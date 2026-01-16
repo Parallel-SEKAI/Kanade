@@ -23,10 +23,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import org.parallel_sekai.kanade.data.source.MusicModel
+import org.parallel_sekai.kanade.R
+import org.parallel_sekai.kanade.data.model.MusicModel
 import org.parallel_sekai.kanade.ui.screens.library.MusicListDetailScreen
 import org.parallel_sekai.kanade.ui.screens.player.PlayerState
+import org.parallel_sekai.kanade.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,10 +41,10 @@ fun ArtistListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Artists") },
+                title = { Text(stringResource(R.string.title_artists)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 }
             )
@@ -49,17 +52,17 @@ fun ArtistListScreen(
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 80.dp)
+            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
         ) {
             items(state.artistList) { artist ->
                 ListItem(
                     headlineContent = { Text(artist.name) },
-                    supportingContent = { Text("${artist.albumCount} albums • ${artist.songCount} songs") },
+                    supportingContent = { Text(stringResource(R.string.fmt_albums_songs, artist.albumCount, artist.songCount)) },
                     leadingContent = {
                         Icon(
                             Icons.Default.Person,
                             contentDescription = null,
-                            modifier = Modifier.size(40.dp).clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(8.dp)
+                            modifier = Modifier.size(Dimens.IconSizeHuge).clip(RoundedCornerShape(Dimens.CornerRadiusExtraLarge)).background(MaterialTheme.colorScheme.surfaceVariant).padding(Dimens.PaddingSmall)
                         )
                     },
                     modifier = Modifier.clickable { onArtistClick(artist.name) }
@@ -78,7 +81,7 @@ fun ArtistDetailScreen(
 ) {
     MusicListDetailScreen(
         title = name,
-        subtitle = "${state.detailMusicList.size} songs",
+        subtitle = stringResource(R.string.fmt_songs_count, state.detailMusicList.size),
         songs = state.detailMusicList,
         currentSong = state.currentSong,
         artistJoinString = state.artistJoinString,

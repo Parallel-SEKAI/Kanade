@@ -19,11 +19,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import org.parallel_sekai.kanade.data.source.MusicModel
+import org.parallel_sekai.kanade.R
+import org.parallel_sekai.kanade.data.model.*
 import org.parallel_sekai.kanade.ui.screens.player.PlayerState
+import org.parallel_sekai.kanade.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,11 +42,11 @@ fun LibraryScreen(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
             top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
-            bottom = 80.dp // Space for MiniPlayer
+            bottom = Dimens.MiniPlayerBottomPadding // Space for MiniPlayer
         )
     ) {
         item {
-            SectionHeader("Your Library")
+            SectionHeader(stringResource(R.string.header_your_library))
         }
 
         item {
@@ -56,7 +59,7 @@ fun LibraryScreen(
         }
 
         item {
-            SectionHeader("All Music")
+            SectionHeader(stringResource(R.string.header_all_music))
         }
 
                         items(state.allMusicList) { song ->
@@ -77,13 +80,13 @@ fun LibraryScreen(
     onNavigateToFolders: () -> Unit
 ) {
     val items = listOf(
-        LibraryGridItem("Artists", Icons.Default.Person, onNavigateToArtists),
-        LibraryGridItem("Albums", Icons.Default.Album, onNavigateToAlbums),
-        LibraryGridItem("Playlists", Icons.Default.PlaylistPlay, onNavigateToPlaylists),
-        LibraryGridItem("Folders", Icons.Default.Folder, onNavigateToFolders)
+        LibraryGridItem(stringResource(R.string.label_artists), Icons.Default.Person, onNavigateToArtists),
+        LibraryGridItem(stringResource(R.string.label_albums), Icons.Default.Album, onNavigateToAlbums),
+        LibraryGridItem(stringResource(R.string.label_playlists), Icons.Default.PlaylistPlay, onNavigateToPlaylists),
+        LibraryGridItem(stringResource(R.string.label_folders), Icons.Default.Folder, onNavigateToFolders)
     )
 
-    Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+    Column(modifier = Modifier.padding(horizontal = Dimens.PaddingSmall)) {
         Row(modifier = Modifier.fillMaxWidth()) {
             LibraryCard(items[0], Modifier.weight(1f))
             LibraryCard(items[1], Modifier.weight(1f))
@@ -101,17 +104,17 @@ data class LibraryGridItem(val title: String, val icon: ImageVector, val onClick
 fun LibraryCard(item: LibraryGridItem, modifier: Modifier = Modifier) {
     ElevatedCard(
         onClick = item.onClick,
-        modifier = modifier.padding(8.dp),
-        shape = RoundedCornerShape(12.dp)
+        modifier = modifier.padding(Dimens.PaddingSmall),
+        shape = RoundedCornerShape(Dimens.CornerRadiusLarge)
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(Dimens.PaddingMedium)
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.Start
         ) {
             Icon(item.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
             Text(text = item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         }
     }
@@ -123,7 +126,7 @@ fun SectionHeader(title: String) {
         text = title,
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(16.dp)
+        modifier = Modifier.padding(Dimens.PaddingMedium)
     )
 }
 
@@ -140,7 +143,7 @@ fun SongListItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (showCover) {
@@ -148,15 +151,15 @@ fun SongListItem(
                 model = song.coverUrl,
                 contentDescription = null,
                 modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .size(Dimens.AlbumCoverSizeListItem)
+                    .clip(RoundedCornerShape(Dimens.CornerRadiusMedium))
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentScale = ContentScale.Crop
             )
         }
         Column(
             modifier = Modifier
-                .padding(start = if (showCover) 16.dp else 0.dp)
+                .padding(start = if (showCover) Dimens.PaddingMedium else 0.dp)
                 .weight(1f)
         ) {
             val color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
@@ -191,10 +194,10 @@ fun AlbumListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Albums") },
+                title = { Text(stringResource(R.string.label_albums)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 }
             )
@@ -202,17 +205,17 @@ fun AlbumListScreen(
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 80.dp)
+            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
         ) {
             items(state.albumList) { album ->
                 ListItem(
                     headlineContent = { Text(album.title) },
-                    supportingContent = { Text("${album.artists.joinToString(state.artistJoinString)} • ${album.songCount} songs") },
+                    supportingContent = { Text(stringResource(R.string.fmt_item_info_songs, album.artists.joinToString(state.artistJoinString), album.songCount)) },
                     leadingContent = {
                         AsyncImage(
                             model = album.coverUrl,
                             contentDescription = null,
-                            modifier = Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
+                            modifier = Modifier.size(Dimens.AlbumCoverSizeListItem).clip(RoundedCornerShape(Dimens.CornerRadiusMedium)).background(MaterialTheme.colorScheme.surfaceVariant),
                             contentScale = ContentScale.Crop
                         )
                     },
@@ -233,10 +236,10 @@ fun PlaylistListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Playlists") },
+                title = { Text(stringResource(R.string.label_playlists)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 }
             )
@@ -244,17 +247,17 @@ fun PlaylistListScreen(
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 80.dp)
+            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
         ) {
             items(state.playlistList) { playlist ->
                 ListItem(
                     headlineContent = { Text(playlist.name) },
-                    supportingContent = { Text("${playlist.songCount} songs") },
+                    supportingContent = { Text(stringResource(R.string.fmt_songs_count, playlist.songCount)) },
                     leadingContent = {
                         Icon(
                             Icons.Default.PlaylistPlay,
                             contentDescription = null,
-                            modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(8.dp)
+                            modifier = Modifier.size(Dimens.IconSizeHuge).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Dimens.CornerRadiusMedium)).padding(Dimens.PaddingSmall)
                         )
                     },
                     modifier = Modifier.clickable { onPlaylistClick(playlist.id, playlist.name) }
@@ -274,10 +277,10 @@ fun FolderListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Folders") },
+                title = { Text(stringResource(R.string.label_folders)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 }
             )
@@ -285,17 +288,17 @@ fun FolderListScreen(
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 80.dp)
+            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
         ) {
             items(state.folderList) { folder ->
                 ListItem(
                     headlineContent = { Text(folder.name) },
-                    supportingContent = { Text("${folder.path} • ${folder.songCount} songs") },
+                    supportingContent = { Text(stringResource(R.string.fmt_folder_info, folder.path, folder.songCount)) },
                     leadingContent = {
                         Icon(
                             Icons.Default.Folder,
                             contentDescription = null,
-                            modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(8.dp)
+                            modifier = Modifier.size(Dimens.IconSizeHuge).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Dimens.CornerRadiusMedium)).padding(Dimens.PaddingSmall)
                         )
                     },
                     modifier = Modifier.clickable { onFolderClick(folder.path) }
@@ -325,7 +328,7 @@ fun MusicListDetailScreen(
                 title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -336,14 +339,14 @@ fun MusicListDetailScreen(
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 80.dp)
+            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
         ) {
             if (coverUrl != null) {
                 item {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(280.dp)
+                            .height(Dimens.AlbumCoverSizeFullScreenPlayer)
                     ) {
                         AsyncImage(
                             model = coverUrl,
@@ -363,7 +366,7 @@ fun MusicListDetailScreen(
                         Column(
                             modifier = Modifier
                                 .align(Alignment.BottomStart)
-                                .padding(16.dp)
+                                .padding(Dimens.PaddingMedium)
                         ) {
                             Text(
                                 text = title,
@@ -382,7 +385,7 @@ fun MusicListDetailScreen(
                 }
             } else if (subtitle != null) {
                 item {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(Dimens.PaddingMedium)) {
                         Text(
                             text = subtitle,
                             style = MaterialTheme.typography.bodyMedium,

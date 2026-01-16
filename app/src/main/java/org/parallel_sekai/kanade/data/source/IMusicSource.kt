@@ -1,6 +1,7 @@
 package org.parallel_sekai.kanade.data.source
 
 import kotlinx.coroutines.flow.Flow
+import org.parallel_sekai.kanade.data.model.*
 
 /**
  * 核心音源接口，支持本地和脚本化第三方音源
@@ -64,46 +65,6 @@ interface IMusicSource {
      */
     suspend fun getSongsByPlaylist(playlistId: String): List<MusicModel> = emptyList()
 }
-
-data class MusicModel(
-    val id: String,
-    val title: String,
-    val artists: List<String>,
-    val album: String,
-    val coverUrl: String,
-    val mediaUri: String, // 真实的播放 URI
-    val duration: Long,
-    val sourceId: String,
-    val lyrics: String? = null
-)
-
-data class ArtistModel(
-    val id: String,
-    val name: String,
-    val albumCount: Int,
-    val songCount: Int
-)
-
-data class AlbumModel(
-    val id: String,
-    val title: String,
-    val artists: List<String>,
-    val coverUrl: String,
-    val songCount: Int
-)
-
-data class FolderModel(
-    val name: String,
-    val path: String,
-    val songCount: Int
-)
-
-data class PlaylistModel(
-    val id: String,
-    val name: String,
-    val coverUrl: String?,
-    val songCount: Int
-)
 
 /**
  * 脚本注入层逻辑伪代码

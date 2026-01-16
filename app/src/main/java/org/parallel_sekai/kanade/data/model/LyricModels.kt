@@ -1,4 +1,4 @@
-package org.parallel_sekai.kanade.ui.screens.player
+package org.parallel_sekai.kanade.data.model
 
 data class WordInfo(
     val text: String,

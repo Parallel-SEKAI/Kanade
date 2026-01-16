@@ -1,12 +1,10 @@
 package org.parallel_sekai.kanade.ui.screens.player
 
 import androidx.compose.ui.graphics.Color
-import org.parallel_sekai.kanade.data.source.AlbumModel
-import org.parallel_sekai.kanade.data.source.ArtistModel
-import org.parallel_sekai.kanade.data.source.FolderModel
-import org.parallel_sekai.kanade.data.source.PlaylistModel
-import org.parallel_sekai.kanade.data.source.MusicModel
 import org.parallel_sekai.kanade.data.repository.LyricsSettings
+import org.parallel_sekai.kanade.data.model.*
+import org.parallel_sekai.kanade.ui.theme.PlayerGradientEnd
+import org.parallel_sekai.kanade.ui.theme.PlayerGradientStart
 
 enum class RepeatMode {
     OFF, ONE, ALL
@@ -38,7 +36,7 @@ data class PlayerState(
     val lyricData: LyricData? = null,
     val lyricsSettings: LyricsSettings = LyricsSettings(),
     val artistJoinString: String = ", ", // 新增：艺术家拼接字符串
-    val gradientColors: List<Color> = listOf(Color(0xFF1A1A1A), Color(0xFF000000))
+    val gradientColors: List<Color> = listOf(PlayerGradientStart, PlayerGradientEnd)
 )
 
 sealed interface PlayerIntent {

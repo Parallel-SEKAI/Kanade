@@ -13,9 +13,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.parallel_sekai.kanade.data.source.FolderModel
+import org.parallel_sekai.kanade.R
+import org.parallel_sekai.kanade.data.model.FolderModel
+import org.parallel_sekai.kanade.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,10 +33,10 @@ fun ExcludedFoldersScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Excluded Folders", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.title_excluded_folders), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 }
             )
@@ -41,9 +44,9 @@ fun ExcludedFoldersScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                modifier = Modifier.padding(bottom = 80.dp)
+                modifier = Modifier.padding(bottom = Dimens.MiniPlayerBottomPadding)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.desc_add))
             }
         }
     ) { innerPadding ->
@@ -58,7 +61,7 @@ fun ExcludedFoldersScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No folders excluded.",
+                        text = stringResource(R.string.msg_no_folders_excluded),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -66,14 +69,14 @@ fun ExcludedFoldersScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 80.dp) // Added bottom padding
+                    contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding) // Added bottom padding
                 ) {
                     item {
                         Text(
-                            text = "Music in these folders will be hidden from your library.",
+                            text = stringResource(R.string.desc_excluded_folders_screen),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier.padding(Dimens.PaddingMedium)
                         )
                     }
                     items(excludedFolders.toList()) { path ->
@@ -83,7 +86,7 @@ fun ExcludedFoldersScreen(
                             leadingContent = { Icon(Icons.Default.Folder, contentDescription = null) },
                             trailingContent = {
                                 IconButton(onClick = { viewModel.removeExcludedFolder(path) }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Remove")
+                                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.desc_remove))
                                 }
                             }
                         )
@@ -117,10 +120,10 @@ fun AddFolderDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Exclude Folder") },
+        title = { Text(stringResource(R.string.title_exclude_folder_dialog)) },
         text = {
             if (availableFolders.isEmpty()) {
-                Text("No more folders available in library.")
+                Text(stringResource(R.string.msg_no_more_folders))
             } else {
                 LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
                     items(availableFolders) { folder ->
@@ -135,7 +138,7 @@ fun AddFolderDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )

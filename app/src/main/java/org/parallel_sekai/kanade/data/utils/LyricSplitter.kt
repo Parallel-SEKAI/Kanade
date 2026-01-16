@@ -1,5 +1,6 @@
-package org.parallel_sekai.kanade.ui.screens.player
+package org.parallel_sekai.kanade.data.utils
 
+import org.parallel_sekai.kanade.data.model.WordInfo
 import kotlin.math.abs
 
 data class SplitResult(
@@ -109,102 +110,50 @@ object LyricSplitter {
         val wordInfo: WordInfo? = null
     )
 
-        private fun identifyAtoms(content: String, words: List<WordInfo>?): List<Atom> {
-
-            val atoms = mutableListOf<Atom>()
-
-            if (words != null && words.isNotEmpty()) {
-
-                var charIdx = 0
-
-                var wordIdx = 0
-
-                
-
-                while (charIdx < content.length) {
-
-                    if (wordIdx < words.size) {
-
-                        val word = words[wordIdx]
-
-                        val foundIdx = content.indexOf(word.text, charIdx)
-
-                        
-
-                        if (foundIdx != -1) {
-
-                            if (foundIdx > charIdx) {
-
-                                val gapText = content.substring(charIdx, foundIdx)
-
-                                gapText.forEachIndexed { i, c ->
-
-                                    atoms.add(Atom(charIdx + i, c.toString()))
-
-                                }
-
+    private fun identifyAtoms(content: String, words: List<WordInfo>?): List<Atom> {
+        val atoms = mutableListOf<Atom>()
+        if (words != null && words.isNotEmpty()) {
+            var charIdx = 0
+            var wordIdx = 0
+            while (charIdx < content.length) {
+                if (wordIdx < words.size) {
+                    val word = words[wordIdx]
+                    val foundIdx = content.indexOf(word.text, charIdx)
+                    if (foundIdx != -1) {
+                        if (foundIdx > charIdx) {
+                            val gapText = content.substring(charIdx, foundIdx)
+                            gapText.forEachIndexed { i, c ->
+                                atoms.add(Atom(charIdx + i, c.toString()))
                             }
-
-                            atoms.add(Atom(foundIdx, word.text, word))
-
-                            charIdx = foundIdx + word.text.length
-
-                            wordIdx++
-
-                        } else {
-
-                            atoms.add(Atom(charIdx, content[charIdx].toString()))
-
-                            charIdx++
-
                         }
-
+                        atoms.add(Atom(foundIdx, word.text, word))
+                        charIdx = foundIdx + word.text.length
+                        wordIdx++
                     } else {
-
                         atoms.add(Atom(charIdx, content[charIdx].toString()))
-
                         charIdx++
-
                     }
-
+                } else {
+                    atoms.add(Atom(charIdx, content[charIdx].toString()))
+                    charIdx++
                 }
-
-            } else {
-
-                var i = 0
-
-                while (i < content.length) {
-
-                    val char = content[i]
-
-                    if (char.isLetterOrDigit() && char.code < 128) {
-
-                        val start = i
-
-                        while (i < content.length && content[i].isLetterOrDigit() && content[i].code < 128) {
-
-                            i++
-
-                        }
-
-                        atoms.add(Atom(start, content.substring(start, i)))
-
-                    } else {
-
-                        atoms.add(Atom(i, char.toString()))
-
-                        i++
-
-                    }
-
-                }
-
             }
-
-            return atoms
-
+        } else {
+            var i = 0
+            while (i < content.length) {
+                val char = content[i]
+                if (char.isLetterOrDigit() && char.code < 128) {
+                    val start = i
+                    while (i < content.length && content[i].isLetterOrDigit() && content[i].code < 128) {
+                        i++
+                    }
+                    atoms.add(Atom(start, content.substring(start, i)))
+                } else {
+                    atoms.add(Atom(i, char.toString()))
+                    i++
+                }
+            }
         }
-
+        return atoms
     }
-
-    
+}

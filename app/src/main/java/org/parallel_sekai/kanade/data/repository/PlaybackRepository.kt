@@ -10,11 +10,8 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
-import org.parallel_sekai.kanade.data.source.AlbumModel
-import org.parallel_sekai.kanade.data.source.ArtistModel
-import org.parallel_sekai.kanade.data.source.FolderModel
-import org.parallel_sekai.kanade.data.source.PlaylistModel
-import org.parallel_sekai.kanade.data.source.MusicModel
+import org.parallel_sekai.kanade.data.model.*
+import org.parallel_sekai.kanade.data.source.IMusicSource
 import org.parallel_sekai.kanade.data.source.local.LocalMusicSource
 import org.parallel_sekai.kanade.service.KanadePlaybackService
 import kotlinx.coroutines.MainScope

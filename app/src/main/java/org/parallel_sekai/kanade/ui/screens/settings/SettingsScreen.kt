@@ -9,8 +9,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.parallel_sekai.kanade.R
+import org.parallel_sekai.kanade.ui.theme.Dimens
 
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -30,10 +33,10 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.title_settings), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 }
             )
@@ -45,27 +48,27 @@ fun SettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(scrollState)
         ) {
-            SettingsSectionHeader(title = "界面")
+            SettingsSectionHeader(title = stringResource(R.string.header_interface))
             
             ListItem(
-                headlineContent = { Text("歌词界面") },
+                headlineContent = { Text(stringResource(R.string.pref_lyrics_settings)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
                 modifier = Modifier.clickable(onClick = onNavigateToLyricsSettings)
             )
 
             ListItem(
-                headlineContent = { Text("艺术家解析") }, // 新增入口
-                supportingContent = { Text("自定义艺术家分隔符和显示方式") },
+                headlineContent = { Text(stringResource(R.string.pref_artist_parsing)) }, // 新增入口
+                supportingContent = { Text(stringResource(R.string.desc_artist_parsing)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
                 modifier = Modifier.clickable(onClick = onNavigateToArtistParsingSettings)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-            SettingsSectionHeader(title = "常规")
+            Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
+            SettingsSectionHeader(title = stringResource(R.string.header_general))
 
             ListItem(
-                headlineContent = { Text("搜索结果作为播放列表") },
-                supportingContent = { Text("播放搜索结果中的歌曲时，将整个列表设为当前队列") },
+                headlineContent = { Text(stringResource(R.string.pref_search_as_playlist)) },
+                supportingContent = { Text(stringResource(R.string.desc_search_as_playlist)) },
                 trailingContent = {
                     Switch(
                         checked = searchAsPlaylist.value,
@@ -75,14 +78,14 @@ fun SettingsScreen(
             )
 
             ListItem(
-                headlineContent = { Text("排除文件夹") },
-                supportingContent = { Text("隐藏特定文件夹中的音乐") },
+                headlineContent = { Text(stringResource(R.string.pref_excluded_folders)) },
+                supportingContent = { Text(stringResource(R.string.desc_excluded_folders_pref)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
                 modifier = Modifier.clickable(onClick = onNavigateToExcludedFolders)
             )
 
             // 为底部的 MiniPlayer 留出空间
-            Spacer(modifier = Modifier.height(80.dp))
+            Spacer(modifier = Modifier.height(Dimens.MiniPlayerBottomPadding))
         }
     }
 }
@@ -93,6 +96,6 @@ fun SettingsSectionHeader(title: String) {
         text = title,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        modifier = Modifier.padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall)
     )
 }

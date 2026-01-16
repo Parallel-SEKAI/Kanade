@@ -1,7 +1,7 @@
-package org.parallel_sekai.kanade.ui.screens.settings
+package org.parallel_sekai.kanade.ui.preview
 
 import android.content.Context
-import org.parallel_sekai.kanade.data.repository.FakeSettingsRepository
+import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
 
 // This is a fake implementation for preview purposes only
 class FakeSettingsViewModel(context: Context) : SettingsViewModel(FakeSettingsRepository(context)) {

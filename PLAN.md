@@ -5,3 +5,18 @@
     - Grant execution permission to `gradlew`.
     - Run `./gradlew assembleDebug`.
     - Upload APK artifact.
+- [x] Multi-language Support
+    - [x] Extract all hardcoded strings to `strings.xml`.
+    - [x] Create Chinese translation in `values-zh/strings.xml`.
+    - [x] Update UI components to use `stringResource(R.string...)`.
+- [x] Code & File Structure Optimization
+    - [x] Move hardcoded colors to `ui/theme/Color.kt`.
+    - [x] Create `ui/theme/Dimens.kt` for common dimensions.
+    - [x] Replace hardcoded `.dp` values with `Dimens` references.
+    - [x] Create `data/model` package and move all data models (`MusicModel`, `LyricData`, etc.) there.
+    - [x] Create `data/parser` package and move `LyricParsers.kt` there.
+    - [x] Create `data/utils` package and move `LyricSplitter.kt` there.
+    - [x] Create `ui/preview` package and move `FakeSettingsRepository`/`FakeSettingsViewModel` there.
+    - [x] Update all imports to reflect new structure.
+- [ ] Verification
+    - [ ] Run `./gradlew assembleDebug` to check for compilation errors.

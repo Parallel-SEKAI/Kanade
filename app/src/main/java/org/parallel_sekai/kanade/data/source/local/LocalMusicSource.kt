@@ -7,7 +7,8 @@ import android.net.Uri
 import android.provider.MediaStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.parallel_sekai.kanade.data.source.*
+import org.parallel_sekai.kanade.data.model.*
+import org.parallel_sekai.kanade.data.source.IMusicSource
 import org.parallel_sekai.kanade.data.source.MusicUtils
 import java.io.File
 import java.io.InputStream

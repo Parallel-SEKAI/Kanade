@@ -1,0 +1,109 @@
+<resources>
+    <string name="app_name">kanade</string>
+    <string name="various_artists">群星</string>
+
+    <!-- Common -->
+    <string name="desc_back">返回</string>
+    <string name="desc_clear">清除</string>
+    <string name="action_clear">清除</string>
+    <string name="action_cancel">取消</string>
+    <string name="desc_add">添加</string>
+    <string name="desc_remove">移除</string>
+    <string name="desc_delete">删除</string>
+    <string name="error_unknown">未知错误</string>
+
+    <!-- Main Screens -->
+    <string name="title_library">媒体库</string>
+    <string name="title_settings">设置</string>
+    <string name="title_more">更多</string>
+    <string name="label_about">关于</string>
+
+    <!-- Library Screen -->
+    <string name="header_your_library">你的资料库</string>
+    <string name="header_all_music">所有音乐</string>
+    <string name="label_artists">艺术家</string>
+    <string name="label_albums">专辑</string>
+    <string name="label_playlists">播放列表</string>
+    <string name="label_folders">文件夹</string>
+    <string name="label_search">搜索</string>
+    <string name="msg_grant_permission">请授予存储权限以扫描音乐。</string>
+    <string name="fmt_albums_songs">%1$d 张专辑 • %2$d 首歌</string>
+    <string name="fmt_songs_count">%d 首歌</string>
+    <string name="fmt_item_info_songs">%1$s • %2$d 首歌</string>
+    <string name="fmt_folder_info">%1$s • %2$d 首歌</string>
+
+    <!-- Artist Screen -->
+    <string name="title_artists">艺术家</string>
+
+    <!-- Search Screen -->
+    <string name="hint_search_music">搜索音乐...</string>
+    <string name="title_recent_searches">最近搜索</string>
+    <string name="msg_no_results">未找到结果</string>
+
+    <!-- Player -->
+    <string name="header_playing_next">接下来播放</string>
+    <string name="desc_shuffle">随机播放</string>
+    <string name="desc_repeat">循环播放</string>
+    <string name="msg_no_lyrics">无歌词</string>
+
+    <!-- Settings: Main -->
+    <string name="header_interface">界面</string>
+    <string name="header_general">常规</string>
+    <string name="pref_lyrics_settings">歌词设置</string>
+    <string name="pref_artist_parsing">艺术家解析</string>
+    <string name="desc_artist_parsing">自定义艺术家分隔符和显示方式</string>
+    <string name="pref_search_as_playlist">将搜索结果作为播放列表</string>
+    <string name="desc_search_as_playlist">从搜索结果播放时，将整个列表设为当前队列</string>
+    <string name="pref_excluded_folders">排除文件夹</string>
+    <string name="desc_excluded_folders_pref">隐藏特定文件夹中的音乐</string>
+
+    <!-- Settings: Lyrics -->
+    <string name="title_lyrics_settings">歌词设置</string>
+    <string name="label_preview">预览</string>
+    <string name="text_lyric_preview">这是一段歌词预览</string>
+    <string name="header_display">显示</string>
+    <string name="pref_show_translation">显示翻译</string>
+    <string name="pref_blur_inactive">非活跃行模糊</string>
+    <string name="pref_balance_lines">平衡长行</string>
+    <string name="desc_balance_lines">自动切分过长的歌词以使排版更整齐</string>
+    <string name="label_font_size">字体大小 (%d sp)</string>
+    <string name="header_style">样式</string>
+    <string name="label_font_weight">字体粗细 (%1$s - %2$d)</string>
+    <string name="label_alignment">对齐方式</string>
+    
+    <string name="weight_thin">极细</string>
+    <string name="weight_light">细</string>
+    <string name="weight_normal">常规</string>
+    <string name="weight_medium">中等</string>
+    <string name="weight_semi_bold">半粗</string>
+    <string name="weight_bold">加粗</string>
+    <string name="weight_extra_bold">极粗</string>
+
+    <string name="align_left">居左</string>
+    <string name="align_center">居中</string>
+    <string name="align_right">居右</string>
+
+    <!-- Settings: Artist Parsing -->
+    <string name="title_artist_parsing">艺术家解析</string>
+    <string name="header_artist_separators">艺术家分隔符 (优先级)</string>
+    <string name="desc_artist_separators">将使用列表中第一个匹配的分隔符来拆分艺术家。拖动以重新排序。</string>
+    <string name="desc_reorder">排序</string>
+    <string name="label_separator">分隔符</string>
+    <string name="desc_delete_separator">删除分隔符</string>
+    <string name="action_add_separator">添加新分隔符</string>
+    <string name="header_artist_whitelist">艺术家白名单</string>
+    <string name="desc_artist_whitelist">此列表中的艺术家名称即使包含分隔符也不会被拆分。</string>
+    <string name="label_whitelisted_artist">白名单艺术家</string>
+    <string name="desc_delete_whitelist">删除白名单项</string>
+    <string name="action_add_whitelist">添加新白名单项</string>
+    <string name="header_display_join_string">显示连接符</string>
+    <string name="desc_display_join_string">用于连接多个艺术家以进行显示 (例如 艺术家 A &amp; 艺术家 B)。</string>
+    <string name="label_join_string">连接符</string>
+
+    <!-- Settings: Excluded Folders -->
+    <string name="title_excluded_folders">排除文件夹</string>
+    <string name="msg_no_folders_excluded">没有排除的文件夹。</string>
+    <string name="desc_excluded_folders_screen">这些文件夹中的音乐将从您的资料库中隐藏。</string>
+    <string name="title_exclude_folder_dialog">排除文件夹</string>
+    <string name="msg_no_more_folders">资料库中没有更多可用文件夹。</string>
+</resources>

@@ -11,10 +11,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.parallel_sekai.kanade.R
+import org.parallel_sekai.kanade.ui.theme.Dimens
 
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -41,10 +44,10 @@ fun LyricsSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("歌词界面", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.title_lyrics_settings), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 }
             )
@@ -58,25 +61,25 @@ fun LyricsSettingsScreen(
         ) {
             // Preview Section
             Text(
-                text = "预览",
+                text = stringResource(R.string.label_preview),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall)
             )
             
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(12.dp)),
+                    .padding(horizontal = Dimens.PaddingMedium)
+                    .clip(RoundedCornerShape(Dimens.CornerRadiusLarge)),
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(Dimens.PaddingMedium),
                     horizontalAlignment = previewAlignment
                 ) {
                     Text(
-                        text = "这是一段歌词预览",
+                        text = stringResource(R.string.text_lyric_preview),
                         fontSize = settings.fontSize.sp,
                         fontWeight = FontWeight(settings.fontWeight),
                         color = MaterialTheme.colorScheme.onSurface,
@@ -88,18 +91,18 @@ fun LyricsSettingsScreen(
                             fontSize = (settings.fontSize * 0.8f).sp,
                             fontWeight = FontWeight(settings.fontWeight),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp),
+                            modifier = Modifier.padding(top = Dimens.PaddingExtraSmall),
                             textAlign = previewTextAlign
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            SettingsSectionHeader(title = "显示")
+            Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
+            SettingsSectionHeader(title = stringResource(R.string.header_display))
             
             ListItem(
-                headlineContent = { Text("显示翻译") },
+                headlineContent = { Text(stringResource(R.string.pref_show_translation)) },
                 trailingContent = {
                     Switch(
                         checked = settings.showTranslation,
@@ -109,7 +112,7 @@ fun LyricsSettingsScreen(
             )
 
             ListItem(
-                headlineContent = { Text("非活跃行模糊") },
+                headlineContent = { Text(stringResource(R.string.pref_blur_inactive)) },
                 trailingContent = {
                     Switch(
                         checked = settings.blurEnabled,
@@ -119,8 +122,8 @@ fun LyricsSettingsScreen(
             )
 
             ListItem(
-                headlineContent = { Text("平衡长行") },
-                supportingContent = { Text("自动切分过长的歌词以使排版更整齐") },
+                headlineContent = { Text(stringResource(R.string.pref_balance_lines)) },
+                supportingContent = { Text(stringResource(R.string.desc_balance_lines)) },
                 trailingContent = {
                     Switch(
                         checked = settings.balanceLines,
@@ -129,41 +132,41 @@ fun LyricsSettingsScreen(
                 }
             )
             
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "字体大小 (${settings.fontSize.toInt()} sp)", style = MaterialTheme.typography.bodyLarge)
+            Column(modifier = Modifier.padding(Dimens.PaddingMedium)) {
+                Text(text = stringResource(R.string.label_font_size, settings.fontSize.toInt()), style = MaterialTheme.typography.bodyLarge)
                 Slider(
                     value = settings.fontSize,
                     onValueChange = { viewModel.updateFontSize(it) },
                     valueRange = 12f..32f,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = Dimens.PaddingSmall)
                 )
             }
 
-            SettingsSectionHeader(title = "样式")
+            SettingsSectionHeader(title = stringResource(R.string.header_style))
             
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(Dimens.PaddingMedium)) {
                 val weightLabel = when (settings.fontWeight) {
-                    in 100..299 -> "极细"
-                    in 300..399 -> "细"
-                    in 400..499 -> "常规"
-                    in 500..599 -> "中等"
-                    in 600..699 -> "半粗"
-                    in 700..799 -> "加粗"
-                    else -> "极粗"
+                    in 100..299 -> stringResource(R.string.weight_thin)
+                    in 300..399 -> stringResource(R.string.weight_light)
+                    in 400..499 -> stringResource(R.string.weight_normal)
+                    in 500..599 -> stringResource(R.string.weight_medium)
+                    in 600..699 -> stringResource(R.string.weight_semi_bold)
+                    in 700..799 -> stringResource(R.string.weight_bold)
+                    else -> stringResource(R.string.weight_extra_bold)
                 }
-                Text(text = "字体粗细 ($weightLabel - ${settings.fontWeight})", style = MaterialTheme.typography.bodyLarge)
+                Text(text = stringResource(R.string.label_font_weight, weightLabel, settings.fontWeight), style = MaterialTheme.typography.bodyLarge)
                 Slider(
                     value = settings.fontWeight.toFloat(),
                     onValueChange = { viewModel.updateFontWeight(it.toInt()) },
                     valueRange = 100f..900f,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = Dimens.PaddingSmall)
                 )
             }
 
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "对齐方式", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(bottom = 8.dp))
+            Column(modifier = Modifier.padding(Dimens.PaddingMedium)) {
+                Text(text = stringResource(R.string.label_alignment), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(bottom = Dimens.PaddingSmall))
                 
-                val alignments = listOf("居左", "居中", "居右")
+                val alignments = listOf(stringResource(R.string.align_left), stringResource(R.string.align_center), stringResource(R.string.align_right))
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     alignments.forEachIndexed { index, label ->
                         SegmentedButton(
@@ -178,7 +181,7 @@ fun LyricsSettingsScreen(
             }
 
             // 为底部的 MiniPlayer 留出空间
-            Spacer(modifier = Modifier.height(80.dp))
+            Spacer(modifier = Modifier.height(Dimens.MiniPlayerBottomPadding))
         }
     }
 }

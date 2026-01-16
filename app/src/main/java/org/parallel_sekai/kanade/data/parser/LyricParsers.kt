@@ -1,6 +1,7 @@
-package org.parallel_sekai.kanade.ui.screens.player
+package org.parallel_sekai.kanade.data.parser
 
 import android.util.Xml
+import org.parallel_sekai.kanade.data.model.*
 import org.xmlpull.v1.XmlPullParser
 import java.io.StringReader
 

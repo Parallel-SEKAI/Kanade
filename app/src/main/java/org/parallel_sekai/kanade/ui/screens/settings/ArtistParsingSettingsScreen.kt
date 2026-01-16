@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,9 +22,12 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.data.repository.ArtistParsingSettings
 import org.parallel_sekai.kanade.data.repository.SettingsRepository // 导入 SettingsRepository
 import org.parallel_sekai.kanade.ui.theme.KanadeTheme
+import org.parallel_sekai.kanade.ui.theme.Dimens
+import org.parallel_sekai.kanade.ui.preview.FakeSettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -36,10 +40,10 @@ fun ArtistParsingSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Artist Parsing", style = MaterialTheme.typography.titleLarge) },
+                title = { Text(stringResource(R.string.title_artist_parsing), style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 }
             )
@@ -54,16 +58,16 @@ fun ArtistParsingSettingsScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(top = 8.dp)
+                    .padding(horizontal = Dimens.PaddingMedium),
+                contentPadding = PaddingValues(top = Dimens.PaddingSmall)
             ) {
                 item {
-                    SettingsSectionHeader(title = "Artist Separators (Priority Order)")
+                    SettingsSectionHeader(title = stringResource(R.string.header_artist_separators))
                     Text(
-                        text = "Artists will be split using the first matching separator from this list. Drag to reorder.",
+                        text = stringResource(R.string.desc_artist_separators),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
                     )
                 }
                 itemsIndexed(settings.separators, key = { _, separator -> separator }) { index, separator ->
@@ -73,13 +77,13 @@ fun ArtistParsingSettingsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = Dimens.PaddingExtraSmall),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             Icons.Default.DragHandle,
-                            contentDescription = "Reorder",
-                            modifier = Modifier.padding(end = 8.dp)
+                            contentDescription = stringResource(R.string.desc_reorder),
+                            modifier = Modifier.padding(end = Dimens.PaddingSmall)
                         )
                         OutlinedTextField(
                             value = text,
@@ -89,7 +93,7 @@ fun ArtistParsingSettingsScreen(
                                 newList[index] = it
                                 viewModel.updateArtistSeparators(newList)
                             },
-                            label = { Text("Separator") },
+                            label = { Text(stringResource(R.string.label_separator)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None)
@@ -97,27 +101,27 @@ fun ArtistParsingSettingsScreen(
                         IconButton(onClick = {
                             viewModel.updateArtistSeparators(settings.separators.filterIndexed { i, _ -> i != index })
                         }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete Separator")
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.desc_delete_separator))
                         }
                     }
                 }
                 item {
                     Button(
                         onClick = { viewModel.updateArtistSeparators(settings.separators + "") },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingSmall)
                     ) {
-                        Text("Add New Separator")
+                        Text(stringResource(R.string.action_add_separator))
                     }
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    SettingsSectionHeader(title = "Artist Whitelist")
+                    Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
+                    SettingsSectionHeader(title = stringResource(R.string.header_artist_whitelist))
                     Text(
-                        text = "Artist names in this list will not be split, even if they contain separators.",
+                        text = stringResource(R.string.desc_artist_whitelist),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
                     )
                 }
                 itemsIndexed(settings.whitelist, key = { _, item -> item }) { index, item ->
@@ -127,7 +131,7 @@ fun ArtistParsingSettingsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = Dimens.PaddingExtraSmall),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         OutlinedTextField(
@@ -138,7 +142,7 @@ fun ArtistParsingSettingsScreen(
                                 newList[index] = it
                                 viewModel.updateArtistWhitelist(newList)
                             },
-                            label = { Text("Whitelisted Artist") },
+                            label = { Text(stringResource(R.string.label_whitelisted_artist)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
@@ -146,27 +150,27 @@ fun ArtistParsingSettingsScreen(
                         IconButton(onClick = {
                             viewModel.updateArtistWhitelist(settings.whitelist.filterIndexed { i, _ -> i != index })
                         }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete Whitelist Entry")
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.desc_delete_whitelist))
                         }
                     }
                 }
                 item {
                     Button(
                         onClick = { viewModel.updateArtistWhitelist(settings.whitelist + "") },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingSmall)
                     ) {
-                        Text("Add New Whitelist Entry")
+                        Text(stringResource(R.string.action_add_whitelist))
                     }
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    SettingsSectionHeader(title = "Display Join String")
+                    Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
+                    SettingsSectionHeader(title = stringResource(R.string.header_display_join_string))
                     Text(
-                        text = "Used to combine multiple artists for display (e.g., 'Artist A & Artist B').",
+                        text = stringResource(R.string.desc_display_join_string),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
                     )
                 }
                 item {
@@ -179,14 +183,14 @@ fun ArtistParsingSettingsScreen(
                             text = it
                             viewModel.updateArtistJoinString(it)
                         },
-                        label = { Text("Join String") },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        label = { Text(stringResource(R.string.label_join_string)) },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingExtraSmall),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None)
                     )
                 }
                 item {
-                    Spacer(modifier = Modifier.height(80.dp)) // Added spacer
+                    Spacer(modifier = Modifier.height(Dimens.MiniPlayerBottomPadding)) // Added spacer
                 }
             }
         }

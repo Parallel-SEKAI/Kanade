@@ -12,8 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.parallel_sekai.kanade.R
+import org.parallel_sekai.kanade.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,7 +26,7 @@ fun MoreScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("More", fontWeight = FontWeight.Bold) }
+                title = { Text(stringResource(R.string.title_more), fontWeight = FontWeight.Bold) }
             )
         }
     ) { innerPadding ->
@@ -31,19 +34,19 @@ fun MoreScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 80.dp)
+            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
         ) {
             item {
                 MoreItem(
                     icon = Icons.Default.Settings,
-                    label = "Settings",
+                    label = stringResource(R.string.title_settings),
                     onClick = onNavigateToSettings
                 )
             }
             item {
                 MoreItem(
                     icon = Icons.Default.Info,
-                    label = "About",
+                    label = stringResource(R.string.label_about),
                     onClick = { /* TODO */ }
                 )
             }
@@ -61,7 +64,7 @@ fun MoreItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(16.dp),
+            .padding(Dimens.PaddingMedium),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -69,7 +72,7 @@ fun MoreItem(
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(Dimens.SpacingMedium))
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,

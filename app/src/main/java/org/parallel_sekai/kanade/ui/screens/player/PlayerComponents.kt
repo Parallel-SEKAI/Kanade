@@ -59,15 +59,20 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import org.parallel_sekai.kanade.data.repository.LyricsSettings
+import org.parallel_sekai.kanade.data.model.*
+import org.parallel_sekai.kanade.data.utils.*
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
+import org.parallel_sekai.kanade.R
+import org.parallel_sekai.kanade.ui.theme.Dimens
 
 enum class PlayerExpansionValue {
     Collapsed, Expanded
@@ -169,7 +174,7 @@ fun KanadePlayerContainer(
     val configuration = LocalConfiguration.current
     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
     
-    val miniPlayerHeightPx = with(density) { (64.dp + 16.dp).toPx() }
+    val miniPlayerHeightPx = with(density) { (Dimens.MiniPlayerHeight + Dimens.PaddingMedium).toPx() } // MiniPlayer height + vertical padding
     val bottomPaddingPx = with(density) { bottomPadding.toPx() }
     
     val collapsedOffset = screenHeightPx - miniPlayerHeightPx - bottomPaddingPx
@@ -211,7 +216,7 @@ fun KanadePlayerContainer(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(lerp(80.dp, configuration.screenHeightDp.dp, fraction))
+                .height(lerp(Dimens.MiniPlayerHeight + Dimens.PaddingMedium, configuration.screenHeightDp.dp, fraction))
                 .offset { 
                     val backOffset = (predictiveBackProgress * 100.dp.toPx()).roundToInt()
                     IntOffset(0, offsetY.value.roundToInt() + backOffset) 
@@ -298,10 +303,10 @@ private fun MiniPlayerContent(
     Surface(
         onClick = { onIntent(PlayerIntent.Expand) },
         modifier = Modifier
-            .padding(horizontal = 8.dp, vertical = 8.dp)
+            .padding(horizontal = Dimens.PaddingSmall, vertical = Dimens.PaddingSmall)
             .fillMaxWidth()
-            .height(64.dp),
-        shape = RoundedCornerShape(12.dp),
+            .height(Dimens.MiniPlayerHeight),
+        shape = RoundedCornerShape(Dimens.CornerRadiusLarge),
         color = MaterialTheme.colorScheme.surfaceVariant,
         tonalElevation = 0.dp
     ) {
@@ -324,12 +329,12 @@ private fun MiniPlayerContent(
                         .build(),
                     contentDescription = null,
                     modifier = Modifier
-                        .padding(8.dp)
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(4.dp)),
+                        .padding(Dimens.PaddingSmall)
+                        .size(Dimens.AlbumCoverSizeMiniPlayer)
+                        .clip(RoundedCornerShape(Dimens.CornerRadiusSmall)),
                     contentScale = ContentScale.Crop
                 )
-                Column(modifier = Modifier.weight(1f).padding(start = 4.dp)) {
+                Column(modifier = Modifier.weight(1f).padding(start = Dimens.PaddingExtraSmall)) {
                     Text(
                         text = state.currentSong?.title ?: "",
                         style = MaterialTheme.typography.bodyMedium,
@@ -412,9 +417,9 @@ private fun FullScreenContent(
             // 1. 定义三种状态下的基础值
             
             // 小播放器 (Mini)
-            val miniArtSize = 48.dp
-            val miniArtX = 16.dp 
-            val miniArtY = 16.dp 
+            val miniArtSize = Dimens.AlbumCoverSizeMiniPlayer
+            val miniArtX = Dimens.PaddingMedium 
+            val miniArtY = Dimens.PaddingMedium 
             val miniTitleSize = 14.sp
             val miniArtistSize = 12.sp
             val miniTextX = 72.dp
@@ -430,14 +435,14 @@ private fun FullScreenContent(
             val fullCoverTextX = fullCoverArtX
 
             // 全屏歌词/列表模式 (Full Lyric/Playlist)
-            val fullLyricArtSize = 42.dp
-            val fullLyricArtX = 24.dp
-            val fullLyricArtY = 66.dp
+            val fullLyricArtSize = Dimens.IconSizeHuge
+            val fullLyricArtX = Dimens.PaddingLarge
+            val fullLyricArtY = 66.dp // This looks like it's tied to status bar height + padding, keep for now
             val fullLyricTitleSize = 16.sp
             val fullLyricArtistSize = 14.sp
-            val fullLyricTitleY = 64.dp
-            val fullLyricArtistY = 88.dp
-            val fullLyricTextX = 76.dp
+            val fullLyricTitleY = 64.dp // Keep as is, possibly derived from status bar
+            val fullLyricArtistY = 88.dp // Keep as is, possibly derived from status bar
+            val fullLyricTextX = 76.dp // Keep as is, derived from fullLyricArtX + its size + padding
 
             // 2. 首先在全屏的两个模式之间插值，得到“当前全屏目标”
             val fullTargetArtSize = lerp(fullCoverArtSize, fullLyricArtSize, lyricTransitionFraction)
@@ -453,10 +458,10 @@ private fun FullScreenContent(
             val fullTargetTextWidth = lerp(fullCoverArtSize - 48.dp, screenWidth - 160.dp, lyricTransitionFraction)
 
             // 三点按钮位置插值
-            val fullCoverMoreX = screenWidth - fullCoverArtX - 32.dp
-            val fullCoverMoreY = fullCoverTitleY + 4.dp
-            val fullLyricMoreX = screenWidth - 48.dp
-            val fullLyricMoreY = 72.dp
+            val fullCoverMoreX = screenWidth - fullCoverArtX - Dimens.PaddingExtraLarge
+            val fullCoverMoreY = fullCoverTitleY + Dimens.PaddingExtraSmall
+            val fullLyricMoreX = screenWidth - Dimens.AlbumCoverSizeMiniPlayer
+            val fullLyricMoreY = 72.dp // Keep as is for now
 
             val fullTargetMoreX = lerp(fullCoverMoreX, fullLyricMoreX, lyricTransitionFraction)
             val fullTargetMoreY = lerp(fullCoverMoreY, fullLyricMoreY, lyricTransitionFraction)
@@ -465,19 +470,19 @@ private fun FullScreenContent(
             val currentArtSize = lerp(miniArtSize, fullTargetArtSize, expansionFraction)
             val currentArtX = lerp(miniArtX, fullTargetArtX, expansionFraction)
             val currentArtY = lerp(miniArtY, fullTargetArtY, expansionFraction)
-            val currentArtCornerRadius = lerp(4.dp, fullTargetArtCornerRadius, expansionFraction)
+            val currentArtCornerRadius = lerp(Dimens.CornerRadiusSmall, fullTargetArtCornerRadius, expansionFraction)
 
             val currentTitleSize = lerp(miniTitleSize, fullTargetTitleSize, expansionFraction)
             val currentArtistSize = lerp(miniArtistSize, fullTargetArtistSize, expansionFraction)
-            val currentTitleY = lerp(miniArtY + 6.dp, fullTargetTitleY, expansionFraction)
-            val currentArtistY = lerp(miniArtY + 28.dp, fullTargetArtistY, expansionFraction)
+            val currentTitleY = lerp(miniArtY + Dimens.PaddingSmall, fullTargetTitleY, expansionFraction)
+            val currentArtistY = lerp(miniArtY + Dimens.PaddingExtraLarge, fullTargetArtistY, expansionFraction)
             val currentTextX = lerp(miniTextX, fullTargetTextX, expansionFraction)
             
-            val miniTextWidth = screenWidth - miniTextX - 100.dp
+            val miniTextWidth = screenWidth - miniTextX - Dimens.IconSizeGigantic // Mini player right padding for controls (100.dp)
             val currentTextWidth = lerp(miniTextWidth, fullTargetTextWidth, expansionFraction)
 
-            val currentMoreX = lerp(screenWidth - 48.dp, fullTargetMoreX, expansionFraction)
-            val currentMoreY = lerp(miniArtY + 12.dp, fullTargetMoreY, expansionFraction)
+            val currentMoreX = lerp(screenWidth - Dimens.AlbumCoverSizeMiniPlayer, fullTargetMoreX, expansionFraction)
+            val currentMoreY = lerp(miniArtY + Dimens.PaddingLarge, fullTargetMoreY, expansionFraction)
 
             val miniArtistColor = MaterialTheme.colorScheme.onSurfaceVariant
             val fullArtistColor = Color.White.copy(alpha = 0.6f)
@@ -558,7 +563,7 @@ private fun FullScreenContent(
             Box(
                 modifier = Modifier
                     .offset { IntOffset(currentMoreX.roundToPx(), currentMoreY.roundToPx()) }
-                    .size(32.dp)
+                    .size(Dimens.PaddingExtraLarge) // 32.dp
                     .clip(CircleShape)
                     .background(Color.White.copy(alpha = 0.1f * expansionFraction))
                     .clickable { /* More actions */ }
@@ -569,7 +574,7 @@ private fun FullScreenContent(
                     imageVector = Icons.Default.MoreHoriz,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(Dimens.IconSizeMedium) // 20.dp
                 )
             }
 
@@ -585,8 +590,8 @@ private fun FullScreenContent(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(88.dp)
-                        .padding(horizontal = 24.dp),
+                        .height(88.dp) // Keep as is for now, as it's a specific UI element
+                        .padding(horizontal = Dimens.PaddingLarge),
                     contentAlignment = Alignment.Center
                 ) {
                     androidx.compose.animation.AnimatedVisibility(
@@ -597,10 +602,10 @@ private fun FullScreenContent(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(vertical = 12.dp),
+                                .padding(vertical = Dimens.CornerRadiusLarge), // 12.dp
                             contentAlignment = Alignment.Center
                         ) {
-                            Box(modifier = Modifier.size(36.dp, 4.dp).clip(RoundedCornerShape(2.dp)).background(Color.White.copy(alpha = 0.3f)).align(Alignment.TopCenter))
+                            Box(modifier = Modifier.size(Dimens.IconSizeExtraLarge, Dimens.PaddingExtraSmall).clip(RoundedCornerShape(Dimens.CornerRadiusSmall)).background(Color.White.copy(alpha = 0.3f)).align(Alignment.TopCenter)) // 36.dp, 4.dp, 2.dp
                         }
                     }
                 }
@@ -653,11 +658,11 @@ private fun FullScreenContent(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 24.dp)
-                            .padding(horizontal = 24.dp)
+                            .padding(bottom = Dimens.PaddingLarge)
+                            .padding(horizontal = Dimens.PaddingLarge)
                     ) {
                         val dynamicSpacerHeightValue by animateFloatAsState(
-                            targetValue = if (showLyrics || showPlaylist) 0f else 160f,
+                            targetValue = if (showLyrics || showPlaylist) 0f else 160f, // Keep 160f as it is a specific layout value
                             animationSpec = tween(500, easing = FastOutSlowInEasing),
                             label = "LyricAreaHeightAnimation"
                         )
@@ -678,7 +683,7 @@ private fun FullScreenContent(
                 }
                 
                 val bottomSafeMarginValue by animateFloatAsState(
-                    targetValue = if (controlsVisible) 0f else 24f,
+                    targetValue = if (controlsVisible) 0f else Dimens.PaddingLarge.value, // 24.dp
                     animationSpec = tween(500),
                     label = "BottomSafeMarginAnimation"
                 )
@@ -732,14 +737,14 @@ private fun PlayerControlsSection(
     )
 
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.PaddingExtraSmall),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(text = formatTime(state.progress), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
         Text(text = "-" + formatTime(state.duration - state.progress), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
     }
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -747,17 +752,17 @@ private fun PlayerControlsSection(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = { onIntent(PlayerIntent.Previous) }) {
-            Icon(Icons.Default.SkipPrevious, contentDescription = null, modifier = Modifier.size(42.dp), tint = Color.White)
+            Icon(Icons.Default.SkipPrevious, contentDescription = null, modifier = Modifier.size(Dimens.IconSizeSuperHuge), tint = Color.White)
         }
-        IconButton(onClick = { onIntent(PlayerIntent.PlayPause) }, modifier = Modifier.size(84.dp)) {
-            Icon(imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.White)
+        IconButton(onClick = { onIntent(PlayerIntent.PlayPause) }, modifier = Modifier.size(Dimens.IconSizeColossal)) {
+            Icon(imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(Dimens.IconSizeGigantic), tint = Color.White)
         }
         IconButton(onClick = { onIntent(PlayerIntent.Next) }) {
-            Icon(Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(42.dp), tint = Color.White)
+            Icon(Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(Dimens.IconSizeSuperHuge), tint = Color.White)
         }
     }
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(Dimens.SpacingLarge))
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -765,13 +770,13 @@ private fun PlayerControlsSection(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = { onToggleLyrics(!showLyrics) }) {
-            Icon(imageVector = Icons.Default.Lyrics, contentDescription = null, tint = if (showLyrics) Color.White else Color.White.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
+            Icon(imageVector = Icons.Default.Lyrics, contentDescription = null, tint = if (showLyrics) Color.White else Color.White.copy(alpha = 0.5f), modifier = Modifier.size(Dimens.IconSizeMedium))
         }
         IconButton(onClick = { }) {
-            Icon(Icons.Default.Airplay, contentDescription = null, tint = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
+            Icon(Icons.Default.Airplay, contentDescription = null, tint = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(Dimens.IconSizeMedium))
         }
         IconButton(onClick = { onTogglePlaylist(!showPlaylist) }) {
-            Icon(imageVector = Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null, tint = if (showPlaylist) Color.White else Color.White.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
+            Icon(imageVector = Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null, tint = if (showPlaylist) Color.White else Color.White.copy(alpha = 0.5f), modifier = Modifier.size(Dimens.IconSizeMedium))
         }
     }
 }
@@ -802,20 +807,20 @@ fun PlaylistContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = Dimens.PaddingLarge)
         ) {
             // 缩减顶部占位，标题紧贴上方信息
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
             
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+                    .padding(bottom = Dimens.PaddingMedium),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Playing Next",
+                    text = stringResource(R.string.header_playing_next),
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
                     fontWeight = FontWeight.Bold
@@ -825,31 +830,31 @@ fun PlaylistContent(
                     IconButton(
                         onClick = { onIntent(PlayerIntent.ToggleShuffle) },
                         modifier = Modifier
-                            .padding(horizontal = 4.dp)
-                            .size(36.dp)
+                            .padding(horizontal = Dimens.PaddingExtraSmall)
+                            .size(Dimens.IconSizeExtraLarge)
                             .background(
                                 if (state.shuffleModeEnabled) Color.White.copy(alpha = 0.2f) 
                                 else Color.Transparent,
-                                RoundedCornerShape(8.dp)
+                                RoundedCornerShape(Dimens.PaddingSmall)
                             )
                     ) {
                         Icon(
                             imageVector = Icons.Default.Shuffle,
-                            contentDescription = "Shuffle",
+                            contentDescription = stringResource(R.string.desc_shuffle),
                             tint = if (state.shuffleModeEnabled) Color.White else Color.White.copy(alpha = 0.5f),
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(Dimens.IconSizeMedium)
                         )
                     }
 
                     IconButton(
                         onClick = { onIntent(PlayerIntent.ToggleRepeat) },
                         modifier = Modifier
-                            .padding(horizontal = 4.dp)
-                            .size(36.dp)
+                            .padding(horizontal = Dimens.PaddingExtraSmall)
+                            .size(Dimens.IconSizeExtraLarge)
                             .background(
                                 if (state.repeatMode != RepeatMode.OFF) Color.White.copy(alpha = 0.2f) 
                                 else Color.Transparent,
-                                RoundedCornerShape(8.dp)
+                                RoundedCornerShape(Dimens.PaddingSmall)
                             )
                     ) {
                         Icon(
@@ -857,9 +862,9 @@ fun PlaylistContent(
                                 RepeatMode.ONE -> Icons.Default.RepeatOne
                                 else -> Icons.Default.Repeat
                             },
-                            contentDescription = "Repeat",
+                            contentDescription = stringResource(R.string.desc_repeat),
                             tint = if (state.repeatMode != RepeatMode.OFF) Color.White else Color.White.copy(alpha = 0.5f),
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(Dimens.IconSizeMedium)
                         )
                     }
                 }
@@ -889,20 +894,20 @@ fun PlaylistContent(
                     Surface(
                         onClick = { onIntent(PlayerIntent.SelectSong(music)) },
                         color = if (isCurrent) Color.White.copy(alpha = 0.1f) else Color.Transparent,
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                        shape = RoundedCornerShape(Dimens.PaddingSmall),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingExtraSmall)
                     ) {
                         Row(
-                            modifier = Modifier.padding(8.dp),
+                            modifier = Modifier.padding(Dimens.PaddingSmall),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             AsyncImage(
                                 model = music.coverUrl,
                                 contentDescription = null,
-                                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(4.dp)),
+                                modifier = Modifier.size(Dimens.AlbumCoverSizeMiniPlayer).clip(RoundedCornerShape(Dimens.CornerRadiusSmall)),
                                 contentScale = ContentScale.Crop
                             )
-                            Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                            Column(modifier = Modifier.weight(1f).padding(horizontal = Dimens.CornerRadiusLarge)) { // 12.dp
                                 Text(
                                     text = music.title,
                                     style = MaterialTheme.typography.bodyLarge,
@@ -922,7 +927,7 @@ fun PlaylistContent(
                                 imageVector = Icons.Default.DragHandle,
                                 contentDescription = null,
                                 tint = Color.White.copy(alpha = 0.3f),
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(Dimens.IconSizeMedium)
                             )
                         }
                     }
@@ -1054,7 +1059,7 @@ fun BalancedLyricView(
     
     BoxWithConstraints(modifier = modifier) {
         val maxWidthPx = with(density) { maxWidth.toPx() }
-        val horizontalPaddingPx = with(density) { 64.dp.toPx() } // 32.dp * 2
+        val horizontalPaddingPx = with(density) { (Dimens.LyricHorizontalPadding * 2).toPx() } // 32.dp * 2
         val availableWidthPx = (maxWidthPx - horizontalPaddingPx).coerceAtLeast(0f)
         
         // 缓存计算结果
@@ -1078,7 +1083,7 @@ fun BalancedLyricView(
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = horizontalAlignment,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(Dimens.LyricLineSpacing)
         ) {
             if (splitResult != null) {
                 RenderLyricLine(
@@ -1114,7 +1119,7 @@ fun BalancedLyricView(
                     style = translationTextStyle,
                     color = Color.White.copy(alpha = 0.8f),
                     textAlign = textAlign,
-                    modifier = Modifier.padding(top = 4.dp).padding(horizontal = 32.dp)
+                    modifier = Modifier.padding(top = Dimens.PaddingExtraSmall).padding(horizontal = Dimens.LyricHorizontalPadding)
                 )
             }
         }
@@ -1136,7 +1141,7 @@ private fun RenderLyricLine(
             currentProgress = currentProgress,
             isActive = isActive,
             textStyle = textStyle.copy(textAlign = textAlign),
-            modifier = Modifier.padding(horizontal = 32.dp)
+            modifier = Modifier.padding(horizontal = Dimens.LyricHorizontalPadding)
         )
     } else {
         Text(
@@ -1144,7 +1149,7 @@ private fun RenderLyricLine(
             style = textStyle,
             color = Color.White,
             textAlign = textAlign,
-            modifier = Modifier.padding(horizontal = 32.dp)
+            modifier = Modifier.padding(horizontal = Dimens.LyricHorizontalPadding)
         )
     }
 }
@@ -1219,7 +1224,7 @@ fun LyricContent(
     ) {
         if (lyricData == null || lyricData.lines.isEmpty()) {
             Text(
-                text = "No Lyrics",
+                text = stringResource(R.string.msg_no_lyrics),
                 style = MaterialTheme.typography.headlineMedium,
                 color = Color.White.copy(alpha = 0.4f),
                 modifier = Modifier.align(Alignment.Center)
@@ -1228,7 +1233,7 @@ fun LyricContent(
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 40.dp, bottom = 500.dp),
+                contentPadding = PaddingValues(top = 40.dp, bottom = 500.dp), // Keep 40.dp and 500.dp for now, these seem specific layout values
                 horizontalAlignment = lyricHorizontalAlignment
             ) {
                 itemsIndexed(lyricData.lines) { index, line ->
@@ -1248,7 +1253,7 @@ fun LyricContent(
                     )
                     
                     val targetBlur = if (settings.blurEnabled && (isActive || isDragged).not()) {
-                        (distance.toFloat() * 4f).dp.coerceAtMost(16.dp)
+                        (distance.toFloat() * 4f).dp.coerceAtMost(Dimens.PaddingMedium) // 16.dp
                     } else 0.dp
                     
                     val blurRadius by animateDpAsState(
@@ -1269,7 +1274,7 @@ fun LyricContent(
                             horizontalAlignment = lyricHorizontalAlignment,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 20.dp)
+                                .padding(vertical = 20.dp) // Keep 20.dp for now, seems specific
                                 .blur(blurRadius)
                                 .graphicsLayer {
                                     this.alpha = alpha

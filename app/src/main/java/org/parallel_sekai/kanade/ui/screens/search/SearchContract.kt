@@ -1,6 +1,6 @@
 package org.parallel_sekai.kanade.ui.screens.search
 
-import org.parallel_sekai.kanade.data.source.MusicModel
+import org.parallel_sekai.kanade.data.model.MusicModel
 
 sealed interface SearchIntent {
     data class UpdateQuery(val query: String) : SearchIntent
@@ -21,5 +21,5 @@ data class SearchState(
 )
 
 sealed interface SearchEffect {
-    data class ShowError(val message: String) : SearchEffect
+    data class ShowError(val messageResId: Int, val formatArgs: List<Any> = emptyList()) : SearchEffect
 }

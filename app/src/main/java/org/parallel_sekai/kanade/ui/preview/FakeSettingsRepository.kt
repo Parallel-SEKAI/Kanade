@@ -1,9 +1,10 @@
-package org.parallel_sekai.kanade.data.repository
+package org.parallel_sekai.kanade.ui.preview
 
 import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.parallel_sekai.kanade.data.repository.*
 
 // This is a fake implementation for preview purposes only
 class FakeSettingsRepository(context: Context) : SettingsRepository(context) {

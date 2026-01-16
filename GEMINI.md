@@ -6,6 +6,7 @@
 - **Background Playback**: Leveraging Android Media3 to ensure seamless audio sessions across the system.
 - **Modern UI/UX**: A reactive interface built with Jetpack Compose following Material 3 guidelines, featuring a floating MiniPlayer, a fullscreen immersive player with rich lyric sync and an Apple Music-style playlist (Up Next) view.
 - **Search Capability**: Integrated search for local music with history support and debounced querying.
+- **Multi-language Support**: Full internationalization support, currently including English and Simplified Chinese.
 
 ## 2. Tech Stack
 - **Language**: [Kotlin](https://kotlinlang.org/) (JVM 17)
@@ -21,31 +22,27 @@
 ```text
 app/src/main/java/org/parallel_sekai/kanade/
 ├── data/
+│   ├── model/                  # Data classes for music, lyrics, etc.
+│   ├── parser/                 # Lyric parsers (LRC, TTML)
 │   ├── repository/
 │   │   ├── PlaybackRepository.kt   # Bridges UI with Media3; manages playback lifecycle and state flows
 │   │   └── SettingsRepository.kt   # Manages user preferences and search history
-│   └── source/
-│       ├── IMusicSource.kt         # Interface for music data providers
-│       └── local/
-│           └── LocalMusicSource.kt # MediaStore implementation; handles file scanning and lyric fetching
+│   ├── source/
+│   │   ├── IMusicSource.kt         # Interface for music data providers
+│   │   └── local/
+│   │       └── LocalMusicSource.kt # MediaStore implementation; handles file scanning and lyric fetching
+│   └── utils/                  # Shared utilities (LyricSplitter, etc.)
 ├── service/
 │   └── KanadePlaybackService.kt    # Media3 MediaSessionService for robust background playback
 ├── ui/
+│   ├── preview/                # Fake implementations for Compose Previews
 │   ├── screens/
 │   │   ├── library/                # UI for browsing music library
 │   │   ├── search/                 # UI and logic for searching music
-│   │   │   ├── SearchContract.kt   # MVI Contract for search
-│   │   │   ├── SearchViewModel.kt  # ViewModel for search logic
-│   │   │   └── SearchScreen.kt     # UI for search screen
 │   │   ├── more/                   # More screen with settings entry
 │   │   ├── settings/               # Settings screen
 │   │   └── player/                 # MVI components for player and lyrics
-│   │       ├── LyricModels.kt      # Data classes for lyrics, lines, and words
-│   │       ├── LyricParsers.kt     # LRC and TTML parser implementations
-│   │       ├── PlayerContract.kt   # Defines MVI State, Intent, and Effect
-│   │       ├── PlayerViewModel.kt  # Orchestrates logic, playback, and lyric syncing
-│   │       └── PlayerComponents.kt # Stateless UI components (MiniPlayer, LyricView, etc.)
-│   └── theme/                      # Material 3 Design system (Colors, Typography, Theme)
+│   └── theme/                      # Material 3 Design system (Colors, Typography, Theme, Dimens)
 └── MainActivity.kt                 # Entry point, permission handling, and navigation
 ```
 
@@ -66,6 +63,7 @@ app/src/main/java/org/parallel_sekai/kanade/
     - **Intent**: Sealed interface `PlayerIntent` representing user actions.
     - **Effect**: One-time events (e.g., `ShowError`) via `SharedFlow`.
 - **Clean Architecture**: Strict separation between Data (`IMusicSource`), Domain/Logic (`PlaybackRepository`), and Presentation (`ViewModel`/`Compose`).
+- **Resources**: Avoid hardcoded strings and dimensions. Use `stringResource()` and `Dimens` object.
 
 ## 6. Core Classes & Functions Index
 - `PlaybackRepository`: The source of truth for playback state. Exposes `isPlaying`, `currentMediaId`, and a high-frequency `progressFlow` for smooth UI updates.
@@ -104,6 +102,8 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Search Page implementation with history support.
 - [x] Album detail page optimization (smart artist display, hidden track covers).
 - [x] CI Setup (GitHub Actions).
+- [x] Multi-language support (EN/ZH).
+- [x] Code structure and file organization optimization.
 
 ## 8. Agent Development Instructions (AI Context)
 - **State Management**: Always use `MutableStateFlow` in ViewModels. UI must be stateless and react only to the `state` flow.
@@ -111,8 +111,9 @@ app/src/main/java/org/parallel_sekai/kanade/
 - **Repository Pattern**: Never interact with `MediaController` directly in the UI. All actions must be encapsulated in `PlaybackRepository`.
 - **UI Consistency**: 
     - Use `MaterialTheme.colorScheme` and `MaterialTheme.typography`.
+    - Use `Dimens` object for all dimensions.
     - MiniPlayer must maintain transparency and rounded corners as defined in `PlayerComponents.kt`.
 - **Testing**:
     - Logic: `app/src/test` (JUnit).
     - UI: `app/src/androidTest` (Compose Test Rule).
-- **Verification**: Always run `./gradlew installDebug` or the project-specific build command to verify changes on a device/emulator.
+- **Verification**: Always run `./gradlew assembleDebug` to verify changes.

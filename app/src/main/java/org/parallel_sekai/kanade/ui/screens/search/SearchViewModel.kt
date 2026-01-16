@@ -7,7 +7,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
-import org.parallel_sekai.kanade.data.source.MusicModel
+import org.parallel_sekai.kanade.data.model.MusicModel
+import org.parallel_sekai.kanade.R
 
 @OptIn(FlowPreview::class)
 class SearchViewModel(
@@ -99,7 +100,7 @@ class SearchViewModel(
             _state.update { it.copy(searchResults = results, isLoading = false) }
         } catch (e: Exception) {
             _state.update { it.copy(isLoading = false) }
-            _effect.emit(SearchEffect.ShowError(e.message ?: "Unknown error"))
+            _effect.emit(SearchEffect.ShowError(R.string.error_unknown))
         }
     }
 }
