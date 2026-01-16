@@ -826,47 +826,25 @@ fun PlaylistContent(
                     fontWeight = FontWeight.Bold
                 )
                 
-                Row {
-                    IconButton(
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    PlaylistModeButton(
+                        icon = Icons.Default.Shuffle,
+                        isActive = state.shuffleModeEnabled,
                         onClick = { onIntent(PlayerIntent.ToggleShuffle) },
-                        modifier = Modifier
-                            .padding(horizontal = Dimens.PaddingExtraSmall)
-                            .size(Dimens.IconSizeExtraLarge)
-                            .background(
-                                if (state.shuffleModeEnabled) Color.White.copy(alpha = 0.2f) 
-                                else Color.Transparent,
-                                RoundedCornerShape(Dimens.PaddingSmall)
-                            )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Shuffle,
-                            contentDescription = stringResource(R.string.desc_shuffle),
-                            tint = if (state.shuffleModeEnabled) Color.White else Color.White.copy(alpha = 0.5f),
-                            modifier = Modifier.size(Dimens.IconSizeMedium)
-                        )
-                    }
+                        contentDescription = stringResource(R.string.desc_shuffle)
+                    )
+                    
+                    Spacer(modifier = Modifier.width(Dimens.SpacingExtraSmall))
 
-                    IconButton(
+                    PlaylistModeButton(
+                        icon = when (state.repeatMode) {
+                            RepeatMode.ONE -> Icons.Default.RepeatOne
+                            else -> Icons.Default.Repeat
+                        },
+                        isActive = state.repeatMode != RepeatMode.OFF,
                         onClick = { onIntent(PlayerIntent.ToggleRepeat) },
-                        modifier = Modifier
-                            .padding(horizontal = Dimens.PaddingExtraSmall)
-                            .size(Dimens.IconSizeExtraLarge)
-                            .background(
-                                if (state.repeatMode != RepeatMode.OFF) Color.White.copy(alpha = 0.2f) 
-                                else Color.Transparent,
-                                RoundedCornerShape(Dimens.PaddingSmall)
-                            )
-                    ) {
-                        Icon(
-                            imageVector = when (state.repeatMode) {
-                                RepeatMode.ONE -> Icons.Default.RepeatOne
-                                else -> Icons.Default.Repeat
-                            },
-                            contentDescription = stringResource(R.string.desc_repeat),
-                            tint = if (state.repeatMode != RepeatMode.OFF) Color.White else Color.White.copy(alpha = 0.5f),
-                            modifier = Modifier.size(Dimens.IconSizeMedium)
-                        )
-                    }
+                        contentDescription = stringResource(R.string.desc_repeat)
+                    )
                 }
             }
 
@@ -1306,6 +1284,30 @@ fun LyricContent(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PlaylistModeButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isActive: Boolean,
+    onClick: () -> Unit,
+    contentDescription: String?
+) {
+    Surface(
+        onClick = onClick,
+        color = if (isActive) Color.White.copy(alpha = 0.2f) else Color.Transparent,
+        shape = RoundedCornerShape(Dimens.CornerRadiusLarge),
+        modifier = Modifier.size(Dimens.IconSizeHuge)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                tint = if (isActive) Color.White else Color.White.copy(alpha = 0.5f),
+                modifier = Modifier.size(Dimens.IconSizeMedium)
+            )
         }
     }
 }

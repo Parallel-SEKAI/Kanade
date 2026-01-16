@@ -1,21 +1,20 @@
-# Plan: Show full-screen player from media notification
+# Plan: Redesign Playlist Mode Buttons in Full-screen Player
 
 ## Goal
-Show the full-screen player when the user clicks on the media notification.
+Redesign the shuffle and repeat mode buttons in the playlist view of the full-screen player to be more visually appealing and consistent with Material 3 principles.
 
 ## Tasks
-- [ ] **Task 1: Update AndroidManifest.xml**
-    - Set `android:launchMode="singleTop"` for `MainActivity` to ensure we can handle new intents efficiently.
-- [ ] **Task 2: Update KanadePlaybackService.kt**
-    - Create a `PendingIntent` targeting `MainActivity` with an extra `EXTRA_EXPAND_PLAYER = true`.
-    - Set this `PendingIntent` as the `sessionActivity` for the `MediaSession`.
-- [ ] **Task 3: Update MainActivity.kt**
-    - Define a constant for `EXTRA_EXPAND_PLAYER`.
-    - Create a function to check the intent and trigger `PlayerIntent.Expand` if needed.
-    - Call this function in `onCreate` and override `onNewIntent` to call it as well.
+- [ ] **Task 1: Locate and Analyze current implementation**
+    - [x] Identified `PlaylistContent` in `app/src/main/java/org/parallel_sekai/kanade/ui/screens/player/PlayerComponents.kt`.
+- [ ] **Task 2: Design and Implement new Mode Buttons**
+    - Replace the existing `IconButton` implementations with a more refined design.
+    - Use `Surface` or `Box` with background and click handling for better control over the visual state.
+    - Ensure active states (shuffle on, repeat modes) are clearly distinguished.
+- [ ] **Task 3: Verification**
+    - Build the project to ensure no compilation errors.
+    - (Manual) Verify the new UI in the app.
 
-## Verification
-- Start playback.
-- Go to home screen or another app.
-- Click the media notification.
-- The app should open and automatically expand the player to full-screen.
+## Proposed Design Changes
+- Use a pill-shaped or rounded-rect container for the buttons.
+- Increase the contrast for active states.
+- Ensure the icons and backgrounds harmonize with the dark, immersive player UI.

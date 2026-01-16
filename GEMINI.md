@@ -110,6 +110,7 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Playback state persistence (playlist, track, position, modes).
 - [x] Code structure and file organization optimization.
 - [x] Show full-screen player when clicking media notification.
+- [x] Redesigned playlist mode buttons in full-screen player for better UI consistency.
 - [x] Improved robustness for lyric sharing (SuperLyricApi integration).
 - [x] Enhanced permission handling with user feedback.
 
