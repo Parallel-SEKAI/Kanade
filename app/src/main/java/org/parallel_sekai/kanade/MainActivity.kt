@@ -1,6 +1,7 @@
 package org.parallel_sekai.kanade
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -102,6 +103,23 @@ val items = listOf(
 )
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        const val EXTRA_EXPAND_PLAYER = "extra_expand_player"
+    }
+
+    private lateinit var playerViewModel: PlayerViewModel
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent) {
+        if (intent.getBooleanExtra(EXTRA_EXPAND_PLAYER, false)) {
+            playerViewModel.handleIntent(PlayerIntent.Expand)
+        }
+    }
+
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,7 +131,7 @@ class MainActivity : ComponentActivity() {
         val imageLoader = ImageLoader(applicationContext)
         val lyricGetterManager = LyricGetterManager(applicationContext)
         
-        val viewModel = PlayerViewModel(
+        playerViewModel = PlayerViewModel(
             playbackRepository = playbackRepository,
             settingsRepository = settingsRepository,
             applicationContext = applicationContext,
@@ -123,9 +141,11 @@ class MainActivity : ComponentActivity() {
         val settingsViewModel = SettingsViewModel(settingsRepository, lyricGetterManager)
         val searchViewModel = SearchViewModel(playbackRepository, settingsRepository)
 
+        handleIntent(intent)
+
         setContent {
             KanadeTheme {
-                val state by viewModel.state.collectAsState()
+                val state by playerViewModel.state.collectAsState()
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
@@ -169,7 +189,7 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(audioPermissionGranted) {
                     if (audioPermissionGranted) {
-                        viewModel.handleIntent(PlayerIntent.RefreshList)
+                        playerViewModel.handleIntent(PlayerIntent.RefreshList)
                     }
                 }
 
@@ -213,7 +233,7 @@ class MainActivity : ComponentActivity() {
                                 if (audioPermissionGranted) {
                                     LibraryScreen(
                                         state = state,
-                                        onSongClick = { song -> viewModel.handleIntent(PlayerIntent.SelectSong(song)) },
+                                        onSongClick = { song -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song)) },
                                         onNavigateToArtists = { navController.navigate(Screen.Artists.route) },
                                         onNavigateToAlbums = { navController.navigate(Screen.Albums.route) },
                                         onNavigateToPlaylists = { navController.navigate(Screen.Playlists.route) },
@@ -233,7 +253,7 @@ class MainActivity : ComponentActivity() {
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
                                     onArtistClick = { name ->
-                                        viewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.ARTIST, name))
+                                        playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.ARTIST, name))
                                         navController.navigate(Screen.ArtistDetail.createRoute(name))
                                     }
                                 )
@@ -243,7 +263,7 @@ class MainActivity : ComponentActivity() {
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
                                     onAlbumClick = { id, title ->
-                                        viewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.ALBUM, id))
+                                        playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.ALBUM, id))
                                         navController.navigate(Screen.AlbumDetail.createRoute(id, title))
                                     }
                                 )
@@ -253,7 +273,7 @@ class MainActivity : ComponentActivity() {
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
                                     onPlaylistClick = { id, title ->
-                                        viewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.PLAYLIST, id))
+                                        playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.PLAYLIST, id))
                                         navController.navigate(Screen.PlaylistDetail.createRoute(id, title))
                                     }
                                 )
@@ -263,7 +283,7 @@ class MainActivity : ComponentActivity() {
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
                                     onFolderClick = { path ->
-                                        viewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.FOLDER, path))
+                                        playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.FOLDER, path))
                                         navController.navigate(Screen.FolderDetail.createRoute(path))
                                     }
                                 )
@@ -274,7 +294,7 @@ class MainActivity : ComponentActivity() {
                                     name = name,
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
-                                    onSongClick = { song, list -> viewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
+                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
                                 )
                             }
                             composable(Screen.AlbumDetail.route) { backStackEntry ->
@@ -285,7 +305,7 @@ class MainActivity : ComponentActivity() {
                                     title = title,
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
-                                    onSongClick = { song, list -> viewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
+                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
                                 )
                             }
                             composable(Screen.PlaylistDetail.route) { backStackEntry ->
@@ -296,7 +316,7 @@ class MainActivity : ComponentActivity() {
                                     title = title,
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
-                                    onSongClick = { song, list -> viewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
+                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
                                 )
                             }
                             composable(Screen.FolderDetail.route) { backStackEntry ->
@@ -305,7 +325,7 @@ class MainActivity : ComponentActivity() {
                                     path = path,
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
-                                    onSongClick = { song, list -> viewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
+                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
                                 )
                             }
                             composable(Screen.Search.route) {
@@ -367,7 +387,7 @@ class MainActivity : ComponentActivity() {
                     // 统一的播放器容器，置于顶层（Scaffold 之上）
                     KanadePlayerContainer(
                         state = state,
-                        onIntent = { viewModel.handleIntent(it) },
+                        onIntent = { playerViewModel.handleIntent(it) },
                         bottomPadding = bottomPadding
                     )
                 }

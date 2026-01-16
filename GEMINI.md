@@ -108,6 +108,7 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] CI Setup (GitHub Actions).
 - [x] Multi-language support (EN/ZH).
 - [x] Code structure and file organization optimization.
+- [x] Show full-screen player when clicking media notification.
 - [x] Improved robustness for lyric sharing (SuperLyricApi integration).
 - [x] Enhanced permission handling with user feedback.
 

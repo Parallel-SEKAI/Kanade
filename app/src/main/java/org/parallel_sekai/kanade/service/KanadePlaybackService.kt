@@ -1,10 +1,13 @@
 package org.parallel_sekai.kanade.service
 
+import android.app.PendingIntent
+import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import org.parallel_sekai.kanade.MainActivity
 
 /**
  * 后台播放服务，基于 Media3 实现
@@ -30,8 +33,17 @@ class KanadePlaybackService : MediaSessionService() {
             .build()
 
         // 2. 初始化 MediaSession
+        val intent = Intent(this, MainActivity::class.java).apply {
+            putExtra(MainActivity.EXTRA_EXPAND_PLAYER, true)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         player?.let {
             mediaSession = MediaSession.Builder(this, it)
+                .setSessionActivity(pendingIntent)
                 .build()
         }
     }

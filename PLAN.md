@@ -1,26 +1,21 @@
-- [x] Create GitHub Actions workflow file `.github/workflows/android_build.yml`.
-- [x] Configure workflow to:
-    - Trigger on `push`.
-    - Set up JDK 17.
-    - Grant execution permission to `gradlew`.
-    - Run `./gradlew assembleDebug`.
-    - Upload APK artifact.
-- [x] Multi-language Support
-    - [x] Extract all hardcoded strings to `strings.xml`.
-    - [x] Create Chinese translation in `values-zh/strings.xml`.
-    - [x] Update UI components to use `stringResource(R.string...)`.
-- [x] Code & File Structure Optimization
-    - [x] Move hardcoded colors to `ui/theme/Color.kt`.
-    - [x] Create `ui/theme/Dimens.kt` for common dimensions.
-    - [x] Replace hardcoded `.dp` values with `Dimens` references.
-    - [x] Create `data/model` package and move all data models (`MusicModel`, `LyricData`, etc.) there.
-    - [x] Create `data/parser` package and move `LyricParsers.kt` there.
-    - [x] Create `data/utils` package and move `LyricSplitter.kt` there.
-    - [x] Create `ui/preview` package and move `FakeSettingsRepository`/`FakeSettingsViewModel` there.
-    - [x] Update all imports to reflect new structure.
-- [x] Support `SuperLyricApi` for system-wide lyric sharing.
-    - [x] Add `com.github.HChenX:SuperLyricApi:2.4` dependency to `app/build.gradle.kts`.
-    - [x] Update `LyricGetterManager` to support `SuperLyricPush`.
-    - [x] Provide track metadata, translations, and word-by-word data to `SuperLyricApi`.
-- [x] Verification
-    - [x] Run `./gradlew assembleDebug` to check for compilation errors.
+# Plan: Show full-screen player from media notification
+
+## Goal
+Show the full-screen player when the user clicks on the media notification.
+
+## Tasks
+- [ ] **Task 1: Update AndroidManifest.xml**
+    - Set `android:launchMode="singleTop"` for `MainActivity` to ensure we can handle new intents efficiently.
+- [ ] **Task 2: Update KanadePlaybackService.kt**
+    - Create a `PendingIntent` targeting `MainActivity` with an extra `EXTRA_EXPAND_PLAYER = true`.
+    - Set this `PendingIntent` as the `sessionActivity` for the `MediaSession`.
+- [ ] **Task 3: Update MainActivity.kt**
+    - Define a constant for `EXTRA_EXPAND_PLAYER`.
+    - Create a function to check the intent and trigger `PlayerIntent.Expand` if needed.
+    - Call this function in `onCreate` and override `onNewIntent` to call it as well.
+
+## Verification
+- Start playback.
+- Go to home screen or another app.
+- Click the media notification.
+- The app should open and automatically expand the player to full-screen.
