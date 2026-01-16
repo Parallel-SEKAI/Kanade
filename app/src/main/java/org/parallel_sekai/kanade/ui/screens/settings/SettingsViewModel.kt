@@ -9,8 +9,15 @@ import kotlinx.coroutines.launch
 import org.parallel_sekai.kanade.data.repository.ArtistParsingSettings
 import org.parallel_sekai.kanade.data.repository.LyricsSettings
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
+import org.parallel_sekai.kanade.data.utils.LyricGetterManager
 
-open class SettingsViewModel(private val repository: SettingsRepository) : ViewModel() {
+open class SettingsViewModel(
+    private val repository: SettingsRepository,
+    private val lyricGetterManager: LyricGetterManager
+) : ViewModel() {
+    
+    val isLyricsGetterActivated: Boolean get() = lyricGetterManager.isActivated
+
     val lyricsSettings: StateFlow<LyricsSettings> = repository.lyricsSettingsFlow
         .stateIn(
             scope = viewModelScope,
@@ -90,6 +97,12 @@ open class SettingsViewModel(private val repository: SettingsRepository) : ViewM
     fun updateBalanceLines(balance: Boolean) {
         viewModelScope.launch {
             repository.updateBalanceLines(balance)
+        }
+    }
+
+    fun updateLyricSharingEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateLyricSharingEnabled(enabled)
         }
     }
 

@@ -1,0 +1,105 @@
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:processDebugNavigationResources
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:parseDebugLocalResources
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:mergeDebugResources
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:processDebugResources
+
+> Task :app:compileDebugKotlin
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:277:30 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:278:30 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:278:40 'static field NAME: String' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:282:30 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:282:40 'static field EXTERNAL_CONTENT_URI: Uri!' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:286:33 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:286:43 'static field NAME: String' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:288:74 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:289:76 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:289:86 'static field NAME: String' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:308:36 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:308:46 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:308:54 'static fun getContentUri(p0: String!, p1: Long): Uri!' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:311:30 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:311:40 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:311:48 'static field AUDIO_ID: String' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:312:30 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:312:40 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:313:30 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:313:40 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:314:30 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:314:40 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:315:30 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:315:40 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:316:30 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:316:40 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:324:30 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:324:40 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:324:48 'static field PLAY_ORDER: String' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:326:74 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:326:84 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:326:92 'static field AUDIO_ID: String' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:327:77 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:327:87 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:328:78 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:328:88 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:329:77 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:329:87 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:330:80 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:330:90 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:331:79 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/data/source/local/LocalMusicSource.kt:331:89 'class Members : Any, MediaStore.Audio.AudioColumns' is deprecated. Deprecated in Java.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/ui/screens/library/LibraryScreen.kt:85:81 'val Icons.Filled.PlaylistPlay: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.PlaylistPlay.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/ui/screens/library/LibraryScreen.kt:258:43 'val Icons.Filled.PlaylistPlay: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.PlaylistPlay.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/ui/screens/more/MoreScreen.kt:82:41 'val Icons.Filled.KeyboardArrowRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.KeyboardArrowRight.
+w: file:///home/xiaocaoooo/code/kanade/app/src/main/java/org/parallel_sekai/kanade/ui/screens/settings/LyricsGetterScreen.kt:64:13 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+
+> Task :app:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
+> Task :app:processDebugJavaRes
+> Task :app:mergeProjectDexDebug
+> Task :app:mergeDebugJavaResource
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleDebug
+
+[Incubating] Problems report is available at: file:///home/xiaocaoooo/code/kanade/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.2.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 6s
+37 actionable tasks: 13 executed, 24 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.2.1/userguide/configuration_cache_enabling.html

@@ -66,6 +66,8 @@
     <string name="pref_blur_inactive">非活跃行模糊</string>
     <string name="pref_balance_lines">平衡长行</string>
     <string name="desc_balance_lines">自动切分过长的歌词以使排版更整齐</string>
+    <string name="pref_lyric_sharing">启用歌词广播</string>
+    <string name="desc_lyric_sharing">与其他应用分享当前歌词 (例如 状态栏歌词)</string>
     <string name="label_font_size">字体大小 (%d sp)</string>
     <string name="header_style">样式</string>
     <string name="label_font_weight">字体粗细 (%1$s - %2$d)</string>
@@ -106,4 +108,10 @@
     <string name="desc_excluded_folders_screen">这些文件夹中的音乐将从您的资料库中隐藏。</string>
     <string name="title_exclude_folder_dialog">排除文件夹</string>
     <string name="msg_no_more_folders">资料库中没有更多可用文件夹。</string>
+    <string name="pref_lyrics_getter">Lyrics Getter</string>
+    <string name="desc_lyrics_getter">配置歌词共享并检查激活状态</string>
+    <string name="label_activation_status">激活状态</string>
+    <string name="status_activated">已激活</string>
+    <string name="status_not_activated">未激活</string>
+    <string name="desc_lyrics_getter_info">Lyrics Getter API 允许第三方应用接收并显示来自 Kanade 的歌词。如果显示已激活，则表示系统中存在兼容的 Hook 或模块正在运行。</string>
 </resources>

@@ -24,6 +24,7 @@ import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.data.model.*
 import org.parallel_sekai.kanade.data.parser.*
 import org.parallel_sekai.kanade.data.source.MusicUtils
+import org.parallel_sekai.kanade.data.utils.LyricGetterManager
 import org.parallel_sekai.kanade.ui.theme.PlayerGradientEnd
 import org.parallel_sekai.kanade.ui.theme.PlayerGradientStart
 import org.parallel_sekai.kanade.ui.screens.player.PlayerIntent
@@ -34,21 +35,31 @@ import org.parallel_sekai.kanade.ui.screens.player.DetailType
 class PlayerViewModel(
     private val playbackRepository: PlaybackRepository,
     private val settingsRepository: SettingsRepository,
-    private val context: Context // 需要 Context 来初始化 Coil Request
+    private val applicationContext: Context,
+    private val imageLoader: ImageLoader,
+    private val lyricGetterManager: LyricGetterManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PlayerState())
     val state = _state.asStateFlow()
-    private val imageLoader = ImageLoader(context)
+
+    private var lastSentLyric: String? = null
+    private var lastLyricUpdateTimestamp = 0L
 
     // 新增：用于存储和传递艺术家解析设置
     private val _artistParsingSettings = MutableStateFlow(ArtistParsingSettings())
 
     init {
+        // ...
+        // ... (rest of init stays mostly same, but remove local imageLoader/lyricGetterManager)
         // 监听歌词设置
         settingsRepository.lyricsSettingsFlow
             .onEach { settings ->
                 _state.update { it.copy(lyricsSettings = settings) }
+                if (!settings.isSharingEnabled) {
+                    lyricGetterManager.clearLyric()
+                    lastSentLyric = null
+                }
             }
             .launchIn(viewModelScope)
 
@@ -120,6 +131,10 @@ class PlayerViewModel(
         playbackRepository.isPlaying
             .onEach { isPlaying ->
                 _state.update { it.copy(isPlaying = isPlaying) }
+                if (!isPlaying) {
+                    lyricGetterManager.clearLyric()
+                    lastSentLyric = null
+                }
             }
             .launchIn(viewModelScope)
 
@@ -132,6 +147,8 @@ class PlayerViewModel(
                         currentSong = song,
                         lyrics = null // 重置旧歌词
                     ) }
+                    lyricGetterManager.clearLyric()
+                    lastSentLyric = null
                     
                     // 异步加载歌词和颜色
                     viewModelScope.launch {
@@ -173,11 +190,26 @@ class PlayerViewModel(
                     progress = pos,
                     duration = duration
                 ) }
+
+                // 发送歌词到外部 API (带节流和重复内容过滤)
+                val now = System.currentTimeMillis()
+                if (now - lastLyricUpdateTimestamp >= 200) { // 200ms 节流，避免频繁 IPC
+                    lastLyricUpdateTimestamp = now
+                    if (state.value.isPlaying && state.value.lyricsSettings.isSharingEnabled) {
+                        val currentLine = state.value.lyricData?.lines?.findLast { it.startTime <= pos }
+                        val lyricContent = currentLine?.content ?: ""
+                        if (lyricContent != lastSentLyric) {
+                            lyricGetterManager.sendLyric(lyricContent, state.value.currentSong)
+                            lastSentLyric = lyricContent
+                        }
+                    }
+                }
             }
             .launchIn(viewModelScope)
     }
 
     fun handleIntent(intent: PlayerIntent) {
+        // ... (rest of handleIntent)
         when (intent) {
             is PlayerIntent.PlayPause -> {
                 if (state.value.isPlaying) {
@@ -268,7 +300,7 @@ class PlayerViewModel(
     }
 
     private suspend fun extractColors(song: MusicModel) {
-        val request = ImageRequest.Builder(context)
+        val request = ImageRequest.Builder(applicationContext)
             .data(song.coverUrl)
             .allowHardware(false) // Palette 需要获取 Bitmap 的像素，不能是 Hardware Bitmap
             .build()

@@ -25,7 +25,8 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLyricsSettings: () -> Unit,
     onNavigateToExcludedFolders: () -> Unit,
-    onNavigateToArtistParsingSettings: () -> Unit // 新增：导航到艺术家解析设置
+    onNavigateToArtistParsingSettings: () -> Unit,
+    onNavigateToLyricsGetter: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     val searchAsPlaylist = viewModel.searchResultAsPlaylist.collectAsState()
@@ -65,6 +66,13 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
             SettingsSectionHeader(title = stringResource(R.string.header_general))
+
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.pref_lyrics_getter)) },
+                supportingContent = { Text(stringResource(R.string.desc_lyrics_getter)) },
+                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+                modifier = Modifier.clickable(onClick = onNavigateToLyricsGetter)
+            )
 
             ListItem(
                 headlineContent = { Text(stringResource(R.string.pref_search_as_playlist)) },

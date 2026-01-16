@@ -131,7 +131,7 @@ fun LyricsSettingsScreen(
                     )
                 }
             )
-            
+
             Column(modifier = Modifier.padding(Dimens.PaddingMedium)) {
                 Text(text = stringResource(R.string.label_font_size, settings.fontSize.toInt()), style = MaterialTheme.typography.bodyLarge)
                 Slider(

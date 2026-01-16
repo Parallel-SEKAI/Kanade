@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.google.accompanist.permissions)
     implementation(libs.coil.compose)
+    implementation("com.github.xiaowine:Lyric-Getter-Api:6.0.0")
 
     implementation(platform(libs.androidx.compose.bom))
     implementation("androidx.compose.material3:material3") // 明确指定

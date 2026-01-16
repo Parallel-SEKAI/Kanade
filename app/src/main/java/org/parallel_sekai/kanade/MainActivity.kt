@@ -48,8 +48,9 @@ import org.parallel_sekai.kanade.ui.screens.search.SearchScreen
 import org.parallel_sekai.kanade.ui.screens.search.SearchViewModel
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.LyricsSettingsScreen
+import org.parallel_sekai.kanade.ui.screens.settings.LyricsGetterScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ExcludedFoldersScreen
-import org.parallel_sekai.kanade.ui.screens.settings.ArtistParsingSettingsScreen // New
+import org.parallel_sekai.kanade.ui.screens.settings.ArtistParsingSettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
 import org.parallel_sekai.kanade.ui.screens.player.KanadePlayerContainer
 import org.parallel_sekai.kanade.ui.screens.player.PlayerIntent
@@ -57,6 +58,8 @@ import org.parallel_sekai.kanade.ui.screens.player.PlayerViewModel
 import org.parallel_sekai.kanade.ui.theme.KanadeTheme
 import androidx.compose.ui.res.stringResource
 import org.parallel_sekai.kanade.ui.theme.Dimens
+import coil.ImageLoader
+import org.parallel_sekai.kanade.data.utils.LyricGetterManager
 
 sealed class Screen(val route: String, val labelResId: Int, val icon: ImageVector?) {
     object Library : Screen("library", R.string.title_library, Icons.Filled.Home)
@@ -64,6 +67,7 @@ sealed class Screen(val route: String, val labelResId: Int, val icon: ImageVecto
     object More : Screen("more", R.string.title_more, Icons.Filled.Info)
     object Settings : Screen("settings", R.string.title_settings, null)
     object LyricsSettings : Screen("lyrics_settings", R.string.title_lyrics_settings, null)
+    object LyricsGetter : Screen("lyrics_getter", R.string.pref_lyrics_getter, null)
     object ExcludedFolders : Screen("excluded_folders", R.string.title_excluded_folders, null)
     object ArtistParsingSettings : Screen("artist_parsing_settings", R.string.title_artist_parsing, null)
 
@@ -103,8 +107,17 @@ class MainActivity : ComponentActivity() {
 
         val settingsRepository = SettingsRepository(applicationContext)
         val playbackRepository = PlaybackRepository(applicationContext, settingsRepository)
-        val viewModel = PlayerViewModel(playbackRepository, settingsRepository, applicationContext)
-        val settingsViewModel = SettingsViewModel(settingsRepository)
+        val imageLoader = ImageLoader(applicationContext)
+        val lyricGetterManager = LyricGetterManager(applicationContext)
+        
+        val viewModel = PlayerViewModel(
+            playbackRepository = playbackRepository,
+            settingsRepository = settingsRepository,
+            applicationContext = applicationContext,
+            imageLoader = imageLoader,
+            lyricGetterManager = lyricGetterManager
+        )
+        val settingsViewModel = SettingsViewModel(settingsRepository, lyricGetterManager)
         val searchViewModel = SearchViewModel(playbackRepository, settingsRepository)
 
         setContent {
@@ -285,11 +298,18 @@ class MainActivity : ComponentActivity() {
                                     onNavigateBack = { navController.popBackStack() },
                                     onNavigateToLyricsSettings = { navController.navigate(Screen.LyricsSettings.route) },
                                     onNavigateToExcludedFolders = { navController.navigate(Screen.ExcludedFolders.route) },
-                                    onNavigateToArtistParsingSettings = { navController.navigate(Screen.ArtistParsingSettings.route) } // New
+                                    onNavigateToArtistParsingSettings = { navController.navigate(Screen.ArtistParsingSettings.route) },
+                                    onNavigateToLyricsGetter = { navController.navigate(Screen.LyricsGetter.route) }
                                 )
                             }
                             composable(Screen.LyricsSettings.route) {
                                 LyricsSettingsScreen(
+                                    viewModel = settingsViewModel,
+                                    onNavigateBack = { navController.popBackStack() }
+                                )
+                            }
+                            composable(Screen.LyricsGetter.route) {
+                                LyricsGetterScreen(
                                     viewModel = settingsViewModel,
                                     onNavigateBack = { navController.popBackStack() }
                                 )
@@ -301,7 +321,7 @@ class MainActivity : ComponentActivity() {
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }
-                            composable(Screen.ArtistParsingSettings.route) { // New
+                            composable(Screen.ArtistParsingSettings.route) {
                                 ArtistParsingSettingsScreen(
                                     viewModel = settingsViewModel,
                                     onNavigateBack = { navController.popBackStack() }

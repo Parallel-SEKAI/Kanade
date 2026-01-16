@@ -101,6 +101,7 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Rich lyric support (LRC/TTML).
 - [x] Search Page implementation with history support.
 - [x] Album detail page optimization (smart artist display, hidden track covers).
+- [x] Lyric-Getter-API integration for system-wide lyric sharing.
 - [x] CI Setup (GitHub Actions).
 - [x] Multi-language support (EN/ZH).
 - [x] Code structure and file organization optimization.
