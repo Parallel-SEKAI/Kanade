@@ -34,6 +34,7 @@ import org.parallel_sekai.kanade.ui.theme.Dimens
 @Composable
 fun LibraryScreen(
     state: PlayerState,
+    onIntent: (org.parallel_sekai.kanade.ui.screens.player.PlayerIntent) -> Unit,
     onSongClick: (MusicModel, List<MusicModel>) -> Unit,
     onScriptClick: (String?) -> Unit,
     onNavigateToArtists: () -> Unit,
@@ -44,6 +45,12 @@ fun LibraryScreen(
 ) {
     val activeManifest = state.scriptManifests.find { it.id == state.activeScriptId }
     val isScriptActive = activeManifest != null
+
+    androidx.compose.runtime.LaunchedEffect(state.activeScriptId) {
+        if (isScriptActive) {
+            onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.RefreshHome)
+        }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -303,9 +310,14 @@ fun SongListItem(
 @Composable
 fun AlbumListScreen(
     state: PlayerState,
+    onIntent: (org.parallel_sekai.kanade.ui.screens.player.PlayerIntent) -> Unit,
     onBackClick: () -> Unit,
     onAlbumClick: (String, String) -> Unit
 ) {
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.RefreshAlbums)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -345,9 +357,14 @@ fun AlbumListScreen(
 @Composable
 fun PlaylistListScreen(
     state: PlayerState,
+    onIntent: (org.parallel_sekai.kanade.ui.screens.player.PlayerIntent) -> Unit,
     onBackClick: () -> Unit,
     onPlaylistClick: (String, String) -> Unit
 ) {
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.RefreshPlaylists)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -386,9 +403,14 @@ fun PlaylistListScreen(
 @Composable
 fun FolderListScreen(
     state: PlayerState,
+    onIntent: (org.parallel_sekai.kanade.ui.screens.player.PlayerIntent) -> Unit,
     onBackClick: () -> Unit,
     onFolderClick: (String) -> Unit
 ) {
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.RefreshFolders)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

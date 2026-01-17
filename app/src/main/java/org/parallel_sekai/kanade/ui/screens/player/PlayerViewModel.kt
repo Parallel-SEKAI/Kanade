@@ -112,40 +112,16 @@ class PlayerViewModel(
             }
             .launchIn(viewModelScope)
 
-        // 加载初始音乐列表
+        // 加载初始音乐列表 (仅加载本地音乐)
         viewModelScope.launch {
             _state.update { it.copy(isHomeLoading = true) }
             
-            val listDeferred = async { playbackRepository.fetchMusicList() }
-            val artistsDeferred = async { playbackRepository.fetchArtistList() }
-            val albumsDeferred = async { playbackRepository.fetchAlbumList() }
-            val foldersDeferred = async { playbackRepository.fetchFolderList() }
-            val playlistsDeferred = async { playbackRepository.fetchPlaylistList() }
-            
-            val activeId = settingsRepository.activeScriptIdFlow.first()
-            val homeItems = if (activeId != null) {
-                playbackRepository.fetchHomeList()
-            } else {
-                emptyList()
-            }
-            lastRefreshedScriptId = activeId
-
-            val list = listDeferred.await()
-            val artists = artistsDeferred.await()
-            val albums = albumsDeferred.await()
-            val folders = foldersDeferred.await()
-            val playlists = playlistsDeferred.await()
-            
+            val list = playbackRepository.fetchMusicList()
             val initialSong: MusicModel? = list.firstOrNull() 
 
             _state.update { it.copy(
                 allMusicList = list,
                 currentPlaylist = list,
-                artistList = artists,
-                albumList = albums,
-                folderList = folders,
-                playlistList = playlists,
-                homeMusicList = homeItems,
                 isHomeLoading = false,
                 currentSong = it.currentSong ?: initialSong
             ) }
@@ -305,24 +281,13 @@ class PlayerViewModel(
                 refreshJob?.cancel()
                 refreshJob = viewModelScope.launch {
                     val currentScriptId = state.value.activeScriptId
-                    val shouldRefreshHome = intent.forceScriptRefresh && (currentScriptId != lastRefreshedScriptId)
+                    val shouldRefreshHome = intent.forceScriptRefresh && (currentScriptId != null)
                     
                     if (shouldRefreshHome) {
                         _state.update { it.copy(isHomeLoading = true) }
                     }
                     
-                    // 并行获取本地数据
-                    val listDeferred = async { playbackRepository.fetchMusicList() }
-                    val artistsDeferred = async { playbackRepository.fetchArtistList() }
-                    val albumsDeferred = async { playbackRepository.fetchAlbumList() }
-                    val foldersDeferred = async { playbackRepository.fetchFolderList() }
-                    val playlistsDeferred = async { playbackRepository.fetchPlaylistList() }
-                    
-                    val list = listDeferred.await()
-                    val artists = artistsDeferred.await()
-                    val albums = albumsDeferred.await()
-                    val folders = foldersDeferred.await()
-                    val playlists = playlistsDeferred.await()
+                    val list = playbackRepository.fetchMusicList()
 
                     if (shouldRefreshHome) {
                         val homeItems = playbackRepository.fetchHomeList()
@@ -335,12 +300,47 @@ class PlayerViewModel(
                     
                     _state.update { it.copy(
                         allMusicList = list,
-                        artistList = artists,
-                        albumList = albums,
-                        folderList = folders,
-                        playlistList = playlists,
                         currentSong = it.currentSong ?: list.firstOrNull()
                     ) }
+                }
+            }
+            is PlayerIntent.RefreshArtists -> {
+                viewModelScope.launch {
+                    val artists = playbackRepository.fetchArtistList()
+                    _state.update { it.copy(artistList = artists) }
+                }
+            }
+            is PlayerIntent.RefreshAlbums -> {
+                viewModelScope.launch {
+                    val albums = playbackRepository.fetchAlbumList()
+                    _state.update { it.copy(albumList = albums) }
+                }
+            }
+            is PlayerIntent.RefreshFolders -> {
+                viewModelScope.launch {
+                    val folders = playbackRepository.fetchFolderList()
+                    _state.update { it.copy(folderList = folders) }
+                }
+            }
+            is PlayerIntent.RefreshPlaylists -> {
+                viewModelScope.launch {
+                    val playlists = playbackRepository.fetchPlaylistList()
+                    _state.update { it.copy(playlistList = playlists) }
+                }
+            }
+            is PlayerIntent.RefreshHome -> {
+                val currentScriptId = state.value.activeScriptId
+                if (currentScriptId != null && currentScriptId != lastRefreshedScriptId) {
+                    refreshJob?.cancel()
+                    refreshJob = viewModelScope.launch {
+                        _state.update { it.copy(isHomeLoading = true) }
+                        val homeItems = playbackRepository.fetchHomeList()
+                        _state.update { it.copy(
+                            homeMusicList = homeItems,
+                            isHomeLoading = false
+                        ) }
+                        lastRefreshedScriptId = currentScriptId
+                    }
                 }
             }
             is PlayerIntent.FetchDetailList -> {

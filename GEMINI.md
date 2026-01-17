@@ -126,10 +126,7 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Prevented redundant and automatic script home page refreshes on startup and setting changes to improve UX.
 - [x] Added "Song Info" screen to view detailed metadata and raw file information.
 - [x] Integrated "Song Info" into the full-screen player "More" menu.
-- [x] Ensured correct fetching of lyrics for script-based music sources.
-- [x] Fixed excessive '\n' characters in script-provided lyrics by normalizing line endings.
-- [x] Enabled long-press to copy information on the "Song Info" screen.
-- [x] Implemented direct copy to clipboard on long-press for information in the "Song Info" screen.
+- [x] Optimized data fetching to be on-demand (deferred fetching of artists, albums, folders, and script home items).
 - [ ] Source Selection in Search:
 
 ## 8. Agent Development Instructions (AI Context)

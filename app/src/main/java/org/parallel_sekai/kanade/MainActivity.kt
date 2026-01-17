@@ -247,6 +247,7 @@ class MainActivity : ComponentActivity() {
                                 if (audioPermissionGranted) {
                                     LibraryScreen(
                                         state = state,
+                                        onIntent = { playerViewModel.handleIntent(it) },
                                         onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) },
                                         onScriptClick = { id -> playerViewModel.handleIntent(PlayerIntent.ToggleActiveScript(id)) },
                                         onNavigateToArtists = { navController.navigate(Screen.Artists.route) },
@@ -267,6 +268,7 @@ class MainActivity : ComponentActivity() {
                             composable(Screen.Artists.route) {
                                 ArtistListScreen(
                                     state = state,
+                                    onIntent = { playerViewModel.handleIntent(it) },
                                     onBackClick = { navController.popBackStack() },
                                     onArtistClick = { name ->
                                         playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.ARTIST, name))
@@ -277,6 +279,7 @@ class MainActivity : ComponentActivity() {
                             composable(Screen.Albums.route) {
                                 AlbumListScreen(
                                     state = state,
+                                    onIntent = { playerViewModel.handleIntent(it) },
                                     onBackClick = { navController.popBackStack() },
                                     onAlbumClick = { id, title ->
                                         playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.ALBUM, id))
@@ -287,6 +290,7 @@ class MainActivity : ComponentActivity() {
                             composable(Screen.Playlists.route) {
                                 PlaylistListScreen(
                                     state = state,
+                                    onIntent = { playerViewModel.handleIntent(it) },
                                     onBackClick = { navController.popBackStack() },
                                     onPlaylistClick = { id, title ->
                                         playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.PLAYLIST, id))
@@ -297,6 +301,7 @@ class MainActivity : ComponentActivity() {
                             composable(Screen.Folders.route) {
                                 FolderListScreen(
                                     state = state,
+                                    onIntent = { playerViewModel.handleIntent(it) },
                                     onBackClick = { navController.popBackStack() },
                                     onFolderClick = { path ->
                                         playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.FOLDER, path))

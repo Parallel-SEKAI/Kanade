@@ -35,9 +35,14 @@ import org.parallel_sekai.kanade.ui.theme.Dimens
 @Composable
 fun ArtistListScreen(
     state: PlayerState,
+    onIntent: (org.parallel_sekai.kanade.ui.screens.player.PlayerIntent) -> Unit,
     onBackClick: () -> Unit,
     onArtistClick: (String) -> Unit
 ) {
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.RefreshArtists)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
