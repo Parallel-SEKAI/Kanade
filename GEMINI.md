@@ -113,6 +113,12 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Redesigned playlist mode buttons in full-screen player for better UI consistency.
 - [x] Improved robustness for lyric sharing (SuperLyricApi integration).
 - [x] Enhanced permission handling with user feedback.
+- [x] Initial implementation of Netease Music KSS script.
+- [x] Improved HostBridge to support HTTP headers and POST content types in KSS.
+- [x] Implemented Kanade Scripting System (KSS) for external media providers.
+- [x] Integrated QuickJS engine with Promise support and host bridging.
+- [x] Added script management UI and support for JIT URI resolution.
+- [x] Fixed Netease script home page stuck loading issue (improved JS bridge, timeout, and loading state).
 
 ## 8. Agent Development Instructions (AI Context)
 - **State Management**: Always use `MutableStateFlow` in ViewModels. UI must be stateless and react only to the `state` flow.

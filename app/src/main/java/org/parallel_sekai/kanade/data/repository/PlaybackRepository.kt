@@ -2,19 +2,18 @@ package org.parallel_sekai.kanade.data.repository
 
 import android.content.ComponentName
 import android.content.Context
+import android.net.Uri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
 import org.parallel_sekai.kanade.data.model.*
 import org.parallel_sekai.kanade.data.source.IMusicSource
+import org.parallel_sekai.kanade.data.source.SourceManager
 import org.parallel_sekai.kanade.data.source.local.LocalMusicSource
 import org.parallel_sekai.kanade.service.KanadePlaybackService
 import kotlinx.coroutines.MainScope
@@ -29,7 +28,9 @@ open class PlaybackRepository(
     private val scope: kotlinx.coroutines.CoroutineScope // 注入外部作用域（通常是 applicationScope）
 ) {
 
-    private val localMusicSource = LocalMusicSource(context)
+    private val sourceManager = SourceManager.getInstance(context, settingsRepository)
+    val scriptSources = sourceManager.scriptSources
+    
     private val sessionToken = SessionToken(context, ComponentName(context, KanadePlaybackService::class.java))
     private val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
     
@@ -86,7 +87,25 @@ open class PlaybackRepository(
         setupControllerListener()
         setupSettingsObservers()
         setupPeriodicTasks()
+        
+        scope.launch {
+            sourceManager.refreshScripts()
+        }
     }
+
+    suspend fun refreshScriptSources() {
+        sourceManager.refreshScripts()
+    }
+
+    suspend fun importScript(uri: Uri) {
+        sourceManager.importScript(uri)
+    }
+
+    private val allSources: List<IMusicSource>
+        get() = sourceManager.getAllSources()
+    
+    private val localMusicSource: LocalMusicSource
+        get() = sourceManager.localMusicSource
 
     private fun setupControllerListener() {
         controllerFuture.addListener({
@@ -217,8 +236,26 @@ open class PlaybackRepository(
         localMusicSource.excludedFolders = folders
     }
 
-    suspend fun fetchMusicList(query: String = ""): List<MusicModel> {
-        return localMusicSource.getMusicList(query)
+    suspend fun fetchMusicList(query: String = "", sourceIds: List<String>? = null): List<MusicModel> = coroutineScope {
+        if (query.isEmpty()) {
+            localMusicSource.getMusicList("")
+        } else {
+            val sourcesToSearch = if (sourceIds == null) {
+                allSources
+            } else {
+                allSources.filter { it.sourceId in sourceIds }
+            }
+
+            sourcesToSearch.map { source ->
+                async { 
+                    try {
+                        source.getMusicList(query)
+                    } catch (e: Exception) {
+                        emptyList()
+                    }
+                }
+            }.awaitAll().flatten()
+        }
     }
 
     suspend fun fetchArtistList(): List<ArtistModel> {
@@ -247,6 +284,10 @@ open class PlaybackRepository(
 
     suspend fun fetchPlaylistList(): List<PlaylistModel> {
         return localMusicSource.getPlaylistList()
+    }
+
+    suspend fun fetchHomeList(): List<MusicModel> {
+        return sourceManager.getHomeList()
     }
 
     suspend fun fetchSongsByPlaylist(playlistId: String): List<MusicModel> {

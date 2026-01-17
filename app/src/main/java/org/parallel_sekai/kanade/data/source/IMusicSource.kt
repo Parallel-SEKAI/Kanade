@@ -16,6 +16,11 @@ interface IMusicSource {
     suspend fun getMusicList(query: String): List<MusicModel>
     
     /**
+     * 获取首页推荐列表
+     */
+    suspend fun getHomeList(): List<MusicModel> = emptyList()
+
+    /**
      * 获取真实的播放链接（对于流媒体脚本尤其重要）
      */
     suspend fun getPlayUrl(musicId: String): String

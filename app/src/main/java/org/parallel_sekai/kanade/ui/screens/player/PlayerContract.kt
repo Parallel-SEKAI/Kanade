@@ -1,8 +1,10 @@
 package org.parallel_sekai.kanade.ui.screens.player
 
 import androidx.compose.ui.graphics.Color
+import android.net.Uri
 import org.parallel_sekai.kanade.data.repository.LyricsSettings
 import org.parallel_sekai.kanade.data.model.*
+import org.parallel_sekai.kanade.data.script.ScriptManifest
 import org.parallel_sekai.kanade.ui.theme.PlayerGradientEnd
 import org.parallel_sekai.kanade.ui.theme.PlayerGradientStart
 
@@ -36,6 +38,10 @@ data class PlayerState(
     val lyricData: LyricData? = null,
     val lyricsSettings: LyricsSettings = LyricsSettings(),
     val artistJoinString: String = ", ", // 新增：艺术家拼接字符串
+    val scriptManifests: List<ScriptManifest> = emptyList(),
+    val activeScriptId: String? = null,
+    val homeMusicList: List<MusicModel> = emptyList(),
+    val isHomeLoading: Boolean = false,
     val gradientColors: List<Color> = listOf(PlayerGradientStart, PlayerGradientEnd)
 )
 
@@ -51,6 +57,10 @@ sealed interface PlayerIntent {
     data class FetchDetailList(val type: DetailType, val id: String) : PlayerIntent
     data class SelectSong(val song: MusicModel, val customList: List<MusicModel>? = null) : PlayerIntent // 选择歌曲
     data class SeekTo(val position: Long) : PlayerIntent
+    object ReloadScripts : PlayerIntent
+    data class ImportScript(val uri: Uri) : PlayerIntent
+    data class ToggleActiveScript(val scriptId: String?) : PlayerIntent
+    data class UpdateScriptConfig(val scriptId: String, val key: String, val value: String) : PlayerIntent
 }
 
 sealed interface PlayerEffect {

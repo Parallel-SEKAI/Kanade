@@ -1,20 +1,35 @@
-# Plan: Redesign Playlist Mode Buttons in Full-screen Player
+# Implementation Plan - External Scripts Support (KSS)
 
-## Goal
-Redesign the shuffle and repeat mode buttons in the playlist view of the full-screen player to be more visually appealing and consistent with Material 3 principles.
+## Phase A: Planning & Specification (Completed)
+- [x] Requirement Analysis: Define core goals for the scripting system.
+- [x] Technical Specification: Draft Logic Flow, Interface Contract, Directory Structure, and Security/Sandboxing. (Created `SCRIPTS.md`)
+- [ ] User Review: Obtain approval for the specification.
 
-## Tasks
-- [ ] **Task 1: Locate and Analyze current implementation**
-    - [x] Identified `PlaylistContent` in `app/src/main/java/org/parallel_sekai/kanade/ui/screens/player/PlayerComponents.kt`.
-- [ ] **Task 2: Design and Implement new Mode Buttons**
-    - Replace the existing `IconButton` implementations with a more refined design.
-    - Use `Surface` or `Box` with background and click handling for better control over the visual state.
-    - Ensure active states (shuffle on, repeat modes) are clearly distinguished.
-- [ ] **Task 3: Verification**
-    - Build the project to ensure no compilation errors.
-    - (Manual) Verify the new UI in the app.
+## Phase B: Execution
+- [x] Infrastructure Setup:
+    - [x] Add `quickjs-android` and `kotlinx-serialization-json` dependencies.
+    - [x] Create `org.parallel_sekai.kanade.data.script` package.
+- [x] Script Engine Core:
+    - [x] Implement `ScriptEngine` wrapper for QuickJS with Promise support.
+    - [x] Implement `ScriptManager` for file scanning, manifest parsing, and lifecycle management.
+    - [x] Create `ScriptMusicSource` implementing `IMusicSource`.
+- [x] Bridge Layer:
+    - [x] Implement `HostBridge` with `kanade.http` (OkHttp), `kanade.cache`, and `kanade.log`.
+    - [x] Map JS `MusicItem` and `StreamInfo` to Kotlin data classes.
+- [x] UI Integration:
+    - [x] Add "External Sources" section to Library screen.
+    - [x] Add "Scripts" management page in Settings (List scripts, toggle, reload).
+    - [x] Add "Import Script" functionality to handle permission issues.
+- [ ] Source Selection in Search:
+    - [ ] Implement Source Selection in Search screen (Filter search by specific scripts).
+- [x] Robustness & Bug Fixes:
+    - [x] Implement `importScript(Uri)` in `ScriptManager`.
+    - [x] Fix Netease script home page stuck loading issue (JS bridge wrapper, timeout, loading state).
+- [ ] Testing & Samples:
+    - [ ] Create a sample `.js` script (e.g., `mock_provider.js`).
+    - [ ] Verify search, media URL retrieval, and playback.
 
-## Proposed Design Changes
-- Use a pill-shaped or rounded-rect container for the buttons.
-- Increase the contrast for active states.
-- Ensure the icons and backgrounds harmonize with the dark, immersive player UI.
+## Phase C: Finalization
+- [ ] Testing: Verify script loading and data parsing with sample providers.
+- [ ] Documentation: Provide a "Script Developer Guide" for end-users.
+- [ ] Summary: Finalize changes and prepare for commit.

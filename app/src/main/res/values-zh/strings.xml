@@ -120,4 +120,12 @@
     <string name="status_not_activated">未激活</string>
     <string name="desc_lyric_getter_api_info">Lyric Getter API 允许第三方应用（如状态栏歌词应用）通过标准广播接收并显示来自 Kanade 的歌词。如果显示已激活，则表示系统中存在兼容的 Hook 或模块正在运行。</string>
     <string name="desc_super_lyric_api_info">Super Lyric API 是一种高性能的歌词共享协议。它允许 Kanade 将丰富的歌词数据（包括逐词同步和翻译）推送到兼容的系统模块或应用。</string>
-</resources>
+    <string name="label_scripts">脚本</string>
+    <string name="title_scripts">脚本管理</string>
+    <string name="header_scripts">外部音源</string>
+    <string name="msg_no_scripts">未发现脚本</string>
+        <string name="btn_reload_scripts">重新加载脚本</string>
+            <string name="btn_import_script">导入脚本</string>
+                <string name="header_discover">发现</string>
+                <string name="no_content">暂无内容</string>
+            </resources>        

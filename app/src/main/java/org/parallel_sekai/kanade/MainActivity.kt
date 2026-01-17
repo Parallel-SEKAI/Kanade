@@ -54,6 +54,8 @@ import org.parallel_sekai.kanade.ui.screens.settings.LyricsGetterApiScreen
 import org.parallel_sekai.kanade.ui.screens.settings.SuperLyricApiScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ExcludedFoldersScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ArtistParsingSettingsScreen
+import org.parallel_sekai.kanade.ui.screens.settings.ScriptConfigScreen
+import org.parallel_sekai.kanade.ui.screens.settings.ScriptManagementScreen
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
 import org.parallel_sekai.kanade.ui.screens.player.KanadePlayerContainer
 import org.parallel_sekai.kanade.ui.screens.player.PlayerIntent
@@ -76,6 +78,10 @@ sealed class Screen(val route: String, val labelResId: Int, val icon: ImageVecto
     object SuperLyricApi : Screen("super_lyric_api", R.string.pref_super_lyric, null)
     object ExcludedFolders : Screen("excluded_folders", R.string.title_excluded_folders, null)
     object ArtistParsingSettings : Screen("artist_parsing_settings", R.string.title_artist_parsing, null)
+    object Scripts : Screen("scripts", R.string.title_scripts, null)
+    object ScriptConfig : Screen("script_config/{id}", R.string.title_settings, null) {
+        fun createRoute(id: String) = "script_config/$id"
+    }
 
     // Library sub-screens
     object Artists : Screen("artists", R.string.label_artists, null)
@@ -240,10 +246,12 @@ class MainActivity : ComponentActivity() {
                                     LibraryScreen(
                                         state = state,
                                         onSongClick = { song -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song)) },
+                                        onScriptClick = { id -> playerViewModel.handleIntent(PlayerIntent.ToggleActiveScript(id)) },
                                         onNavigateToArtists = { navController.navigate(Screen.Artists.route) },
                                         onNavigateToAlbums = { navController.navigate(Screen.Albums.route) },
                                         onNavigateToPlaylists = { navController.navigate(Screen.Playlists.route) },
-                                        onNavigateToFolders = { navController.navigate(Screen.Folders.route) }
+                                        onNavigateToFolders = { navController.navigate(Screen.Folders.route) },
+                                        onNavigateToScripts = { navController.navigate(Screen.Scripts.route) }
                                     )
                                 } else {
                                     Box(
@@ -342,7 +350,8 @@ class MainActivity : ComponentActivity() {
                             }
                             composable(Screen.More.route) {
                                 MoreScreen(
-                                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                                    onNavigateToScripts = { navController.navigate(Screen.Scripts.route) }
                                 )
                             }
                             composable(Screen.Settings.route) {
@@ -384,6 +393,24 @@ class MainActivity : ComponentActivity() {
                             composable(Screen.ArtistParsingSettings.route) {
                                 ArtistParsingSettingsScreen(
                                     viewModel = settingsViewModel,
+                                    onNavigateBack = { navController.popBackStack() }
+                                )
+                            }
+                            composable(Screen.Scripts.route) {
+                                ScriptManagementScreen(
+                                    state = state,
+                                    onIntent = { playerViewModel.handleIntent(it) },
+                                    onNavigateToScriptConfig = { id -> navController.navigate(Screen.ScriptConfig.createRoute(id)) },
+                                    onNavigateBack = { navController.popBackStack() }
+                                )
+                            }
+                            composable(Screen.ScriptConfig.route) { backStackEntry ->
+                                val scriptId = backStackEntry.arguments?.getString("id") ?: ""
+                                ScriptConfigScreen(
+                                    scriptId = scriptId,
+                                    state = state,
+                                    settingsRepository = settingsRepository,
+                                    onIntent = { playerViewModel.handleIntent(it) },
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }

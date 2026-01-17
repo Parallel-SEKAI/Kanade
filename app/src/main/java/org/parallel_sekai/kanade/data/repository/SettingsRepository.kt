@@ -56,6 +56,31 @@ open class SettingsRepository(private val context: Context) {
     private val LAST_PLAYED_POSITION = longPreferencesKey("last_played_position")
     private val LAST_PLAYLIST_IDS = stringPreferencesKey("last_playlist_ids")
 
+    private val ACTIVE_SCRIPT_ID = stringPreferencesKey("active_script_id")
+    private val SCRIPT_CONFIGS = stringPreferencesKey("script_configs") // JSON string of Map<String, Map<String, String>>
+
+    open val activeScriptIdFlow: Flow<String?> = context.dataStore.data
+        .map { preferences -> preferences[ACTIVE_SCRIPT_ID] }
+
+    open val scriptConfigsFlow: Flow<String?> = context.dataStore.data
+        .map { preferences -> preferences[SCRIPT_CONFIGS] }
+
+    open suspend fun updateActiveScriptId(id: String?) {
+        context.dataStore.edit { preferences ->
+            if (id == null) {
+                preferences.remove(ACTIVE_SCRIPT_ID)
+            } else {
+                preferences[ACTIVE_SCRIPT_ID] = id
+            }
+        }
+    }
+
+    open suspend fun updateScriptConfigs(configsJson: String) {
+        context.dataStore.edit { preferences ->
+            preferences[SCRIPT_CONFIGS] = configsJson
+        }
+    }
+
     open val lyricsSettingsFlow: Flow<LyricsSettings> = context.dataStore.data
         .map { preferences ->
             LyricsSettings(

@@ -4,12 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.data.model.*
+import org.parallel_sekai.kanade.data.script.ScriptManifest
 import org.parallel_sekai.kanade.ui.screens.player.PlayerState
 import org.parallel_sekai.kanade.ui.theme.Dimens
 
@@ -33,11 +35,16 @@ import org.parallel_sekai.kanade.ui.theme.Dimens
 fun LibraryScreen(
     state: PlayerState,
     onSongClick: (MusicModel) -> Unit,
+    onScriptClick: (String?) -> Unit,
     onNavigateToArtists: () -> Unit,
     onNavigateToAlbums: () -> Unit,
     onNavigateToPlaylists: () -> Unit,
-    onNavigateToFolders: () -> Unit
+    onNavigateToFolders: () -> Unit,
+    onNavigateToScripts: () -> Unit
 ) {
+    val activeManifest = state.scriptManifests.find { it.id == state.activeScriptId }
+    val isScriptActive = activeManifest != null
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -54,36 +61,100 @@ fun LibraryScreen(
                 onNavigateToArtists = onNavigateToArtists,
                 onNavigateToAlbums = onNavigateToAlbums,
                 onNavigateToPlaylists = onNavigateToPlaylists,
-                onNavigateToFolders = onNavigateToFolders
+                onNavigateToFolders = onNavigateToFolders,
+                onNavigateToScripts = onNavigateToScripts
             )
         }
 
-        item {
-            SectionHeader(stringResource(R.string.header_all_music))
-        }
-
-                        items(state.allMusicList) { song ->
-                            SongListItem(
-                                song = song,
-                                isSelected = state.currentSong?.id == song.id,
-                                onClick = { onSongClick(song) },
-                                artistJoinString = state.artistJoinString // 传入 artistJoinString
-                            )
-                        }
+        // 外部音源入口展示
+        if (state.scriptManifests.isNotEmpty()) {
+            item {
+                SectionHeader(stringResource(R.string.header_scripts))
+            }
+            item {
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Dimens.PaddingSmall),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(state.scriptManifests) { manifest ->
+                        SourceCard(
+                            manifest = manifest,
+                            isActive = state.activeScriptId == manifest.id,
+                            modifier = Modifier
+                                .width(120.dp)
+                                .clickable { 
+                                    if (state.activeScriptId == manifest.id) {
+                                        onScriptClick(null) // 取消激活
+                                    } else {
+                                        onScriptClick(manifest.id) // 激活
+                                    }
+                                }
+                        )
                     }
                 }
+            }
+        }
+
+        // 主列表部分：根据音源状态切换
+        item {
+            val title = if (isScriptActive) {
+                activeManifest?.name ?: stringResource(R.string.header_discover)
+            } else {
+                stringResource(R.string.header_all_music)
+            }
+            val icon = if (isScriptActive) Icons.Default.AutoAwesome else null
+            SectionHeader(title = title, icon = icon)
+        }
+
+        val displayList = if (isScriptActive) state.homeMusicList else state.allMusicList
         
-        @Composable
-        fun LibraryGrid(    onNavigateToArtists: () -> Unit,
+        if (isScriptActive && state.isHomeLoading) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingExtraLarge),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        } else if (isScriptActive && displayList.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingExtraLarge),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = stringResource(R.string.no_content), style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        } else {
+            items(displayList) { song ->
+                SongListItem(
+                    song = song,
+                    isSelected = state.currentSong?.id == song.id,
+                    onClick = { onSongClick(song) },
+                    artistJoinString = state.artistJoinString
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun LibraryGrid(
+    onNavigateToArtists: () -> Unit,
     onNavigateToAlbums: () -> Unit,
     onNavigateToPlaylists: () -> Unit,
-    onNavigateToFolders: () -> Unit
+    onNavigateToFolders: () -> Unit,
+    onNavigateToScripts: () -> Unit
 ) {
     val items = listOf(
         LibraryGridItem(stringResource(R.string.label_artists), Icons.Default.Person, onNavigateToArtists),
         LibraryGridItem(stringResource(R.string.label_albums), Icons.Default.Album, onNavigateToAlbums),
         LibraryGridItem(stringResource(R.string.label_playlists), Icons.Default.PlaylistPlay, onNavigateToPlaylists),
-        LibraryGridItem(stringResource(R.string.label_folders), Icons.Default.Folder, onNavigateToFolders)
+        LibraryGridItem(stringResource(R.string.label_folders), Icons.Default.Folder, onNavigateToFolders),
+        LibraryGridItem(stringResource(R.string.label_scripts), Icons.Default.Extension, onNavigateToScripts)
     )
 
     Column(modifier = Modifier.padding(horizontal = Dimens.PaddingSmall)) {
@@ -94,6 +165,37 @@ fun LibraryScreen(
         Row(modifier = Modifier.fillMaxWidth()) {
             LibraryCard(items[2], Modifier.weight(1f))
             LibraryCard(items[3], Modifier.weight(1f))
+        }
+        Row(modifier = Modifier.fillMaxWidth()) {
+            LibraryCard(items[4], Modifier.weight(0.5f))
+            Spacer(modifier = Modifier.weight(0.5f))
+        }
+    }
+}
+
+@Composable
+fun SourceCard(manifest: ScriptManifest, isActive: Boolean, modifier: Modifier = Modifier) {
+    val backgroundColor = if (isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+    val contentColor = if (isActive) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+
+    ElevatedCard(
+        modifier = modifier.padding(Dimens.PaddingSmall),
+        shape = RoundedCornerShape(Dimens.CornerRadiusLarge),
+        colors = CardDefaults.elevatedCardColors(containerColor = backgroundColor, contentColor = contentColor)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(Dimens.PaddingMedium)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Default.Extension, 
+                contentDescription = null, 
+                tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+            )
+            Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
+            Text(text = manifest.name, style = MaterialTheme.typography.labelLarge, maxLines = 1)
         }
     }
 }
@@ -121,13 +223,26 @@ fun LibraryCard(item: LibraryGridItem, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(Dimens.PaddingMedium)
-    )
+fun SectionHeader(title: String, icon: ImageVector? = null) {
+    Row(
+        modifier = Modifier.padding(Dimens.PaddingMedium),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+    }
 }
 
 @Composable

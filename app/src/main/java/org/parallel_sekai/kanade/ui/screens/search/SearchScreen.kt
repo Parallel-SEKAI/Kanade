@@ -4,12 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -89,6 +91,14 @@ fun SearchScreen(
 
             Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
 
+            SourceSelector(
+                availableSources = state.availableSources,
+                selectedSourceIds = state.selectedSourceIds,
+                onToggleSource = { viewModel.handleIntent(SearchIntent.ToggleSource(it)) }
+            )
+
+            Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
+
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
@@ -156,6 +166,40 @@ fun SearchScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SourceSelector(
+    availableSources: List<SourceInfo>,
+    selectedSourceIds: Set<String>,
+    onToggleSource: (String) -> Unit
+) {
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = Dimens.PaddingMedium),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(availableSources) { source ->
+            val isSelected = selectedSourceIds.contains(source.id)
+            FilterChip(
+                selected = isSelected,
+                onClick = { onToggleSource(source.id) },
+                label = { Text(source.name) },
+                leadingIcon = if (isSelected) {
+                    {
+                        Icon(
+                            imageVector = Icons.Default.Done,
+                            contentDescription = null,
+                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                        )
+                    }
+                } else {
+                    null
+                }
+            )
         }
     }
 }

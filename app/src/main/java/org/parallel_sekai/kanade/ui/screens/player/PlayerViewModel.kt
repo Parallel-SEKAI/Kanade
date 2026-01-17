@@ -11,10 +11,14 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
@@ -172,12 +176,22 @@ class PlayerViewModel(
         // 监听循环模式
         playbackRepository.repeatMode
             .onEach { mode ->
-                val repeatMode = when (mode) {
-                    androidx.media3.common.Player.REPEAT_MODE_ONE -> org.parallel_sekai.kanade.ui.screens.player.RepeatMode.ONE
-                    androidx.media3.common.Player.REPEAT_MODE_ALL -> org.parallel_sekai.kanade.ui.screens.player.RepeatMode.ALL
-                    else -> org.parallel_sekai.kanade.ui.screens.player.RepeatMode.OFF
-                }
-                _state.update { it.copy(repeatMode = repeatMode) }
+                // ... (existing logic)
+            }
+            .launchIn(viewModelScope)
+
+        // 监听脚本列表
+        playbackRepository.scriptSources
+            .onEach { sources ->
+                _state.update { it.copy(scriptManifests = sources.map { it.manifest }) }
+            }
+            .launchIn(viewModelScope)
+
+        // 监听当前活跃脚本 ID
+        settingsRepository.activeScriptIdFlow
+            .onEach { id ->
+                _state.update { it.copy(activeScriptId = id) }
+                handleIntent(PlayerIntent.RefreshList) // Refresh home list when script changes
             }
             .launchIn(viewModelScope)
 
@@ -249,15 +263,13 @@ class PlayerViewModel(
             }
             is PlayerIntent.RefreshList -> {
                 viewModelScope.launch {
-                    val currentArtistParsingSettings = _artistParsingSettings.value // 获取最新设置
-                    // fetchMusicList 和 fetchAlbumList 内部的 MusicUtils.parseArtists 调用也需要更新
-                    // 由于 MusicUtils.parseArtists 已经修改为带默认参数的，因此这里无需显式传入
-                    // 但为了保持一致性，还是通过传入参数来明确指定
-                    val list = playbackRepository.fetchMusicList() // fetchMusicList 内部会使用 MusicUtils.parseArtists
+                    _state.update { it.copy(isHomeLoading = true) }
+                    val list = playbackRepository.fetchMusicList()
                     val artists = playbackRepository.fetchArtistList()
                     val albums = playbackRepository.fetchAlbumList()
                     val folders = playbackRepository.fetchFolderList()
                     val playlists = playbackRepository.fetchPlaylistList()
+                    val homeItems = playbackRepository.fetchHomeList()
                     
                     _state.update { it.copy(
                         allMusicList = list,
@@ -265,6 +277,8 @@ class PlayerViewModel(
                         albumList = albums,
                         folderList = folders,
                         playlistList = playlists,
+                        homeMusicList = homeItems,
+                        isHomeLoading = false,
                         currentSong = it.currentSong ?: list.firstOrNull()
                     ) }
                 }
@@ -318,6 +332,39 @@ class PlayerViewModel(
             }
             is PlayerIntent.ToggleShuffle -> {
                 playbackRepository.setShuffleModeEnabled(!state.value.shuffleModeEnabled)
+            }
+            is PlayerIntent.ReloadScripts -> {
+                viewModelScope.launch {
+                    playbackRepository.refreshScriptSources()
+                }
+            }
+            is PlayerIntent.ImportScript -> {
+                viewModelScope.launch {
+                    playbackRepository.importScript(intent.uri)
+                }
+            }
+            is PlayerIntent.ToggleActiveScript -> {
+                viewModelScope.launch {
+                    settingsRepository.updateActiveScriptId(intent.scriptId)
+                }
+            }
+            is PlayerIntent.UpdateScriptConfig -> {
+                viewModelScope.launch {
+                    val configsJson = settingsRepository.scriptConfigsFlow.first()
+                    val allConfigs: MutableMap<String, MutableMap<String, String>> = configsJson?.let {
+                        try {
+                            Json.decodeFromString<MutableMap<String, MutableMap<String, String>>>(it)
+                        } catch (e: Exception) {
+                            mutableMapOf<String, MutableMap<String, String>>()
+                        }
+                    } ?: mutableMapOf<String, MutableMap<String, String>>()
+                    
+                    val scriptConfig = allConfigs.getOrPut(intent.scriptId) { mutableMapOf<String, String>() }
+                    scriptConfig[intent.key] = intent.value
+                    
+                    settingsRepository.updateScriptConfigs(Json.encodeToString(allConfigs))
+                    handleIntent(PlayerIntent.ReloadScripts) // Restart engine to apply config
+                }
             }
         }
     }
