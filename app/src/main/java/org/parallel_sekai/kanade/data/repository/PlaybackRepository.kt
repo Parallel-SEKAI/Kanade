@@ -33,6 +33,7 @@ open class PlaybackRepository(
     
     private val sessionToken = SessionToken(context, ComponentName(context, KanadePlaybackService::class.java))
     private val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
+    private var controller: MediaController? = null
     
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying = _isPlaying.asStateFlow()
@@ -78,9 +79,8 @@ open class PlaybackRepository(
      */
     val progressFlow: Flow<Pair<Long, Long>> = flow {
         while (true) {
-            if (controllerFuture.isDone) {
-                val controller = controllerFuture.get()
-                emit(controller.currentPosition to controller.duration.coerceAtLeast(0L))
+            controller?.let {
+                emit(it.currentPosition to it.duration.coerceAtLeast(0L))
             }
             delay(frameDelay) 
         }
@@ -112,14 +112,15 @@ open class PlaybackRepository(
 
     private fun setupControllerListener() {
         controllerFuture.addListener({
-            if (controllerFuture.isDone) {
-                val controller = controllerFuture.get()
-                controller.addListener(object : Player.Listener {
+            try {
+                val ctrl = controllerFuture.get()
+                controller = ctrl
+                ctrl.addListener(object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         _isPlaying.value = isPlaying
                         if (!isPlaying) {
                             scope.launch {
-                                settingsRepository.updateLastPlayedPosition(controller.currentPosition)
+                                settingsRepository.updateLastPlayedPosition(ctrl.currentPosition)
                             }
                         }
                     }
@@ -128,7 +129,7 @@ open class PlaybackRepository(
                         _currentMediaItem.value = mediaItem
                         scope.launch {
                             settingsRepository.updateLastPlayedMediaId(mediaItem?.mediaId)
-                            settingsRepository.updateLastPlayedPosition(controller.currentPosition)
+                            settingsRepository.updateLastPlayedPosition(ctrl.currentPosition)
                         }
                     }
                     override fun onRepeatModeChanged(repeatMode: Int) {
@@ -145,9 +146,9 @@ open class PlaybackRepository(
                     }
 
                     override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
-                        updatePlaylist(controller)
-                        val ids = (0 until controller.mediaItemCount).map {
-                            controller.getMediaItemAt(it).mediaId
+                        updatePlaylist(ctrl)
+                        val ids = (0 until ctrl.mediaItemCount).map {
+                            ctrl.getMediaItemAt(it).mediaId
                         }
                         scope.launch {
                             settingsRepository.updateLastPlaylistIds(ids)
@@ -155,18 +156,20 @@ open class PlaybackRepository(
                     }
                 })
                 // 初始化状态
-                _repeatMode.value = controller.repeatMode
-                _shuffleModeEnabled.value = controller.shuffleModeEnabled
-                _currentMediaId.value = controller.currentMediaItem?.mediaId
-                _currentMediaItem.value = controller.currentMediaItem
-                updatePlaylist(controller)
+                _repeatMode.value = ctrl.repeatMode
+                _shuffleModeEnabled.value = ctrl.shuffleModeEnabled
+                _currentMediaId.value = ctrl.currentMediaItem?.mediaId
+                _currentMediaItem.value = ctrl.currentMediaItem
+                updatePlaylist(ctrl)
 
                 // 恢复播放状态 (如果当前没有播放内容)
-                if (controller.mediaItemCount == 0) {
+                if (ctrl.mediaItemCount == 0) {
                     scope.launch {
-                        restorePlaybackState(controller)
+                        restorePlaybackState(ctrl)
                     }
                 }
+            } catch (e: Exception) {
+                android.util.Log.e("PlaybackRepository", "Failed to connect to MediaSession", e)
             }
         }, MoreExecutors.directExecutor())
     }
@@ -193,10 +196,9 @@ open class PlaybackRepository(
                 delay(10000) // 每 10 秒保存一次
             }
         }.onEach {
-            if (controllerFuture.isDone) {
-                val controller = controllerFuture.get()
-                if (controller.isPlaying) {
-                    settingsRepository.updateLastPlayedPosition(controller.currentPosition)
+            controller?.let {
+                if (it.isPlaying) {
+                    settingsRepository.updateLastPlayedPosition(it.currentPosition)
                 }
             }
         }.launchIn(scope)
@@ -231,11 +233,11 @@ open class PlaybackRepository(
     }
 
     fun setRepeatMode(mode: Int) {
-        if (controllerFuture.isDone) controllerFuture.get().repeatMode = mode
+        controller?.repeatMode = mode
     }
 
     fun setShuffleModeEnabled(enabled: Boolean) {
-        if (controllerFuture.isDone) controllerFuture.get().shuffleModeEnabled = enabled
+        controller?.shuffleModeEnabled = enabled
     }
 
     fun setExcludedFolders(folders: Set<String>) {
@@ -308,15 +310,14 @@ open class PlaybackRepository(
     }
 
     fun setPlaylist(list: List<MusicModel>, startIndex: Int = 0) {
-        if (controllerFuture.isDone) {
-            val controller = controllerFuture.get()
+        controller?.let { ctrl ->
             val mediaItems = list.map { music ->
                 createMediaItem(music)
             }
             
-            controller.setMediaItems(mediaItems, startIndex, 0L)
-            controller.prepare()
-            controller.play()
+            ctrl.setMediaItems(mediaItems, startIndex, 0L)
+            ctrl.prepare()
+            ctrl.play()
         }
     }
 
@@ -326,12 +327,20 @@ open class PlaybackRepository(
             putString("source_id", music.sourceId)
             putString("original_id", music.id)
         }
-        return MediaItem.Builder()
+        
+        val isLocal = music.sourceId == localMusicSource.sourceId
+        val mediaUri = if (isLocal) {
+            music.mediaUri
+        } else {
+            "kanade://resolve?source_id=${music.sourceId}&original_id=${music.id}"
+        }
+
+        val builder = MediaItem.Builder()
             .setMediaId(uniqueId)
-            .setUri(music.mediaUri)
+            .setUri(mediaUri)
             .setRequestMetadata(
                 androidx.media3.common.MediaItem.RequestMetadata.Builder()
-                    .setMediaUri(android.net.Uri.parse(music.mediaUri))
+                    .setMediaUri(android.net.Uri.parse(mediaUri))
                     .build()
             )
             .setMediaMetadata(
@@ -343,27 +352,28 @@ open class PlaybackRepository(
                     .setExtras(extras)
                     .build()
             )
-            .build()
+
+        return builder.build()
     }
 
     fun play() {
-        if (controllerFuture.isDone) controllerFuture.get().play()
+        controller?.play()
     }
 
     fun pause() {
-        if (controllerFuture.isDone) controllerFuture.get().pause()
+        controller?.pause()
     }
 
     fun next() {
-        if (controllerFuture.isDone) controllerFuture.get().seekToNext()
+        controller?.seekToNext()
     }
 
     fun previous() {
-        if (controllerFuture.isDone) controllerFuture.get().seekToPrevious()
+        controller?.seekToPrevious()
     }
 
     fun seekTo(position: Long) {
-        if (controllerFuture.isDone) controllerFuture.get().seekTo(position)
+        controller?.seekTo(position)
     }
 
     fun release() {

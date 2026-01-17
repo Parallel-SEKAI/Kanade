@@ -20,6 +20,9 @@ import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.data.source.SourceManager
 import org.parallel_sekai.kanade.data.utils.CacheManager
 
+import androidx.media3.datasource.ResolvingDataSource
+import kotlinx.coroutines.runBlocking
+
 /**
  * 后台播放服务，基于 Media3 实现
  */
@@ -38,13 +41,46 @@ class KanadePlaybackService : MediaSessionService() {
             .setUsage(C.USAGE_MEDIA)
             .build()
 
+        val settingsRepository = SettingsRepository(this)
+        val sourceManager = SourceManager.getInstance(this, settingsRepository)
+
+        val resolvingDataSourceFactory = ResolvingDataSource.Factory(
+            CacheManager.getCacheDataSourceFactory(this),
+            object : ResolvingDataSource.Resolver {
+                override fun resolveDataSpec(dataSpec: androidx.media3.datasource.DataSpec): androidx.media3.datasource.DataSpec {
+                    val uri = dataSpec.uri
+                    
+                    if (uri.scheme == "kanade" && uri.host == "resolve") {
+                        val sourceId = uri.getQueryParameter("source_id")
+                        val originalId = uri.getQueryParameter("original_id")
+                        
+                        if (sourceId != null && originalId != null) {
+                            val resolvedUrl = runBlocking {
+                                val source = sourceManager.getSource(sourceId)
+                                try {
+                                    source?.getPlayUrl(originalId) ?: ""
+                                } catch (e: Exception) {
+                                    ""
+                                }
+                            }
+                            
+                            if (resolvedUrl.isNotEmpty()) {
+                                return dataSpec.buildUpon().setUri(android.net.Uri.parse(resolvedUrl)).build()
+                            }
+                        }
+                    }
+                    return dataSpec
+                }
+            }
+        )
+
         player = ExoPlayer.Builder(this)
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true) 
             .setWakeMode(C.WAKE_MODE_NETWORK) 
             .setMediaSourceFactory(
                 androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this)
-                    .setDataSourceFactory(CacheManager.getCacheDataSourceFactory(this))
+                    .setDataSourceFactory(resolvingDataSourceFactory)
             )
             .build().apply {
                 addListener(object : androidx.media3.common.Player.Listener {
@@ -76,47 +112,37 @@ class KanadePlaybackService : MediaSessionService() {
     }
 
     private inner class KanadeSessionCallback : MediaSession.Callback {
+        override fun onConnect(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo
+        ): MediaSession.ConnectionResult {
+            android.util.Log.d("KanadePlaybackService", "Connecting: ${controller.packageName}")
+            
+            // 显式授予所有可用的指令
+            val availableSessionCommands = MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
+                .build()
+            val availablePlayerCommands = MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS.buildUpon()
+                .build()
+            
+            return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                .setAvailableSessionCommands(availableSessionCommands)
+                .setAvailablePlayerCommands(availablePlayerCommands)
+                .build()
+        }
+
+        override fun onPostConnect(session: MediaSession, controller: MediaSession.ControllerInfo) {
+            super.onPostConnect(session, controller)
+            android.util.Log.d("KanadePlaybackService", "Post connect from ${controller.packageName}")
+        }
+
         override fun onAddMediaItems(
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>
         ): ListenableFuture<MutableList<MediaItem>> {
-            return serviceScope.future {
-                mediaItems.mapNotNull { item ->
-                    val uri = item.requestMetadata.mediaUri
-                    if (uri == null || uri.toString().isEmpty()) {
-                        resolveMediaItem(item)
-                    } else {
-                        item
-                    }
-                }.toMutableList()
-            }
-        }
-
-        private suspend fun resolveMediaItem(item: MediaItem): MediaItem? {
-            val extras = item.mediaMetadata.extras ?: return null
-            val sourceId = extras.getString("source_id") ?: return null
-            val originalId = extras.getString("original_id") ?: item.mediaId
-            
-            val settingsRepository = SettingsRepository(this@KanadePlaybackService)
-            val sourceManager = SourceManager.getInstance(this@KanadePlaybackService, settingsRepository)
-            val source = sourceManager.getSource(sourceId) ?: return null
-            
-            val playUrl = try {
-                source.getPlayUrl(originalId)
-            } catch (e: Exception) {
-                ""
-            }
-            if (playUrl.isEmpty()) return null
-
-            return item.buildUpon()
-                .setUri(playUrl)
-                .setRequestMetadata(
-                    item.requestMetadata.buildUpon()
-                        .setMediaUri(android.net.Uri.parse(playUrl))
-                        .build()
-                )
-                .build()
+            // 不再在此处解析 URL，直接返回包含元数据的项目
+            // ResolvingDataSource 会在播放前自动处理
+            return Futures.immediateFuture(mediaItems)
         }
     }
 

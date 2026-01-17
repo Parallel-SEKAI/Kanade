@@ -127,6 +127,7 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Added "Song Info" screen to view detailed metadata and raw file information.
 - [x] Integrated "Song Info" into the full-screen player "More" menu.
 - [x] Optimized data fetching to be on-demand (deferred fetching of artists, albums, folders, and script home items).
+- [x] Implemented "last-minute" script URL resolution using `ResolvingDataSource` to avoid pre-fetching in playlists.
 - [ ] Source Selection in Search:
 
 ## 8. Agent Development Instructions (AI Context)
