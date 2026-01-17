@@ -66,11 +66,10 @@ app/src/main/java/org/parallel_sekai/kanade/
 - **Resources**: Avoid hardcoded strings and dimensions. Use `stringResource()` and `Dimens` object.
 
 ## 6. Core Classes & Functions Index
-- `PlaybackRepository`: The source of truth for playback state. Exposes `isPlaying`, `currentMediaId`, and a high-frequency `progressFlow` for smooth UI updates.
+- `PlaybackRepository`: The source of truth for playback state. Exposes `isPlaying`, `currentMediaItem`, and a high-frequency `progressFlow` for smooth UI updates.
 - `LrcParser` & `TtmlParser`: Specialized parsers for handling various lyric formats. Supports `WordInfo` for granular word-by-word animation.
 - `PlaylistContent`: Displays the current playback queue with smooth transitions, allowing users to browse and select songs directly from the fullscreen player.
-- `PlayerViewModel`: Manages the current playlist, handles playback intents, and fetches/parses lyrics when the track changes.
-- `SearchViewModel`: Handles debounced search queries and manages search history persistence.
+- `PlayerViewModel`: Manages the current playlist, handles playback intents, and fetches/parses lyrics when the track changes. It observes `currentMediaItem` to ensure UI state consistency across different music sources.
 - `LocalMusicSource`: Uses `ContentResolver` to query `MediaStore`. Attempts to find `.lrc` or `.ttml` files in the same directory as the audio file.
 - `LyricGetterManager`: Unified manager for external lyric broadcasting. Supports both `Lyric-Getter-API` and `SuperLyricApi`, providing translations and word-by-word sync to system-wide providers.
 
@@ -119,6 +118,19 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Integrated QuickJS engine with Promise support and host bridging.
 - [x] Added script management UI and support for JIT URI resolution.
 - [x] Fixed Netease script home page stuck loading issue (improved JS bridge, timeout, and loading state).
+- [x] Improved script execution robustness: handled "null" results from script engine to avoid JSON parsing errors.
+- [x] Enhanced playback stability: implemented media item resolution filtering in `KanadePlaybackService` to prevent invalid URIs from causing player crashes.
+- [x] Added global error logging for ExoPlayer in `KanadePlaybackService`.
+- [x] Fixed lyric decoding and display issues for script-based providers (Netease translation support).
+- [x] Improved script engine to support object arguments for better configuration handling.
+- [x] Prevented redundant and automatic script home page refreshes on startup and setting changes to improve UX.
+- [x] Added "Song Info" screen to view detailed metadata and raw file information.
+- [x] Integrated "Song Info" into the full-screen player "More" menu.
+- [x] Ensured correct fetching of lyrics for script-based music sources.
+- [x] Fixed excessive '\n' characters in script-provided lyrics by normalizing line endings.
+- [x] Enabled long-press to copy information on the "Song Info" screen.
+- [x] Implemented direct copy to clipboard on long-press for information in the "Song Info" screen.
+- [ ] Source Selection in Search:
 
 ## 8. Agent Development Instructions (AI Context)
 - **State Management**: Always use `MutableStateFlow` in ViewModels. UI must be stateless and react only to the `state` flow.

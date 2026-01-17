@@ -128,5 +128,20 @@
             <string name="btn_import_script">Import Script</string>
             <string name="header_discover">Discover</string>
     <string name="no_content">No content</string>
+
+    <!-- Song Info -->
+    <string name="title_song_info">Song Info</string>
+    <string name="label_title">Title</string>
+    <string name="label_artist">Artist</string>
+    <string name="label_album">Album</string>
+    <string name="label_duration">Duration</string>
+    <string name="label_file_path">File Path</string>
+    <string name="label_file_size">File Size</string>
+    <string name="label_mime_type">MIME Type</string>
+    <string name="label_bitrate">Bitrate</string>
+    <string name="label_sample_rate">Sample Rate</string>
+    <string name="label_source">Source</string>
+    <string name="label_metadata">Raw Metadata</string>
+    <string name="msg_copied_to_clipboard">Copied to clipboard!</string>
 </resources>
         

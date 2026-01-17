@@ -22,9 +22,19 @@
     - [x] Add "Import Script" functionality to handle permission issues.
 - [ ] Source Selection in Search:
     - [ ] Implement Source Selection in Search screen (Filter search by specific scripts).
+- [x] Song Info & Metadata:
+    - [x] Implement `SongInfoScreen` to display detailed metadata and raw lyrics of the current song.
+    - [x] Add "Song Info" option to the player "More" menu.
+    - [x] Update navigation to support `SongInfoScreen`.
+- [x] External Source Playback & Caching:
+    - [x] Implement lazy URL resolution in `KanadePlaybackService` via `IMusicSource.getPlayUrl`.
+    - [x] Implement `CacheManager` using Media3 `SimpleCache` for persistent audio caching.
+    - [x] Integrate `CacheDataSource` into `ExoPlayer` for automatic remote stream caching.
 - [x] Robustness & Bug Fixes:
     - [x] Implement `importScript(Uri)` in `ScriptManager`.
     - [x] Fix Netease script home page stuck loading issue (JS bridge wrapper, timeout, loading state).
+    - [x] Prevent automatic script refresh on startup and setting changes to improve UX.
+- [x] Debug: Netease Lyric Mismatch - Investigate why `netease.kanade.js` returns incorrect lyrics for specific songs, possibly by logging `musicId` and API responses. (Fixed by normalizing script output concatenation)
 - [ ] Testing & Samples:
     - [ ] Create a sample `.js` script (e.g., `mock_provider.js`).
     - [ ] Verify search, media URL retrieval, and playback.

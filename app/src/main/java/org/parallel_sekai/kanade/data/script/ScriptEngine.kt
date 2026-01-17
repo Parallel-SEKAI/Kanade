@@ -148,9 +148,8 @@ class ScriptEngine : Closeable {
     }
 
     suspend fun callInit(config: Map<String, String>) {
-        val configJson = Json.encodeToString(config)
-        // Pass the JSON string. callAsync will wrap it in quotes for JS.
-        callAsync(null, "init", configJson)
+        // Pass the map directly, callAsync will use toJson to convert it to a JS object
+        callAsync(null, "init", config)
     }
 
     suspend fun callAsync(objectName: String?, methodName: String, vararg args: Any?): String {
@@ -188,6 +187,19 @@ class ScriptEngine : Closeable {
             null -> "null"
             is String -> Json.encodeToString(arg)
             is Number, is Boolean -> arg.toString()
+            is Map<*, *> -> {
+                try {
+                    // Convert Map to JSON object string
+                    val entries = arg.entries.joinToString(", ") { entry ->
+                        val k = entry.key.toString()
+                        val v = entry.value
+                        "\"$k\": ${toJson(v)}"
+                    }
+                    "{$entries}"
+                } catch (e: Exception) {
+                    "{}"
+                }
+            }
             else -> try {
                 Json.encodeToString(arg.toString())
             } catch (e: Exception) {

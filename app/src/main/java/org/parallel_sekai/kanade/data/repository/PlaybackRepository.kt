@@ -40,6 +40,9 @@ open class PlaybackRepository(
     private val _currentMediaId = MutableStateFlow<String?>(null)
     val currentMediaId = _currentMediaId.asStateFlow()
 
+    private val _currentMediaItem = MutableStateFlow<MediaItem?>(null)
+    val currentMediaItem = _currentMediaItem.asStateFlow()
+
     private val _repeatMode = MutableStateFlow(Player.REPEAT_MODE_OFF)
     val repeatMode = _repeatMode.asStateFlow()
 
@@ -122,6 +125,7 @@ open class PlaybackRepository(
                     }
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                         _currentMediaId.value = mediaItem?.mediaId
+                        _currentMediaItem.value = mediaItem
                         scope.launch {
                             settingsRepository.updateLastPlayedMediaId(mediaItem?.mediaId)
                             settingsRepository.updateLastPlayedPosition(controller.currentPosition)
@@ -154,6 +158,7 @@ open class PlaybackRepository(
                 _repeatMode.value = controller.repeatMode
                 _shuffleModeEnabled.value = controller.shuffleModeEnabled
                 _currentMediaId.value = controller.currentMediaItem?.mediaId
+                _currentMediaItem.value = controller.currentMediaItem
                 updatePlaylist(controller)
 
                 // 恢复播放状态 (如果当前没有播放内容)
@@ -212,6 +217,7 @@ open class PlaybackRepository(
                 controller.prepare()
                 // 手动更新一次 ID，确保 UI 在恢复后立即响应
                 _currentMediaId.value = controller.currentMediaItem?.mediaId
+                _currentMediaItem.value = controller.currentMediaItem
             }
         }
     }
@@ -294,8 +300,11 @@ open class PlaybackRepository(
         return localMusicSource.getSongsByPlaylist(playlistId)
     }
 
-    suspend fun fetchLyrics(musicId: String): String? {
-        return localMusicSource.getLyrics(musicId)
+    suspend fun fetchLyrics(musicId: String, sourceId: String? = null): String? {
+        if (sourceId == null || sourceId == localMusicSource.sourceId) {
+            return localMusicSource.getLyrics(musicId)
+        }
+        return sourceManager.getLyrics(sourceId, musicId)
     }
 
     fun setPlaylist(list: List<MusicModel>, startIndex: Int = 0) {
@@ -312,11 +321,13 @@ open class PlaybackRepository(
     }
 
     private fun createMediaItem(music: MusicModel): MediaItem {
+        val uniqueId = "${music.sourceId}:${music.id}"
         val extras = android.os.Bundle().apply {
             putString("source_id", music.sourceId)
+            putString("original_id", music.id)
         }
         return MediaItem.Builder()
-            .setMediaId(music.id)
+            .setMediaId(uniqueId)
             .setUri(music.mediaUri)
             .setRequestMetadata(
                 androidx.media3.common.MediaItem.RequestMetadata.Builder()

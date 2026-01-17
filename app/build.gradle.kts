@@ -62,6 +62,8 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.datasource.okhttp)
+    implementation(libs.okhttp)
     implementation(libs.google.accompanist.permissions)
     implementation(libs.coil.compose)
     implementation("com.github.xiaowine:Lyric-Getter-Api:6.0.0")

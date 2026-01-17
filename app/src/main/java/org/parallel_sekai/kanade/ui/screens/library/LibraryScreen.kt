@@ -34,7 +34,7 @@ import org.parallel_sekai.kanade.ui.theme.Dimens
 @Composable
 fun LibraryScreen(
     state: PlayerState,
-    onSongClick: (MusicModel) -> Unit,
+    onSongClick: (MusicModel, List<MusicModel>) -> Unit,
     onScriptClick: (String?) -> Unit,
     onNavigateToArtists: () -> Unit,
     onNavigateToAlbums: () -> Unit,
@@ -133,7 +133,7 @@ fun LibraryScreen(
                 SongListItem(
                     song = song,
                     isSelected = state.currentSong?.id == song.id,
-                    onClick = { onSongClick(song) },
+                    onClick = { onSongClick(song, displayList) },
                     artistJoinString = state.artistJoinString
                 )
             }

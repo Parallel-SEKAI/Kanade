@@ -127,5 +127,20 @@
         <string name="btn_reload_scripts">重新加载脚本</string>
             <string name="btn_import_script">导入脚本</string>
                 <string name="header_discover">发现</string>
-                <string name="no_content">暂无内容</string>
-            </resources>        
+                    <string name="no_content">暂无内容</string>
+                
+                    <!-- Song Info -->
+                    <string name="title_song_info">歌曲信息</string>
+                    <string name="label_title">标题</string>
+                    <string name="label_artist">艺术家</string>
+                    <string name="label_album">专辑</string>
+                    <string name="label_duration">时长</string>
+                    <string name="label_file_path">文件路径</string>
+                    <string name="label_file_size">文件大小</string>
+                    <string name="label_mime_type">MIME 类型</string>
+                    <string name="label_bitrate">比特率</string>
+                    <string name="label_sample_rate">采样率</string>
+                    <string name="label_source">音源</string>
+                        <string name="label_metadata">原始元数据</string>
+                        <string name="msg_copied_to_clipboard">已复制到剪贴板！</string>
+                    </resources>

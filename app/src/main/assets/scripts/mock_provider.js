@@ -21,8 +21,15 @@ const mockData = [
 ];
 
 function init(config) {
-    // console.log("Initializing with config: " + config);
-    currentConfig = JSON.parse(config);
+    if (typeof config === "string") {
+        try {
+            currentConfig = JSON.parse(config);
+        } catch (e) {
+            currentConfig = {};
+        }
+    } else {
+        currentConfig = config || {};
+    }
 }
 
 function getHomeList() {

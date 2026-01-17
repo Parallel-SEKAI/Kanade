@@ -18,6 +18,7 @@ import kotlinx.coroutines.guava.future
 import org.parallel_sekai.kanade.MainActivity
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.data.source.SourceManager
+import org.parallel_sekai.kanade.data.utils.CacheManager
 
 /**
  * 后台播放服务，基于 Media3 实现
@@ -41,7 +42,17 @@ class KanadePlaybackService : MediaSessionService() {
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true) 
             .setWakeMode(C.WAKE_MODE_NETWORK) 
-            .build()
+            .setMediaSourceFactory(
+                androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this)
+                    .setDataSourceFactory(CacheManager.getCacheDataSourceFactory(this))
+            )
+            .build().apply {
+                addListener(object : androidx.media3.common.Player.Listener {
+                    override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                        android.util.Log.e("KanadePlaybackService", "Player Error: ${error.message}", error)
+                    }
+                })
+            }
 
         // 2. 初始化 MediaSession
         val intent = Intent(this, MainActivity::class.java).apply {
@@ -71,7 +82,7 @@ class KanadePlaybackService : MediaSessionService() {
             mediaItems: MutableList<MediaItem>
         ): ListenableFuture<MutableList<MediaItem>> {
             return serviceScope.future {
-                mediaItems.map { item ->
+                mediaItems.mapNotNull { item ->
                     val uri = item.requestMetadata.mediaUri
                     if (uri == null || uri.toString().isEmpty()) {
                         resolveMediaItem(item)
@@ -82,14 +93,21 @@ class KanadePlaybackService : MediaSessionService() {
             }
         }
 
-        private suspend fun resolveMediaItem(item: MediaItem): MediaItem {
-            val sourceId = item.mediaMetadata.extras?.getString("source_id") ?: return item
+        private suspend fun resolveMediaItem(item: MediaItem): MediaItem? {
+            val extras = item.mediaMetadata.extras ?: return null
+            val sourceId = extras.getString("source_id") ?: return null
+            val originalId = extras.getString("original_id") ?: item.mediaId
+            
             val settingsRepository = SettingsRepository(this@KanadePlaybackService)
             val sourceManager = SourceManager.getInstance(this@KanadePlaybackService, settingsRepository)
-            val source = sourceManager.getSource(sourceId) ?: return item
+            val source = sourceManager.getSource(sourceId) ?: return null
             
-            val playUrl = source.getPlayUrl(item.mediaId)
-            if (playUrl.isEmpty()) return item
+            val playUrl = try {
+                source.getPlayUrl(originalId)
+            } catch (e: Exception) {
+                ""
+            }
+            if (playUrl.isEmpty()) return null
 
             return item.buildUpon()
                 .setUri(playUrl)

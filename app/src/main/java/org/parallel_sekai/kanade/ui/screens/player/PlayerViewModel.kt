@@ -15,8 +15,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.Job
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import coil.ImageLoader
@@ -52,13 +55,13 @@ class PlayerViewModel(
 
     private var lastSentLyric: String? = null
     private var lastLyricUpdateTimestamp = 0L
+    private var lastRefreshedScriptId: String? = null
+    private var refreshJob: Job? = null
 
     // 新增：用于存储和传递艺术家解析设置
     private val _artistParsingSettings = MutableStateFlow(ArtistParsingSettings())
 
     init {
-        // ...
-        // ... (rest of init stays mostly same, but remove local imageLoader/lyricGetterManager)
         // 监听歌词设置
         settingsRepository.lyricsSettingsFlow
             .onEach { settings ->
@@ -80,9 +83,10 @@ class PlayerViewModel(
 
         // 监听排除文件夹
         settingsRepository.excludedFoldersFlow
+            .drop(1) // 跳过启动时的初始加载，因为 init 块已经处理了
             .onEach { folders ->
                 playbackRepository.setExcludedFolders(folders)
-                handleIntent(PlayerIntent.RefreshList)
+                handleIntent(PlayerIntent.RefreshList(forceScriptRefresh = false))
             }
             .launchIn(viewModelScope)
 
@@ -91,7 +95,7 @@ class PlayerViewModel(
             .onEach { mediaItems ->
                 val list = mediaItems.map { item ->
                     MusicModel(
-                        id = item.mediaId,
+                        id = item.mediaMetadata.extras?.getString("original_id") ?: item.mediaId,
                         title = item.mediaMetadata.title?.toString() ?: "",
                         artists = MusicUtils.parseArtists(
                             artistString = item.mediaMetadata.artist?.toString(),
@@ -110,23 +114,40 @@ class PlayerViewModel(
 
         // 加载初始音乐列表
         viewModelScope.launch {
-            val list = playbackRepository.fetchMusicList()
-            val artists = playbackRepository.fetchArtistList()
-            val albums = playbackRepository.fetchAlbumList()
-            val folders = playbackRepository.fetchFolderList()
-            val playlists = playbackRepository.fetchPlaylistList()
+            _state.update { it.copy(isHomeLoading = true) }
             
-            // 确保 initialSong 始终是 MusicModel? 类型
+            val listDeferred = async { playbackRepository.fetchMusicList() }
+            val artistsDeferred = async { playbackRepository.fetchArtistList() }
+            val albumsDeferred = async { playbackRepository.fetchAlbumList() }
+            val foldersDeferred = async { playbackRepository.fetchFolderList() }
+            val playlistsDeferred = async { playbackRepository.fetchPlaylistList() }
+            
+            val activeId = settingsRepository.activeScriptIdFlow.first()
+            val homeItems = if (activeId != null) {
+                playbackRepository.fetchHomeList()
+            } else {
+                emptyList()
+            }
+            lastRefreshedScriptId = activeId
+
+            val list = listDeferred.await()
+            val artists = artistsDeferred.await()
+            val albums = albumsDeferred.await()
+            val folders = foldersDeferred.await()
+            val playlists = playlistsDeferred.await()
+            
             val initialSong: MusicModel? = list.firstOrNull() 
 
             _state.update { it.copy(
                 allMusicList = list,
-                currentPlaylist = list, // 初始时将全部音乐设为当前队列
+                currentPlaylist = list,
                 artistList = artists,
                 albumList = albums,
                 folderList = folders,
                 playlistList = playlists,
-                currentSong = it.currentSong ?: initialSong // 使用明确类型的 initialSong
+                homeMusicList = homeItems,
+                isHomeLoading = false,
+                currentSong = it.currentSong ?: initialSong
             ) }
             
             initialSong?.let {
@@ -145,29 +166,42 @@ class PlayerViewModel(
             }
             .launchIn(viewModelScope)
 
-        // 监听当前播放的 MediaId 并更新 currentSong (联动 allMusicList)
-        combine(playbackRepository.currentMediaId, _state.map { it.allMusicList }.distinctUntilChanged()) { mediaId, allMusic ->
-            mediaId to allMusic
-        }
-            .onEach { (mediaId, allMusic) ->
-                val song = allMusic.find { it.id == mediaId }
-                if (song != null && song.id != state.value.currentSong?.id) {
-                    _state.update { it.copy(
-                        currentSong = song,
-                        lyrics = null // 重置旧歌词
-                    ) }
-                    lyricGetterManager.clearLyric()
-                    lastSentLyric = null
-                    
-                    // 异步加载歌词和颜色
-                    viewModelScope.launch {
-                        extractColors(song)
-                        val lyrics = playbackRepository.fetchLyrics(song.id)
-                        val lyricData = lyrics?.let { LyricParserFactory.getParser(it).parse(it) }
+        // 监听当前播放的 MediaItem 并更新 currentSong
+        playbackRepository.currentMediaItem
+            .onEach { mediaItem ->
+                if (mediaItem != null) {
+                    val song = MusicModel(
+                        id = mediaItem.mediaMetadata.extras?.getString("original_id") ?: mediaItem.mediaId,
+                        title = mediaItem.mediaMetadata.title?.toString() ?: "",
+                        artists = MusicUtils.parseArtists(
+                            artistString = mediaItem.mediaMetadata.artist?.toString(),
+                            settings = _artistParsingSettings.value
+                        ),
+                        album = mediaItem.mediaMetadata.albumTitle?.toString() ?: "",
+                        coverUrl = mediaItem.mediaMetadata.artworkUri?.toString() ?: "",
+                        mediaUri = mediaItem.requestMetadata.mediaUri?.toString() ?: "",
+                        duration = 0,
+                        sourceId = mediaItem.mediaMetadata.extras?.getString("source_id") ?: "unknown"
+                    )
+
+                    if (song.id != state.value.currentSong?.id || song.sourceId != state.value.currentSong?.sourceId) {
                         _state.update { it.copy(
-                            lyrics = lyrics,
-                            lyricData = lyricData
+                            currentSong = song,
+                            lyrics = null // 重置旧歌词
                         ) }
+                        lyricGetterManager.clearLyric()
+                        lastSentLyric = null
+                        
+                        // 异步加载歌词和颜色
+                        viewModelScope.launch {
+                            extractColors(song)
+                            val lyrics = playbackRepository.fetchLyrics(song.id, song.sourceId)
+                            val lyricData = lyrics?.let { LyricParserFactory.getParser(it).parse(it) }
+                            _state.update { it.copy(
+                                lyrics = lyrics,
+                                lyricData = lyricData
+                            ) }
+                        }
                     }
                 }
             }
@@ -189,9 +223,15 @@ class PlayerViewModel(
 
         // 监听当前活跃脚本 ID
         settingsRepository.activeScriptIdFlow
+            .distinctUntilChanged()
             .onEach { id ->
+                val previousId = _state.value.activeScriptId
                 _state.update { it.copy(activeScriptId = id) }
-                handleIntent(PlayerIntent.RefreshList) // Refresh home list when script changes
+                
+                // 只有当 ID 真正改变（且不是第一次恢复状态）时才刷新
+                if (previousId != null && previousId != id) {
+                    handleIntent(PlayerIntent.RefreshList(forceScriptRefresh = true))
+                }
             }
             .launchIn(viewModelScope)
 
@@ -262,14 +302,36 @@ class PlayerViewModel(
                 _state.update { it.copy(isExpanded = false) }
             }
             is PlayerIntent.RefreshList -> {
-                viewModelScope.launch {
-                    _state.update { it.copy(isHomeLoading = true) }
-                    val list = playbackRepository.fetchMusicList()
-                    val artists = playbackRepository.fetchArtistList()
-                    val albums = playbackRepository.fetchAlbumList()
-                    val folders = playbackRepository.fetchFolderList()
-                    val playlists = playbackRepository.fetchPlaylistList()
-                    val homeItems = playbackRepository.fetchHomeList()
+                refreshJob?.cancel()
+                refreshJob = viewModelScope.launch {
+                    val currentScriptId = state.value.activeScriptId
+                    val shouldRefreshHome = intent.forceScriptRefresh && (currentScriptId != lastRefreshedScriptId)
+                    
+                    if (shouldRefreshHome) {
+                        _state.update { it.copy(isHomeLoading = true) }
+                    }
+                    
+                    // 并行获取本地数据
+                    val listDeferred = async { playbackRepository.fetchMusicList() }
+                    val artistsDeferred = async { playbackRepository.fetchArtistList() }
+                    val albumsDeferred = async { playbackRepository.fetchAlbumList() }
+                    val foldersDeferred = async { playbackRepository.fetchFolderList() }
+                    val playlistsDeferred = async { playbackRepository.fetchPlaylistList() }
+                    
+                    val list = listDeferred.await()
+                    val artists = artistsDeferred.await()
+                    val albums = albumsDeferred.await()
+                    val folders = foldersDeferred.await()
+                    val playlists = playlistsDeferred.await()
+
+                    if (shouldRefreshHome) {
+                        val homeItems = playbackRepository.fetchHomeList()
+                        _state.update { it.copy(
+                            homeMusicList = homeItems,
+                            isHomeLoading = false
+                        ) }
+                        lastRefreshedScriptId = currentScriptId
+                    }
                     
                     _state.update { it.copy(
                         allMusicList = list,
@@ -277,8 +339,6 @@ class PlayerViewModel(
                         albumList = albums,
                         folderList = folders,
                         playlistList = playlists,
-                        homeMusicList = homeItems,
-                        isHomeLoading = false,
                         currentSong = it.currentSong ?: list.firstOrNull()
                     ) }
                 }
@@ -301,7 +361,7 @@ class PlayerViewModel(
                 ) }
                 // 异步加载歌词
                 viewModelScope.launch {
-                    val lyrics = playbackRepository.fetchLyrics(intent.song.id)
+                    val lyrics = playbackRepository.fetchLyrics(intent.song.id, intent.song.sourceId)
                     val lyricData = lyrics?.let { LyricParserFactory.getParser(it).parse(it) }
                     _state.update { it.copy(
                         lyrics = lyrics,
@@ -309,7 +369,10 @@ class PlayerViewModel(
                     ) }
                 }
                 
-                val listToPlay = intent.customList ?: state.value.allMusicList
+                val isScriptActive = state.value.activeScriptId != null
+                val listToPlay = intent.customList 
+                    ?: (if (isScriptActive) state.value.homeMusicList else state.value.allMusicList)
+                
                 val index = listToPlay.indexOf(intent.song).coerceAtLeast(0)
                 playbackRepository.setPlaylist(listToPlay, index)
             }
@@ -336,6 +399,7 @@ class PlayerViewModel(
             is PlayerIntent.ReloadScripts -> {
                 viewModelScope.launch {
                     playbackRepository.refreshScriptSources()
+                    handleIntent(PlayerIntent.RefreshList(forceScriptRefresh = true))
                 }
             }
             is PlayerIntent.ImportScript -> {

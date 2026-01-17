@@ -7,7 +7,7 @@ import java.io.StringReader
 
 object LyricUtils {
     /**
-     * 解析时间戳，支持 [mm:ss.xx] 或 mm:ss.xxx 格式，兼容逗号分隔符
+     * 解析时间戳，支持 [mm:ss.xx]、[mm:ss:xx] 或 mm:ss.xxx 格式，兼容逗号分隔符
      */
     fun parseTimestamp(timeStr: String): Long {
         return try {
@@ -15,7 +15,17 @@ object LyricUtils {
                 .removeSurrounding("[", "]")
                 .removeSurrounding("<", ">")
                 .replace(",", ".") // 兼容某些格式的逗号
-            val parts = cleanTime.split(":")
+            
+            // 针对 [mm:ss:xx] 这种乱格式，如果存在两个冒号，将最后一个冒号替换为点
+            val lastColonIndex = cleanTime.lastIndexOf(':')
+            val firstColonIndex = cleanTime.indexOf(':')
+            val normalizedTime = if (lastColonIndex > firstColonIndex && lastColonIndex != -1) {
+                cleanTime.substring(0, lastColonIndex) + "." + cleanTime.substring(lastColonIndex + 1)
+            } else {
+                cleanTime
+            }
+
+            val parts = normalizedTime.split(":")
             if (parts.size < 2) return 0L
             
             val minutes = parts[0].toLong()
@@ -35,36 +45,33 @@ interface LyricParser {
  * LRC 解析器：支持标准、翻译（同时间戳行）和逐字（Enhanced LRC）
  */
 class LrcParser : LyricParser {
-    // 歌词行正则：必须以 [时间戳] 开头
-    private val lineRegex = Regex("""^\[(\d{1,3}:\d{1,2}(?:\.\d+)?)\](.*)""")
-    // 逐字标签正则
-    private val wordRegex = Regex("""<(\d{1,3}:\d{1,2}(?:\.\d+)?)>([^<]*)""")
-    // 标签正则：严格匹配整个括号内的内容，且 Key 必须是字母
+    // Matches one or more [mm:ss.xx] or [mm:ss:xx] tags at the beginning of a line
+    private val timeTagsRegex = Regex("""^((?:\[\d{1,3}:\d{1,2}(?:[:.]\d+)?\])+)(.*)""")
+    // Individual time tag extractor, supports both . and : for milliseconds
+    private val singleTagRegex = Regex("""\[(\d{1,3}:\d{1,2}(?:[:.]\d+)?)\]""")
+    // Enhanced LRC word tags
+    private val wordRegex = Regex("""<(\d{1,3}:\d{1,2}(?:[:.]\d+)?)>([^<]*)""")
+    // Metadata tags: [key:value]
     private val tagRegex = Regex("""^\[([a-zA-Z]+):(.+)\]$""")
 
     override fun parse(content: String): LyricData {
-        val lines = mutableListOf<LyricLine>()
+        val allLyricEntries = mutableListOf<RawLyricEntry>()
         var title: String? = null
         var artist: String? = null
         var album: String? = null
 
         val rawLines = content.lines().map { it.trim() }.filter { it.isNotEmpty() }
-        android.util.Log.d("LyricDebug", "LrcParser starting with ${rawLines.size} lines")
         
-        var i = 0
-        while (i < rawLines.size) {
-            val rawLine = rawLines[i]
-            
-            // 优先检查是否为歌词行 (lineRegex)
-            val lineMatch = lineRegex.find(rawLine)
-            if (lineMatch != null) {
-                val timestampStr = lineMatch.groupValues[1]
-                val timestamp = LyricUtils.parseTimestamp(timestampStr)
-                val contentText = lineMatch.groupValues[2].trim()
+        for (rawLine in rawLines) {
+            // 1. Check for time-tagged lyric lines
+            val timeMatch = timeTagsRegex.find(rawLine)
+            if (timeMatch != null) {
+                val tagsPart = timeMatch.groupValues[1]
+                val textPart = timeMatch.groupValues[2].trim()
                 
-                // 处理逐字 (Enhanced LRC)
+                // Parse word-by-word info if present
                 val words = mutableListOf<WordInfo>()
-                val wordMatches = wordRegex.findAll(contentText).toList()
+                val wordMatches = wordRegex.findAll(textPart).toList()
                 wordMatches.forEachIndexed { index, wMatch ->
                     val start = LyricUtils.parseTimestamp(wMatch.groupValues[1])
                     val nextStart = if (index < wordMatches.size - 1) {
@@ -72,54 +79,77 @@ class LrcParser : LyricParser {
                     } else start + 500
                     words.add(WordInfo(wMatch.groupValues[2], start, nextStart))
                 }
+                val cleanText = if (words.isNotEmpty()) words.joinToString("") { it.text } else textPart
 
-                val cleanText = if (words.isNotEmpty()) words.joinToString("") { it.text } else contentText
-                
-                // 检查翻译 (如果下一行时间戳完全一致)
-                var translation: String? = null
-                if (i + 1 < rawLines.size) {
-                    val nextLineMatch = lineRegex.find(rawLines[i + 1])
-                    if (nextLineMatch != null) {
-                        val nextTimestamp = LyricUtils.parseTimestamp(nextLineMatch.groupValues[1])
-                        if (nextTimestamp == timestamp) {
-                            translation = nextLineMatch.groupValues[2].trim()
-                            i++ // 消费掉翻译行
-                        }
-                    }
+                // Extract all timestamps from the tags part
+                singleTagRegex.findAll(tagsPart).forEach { tag ->
+                    val timestamp = LyricUtils.parseTimestamp(tag.groupValues[1])
+                    allLyricEntries.add(RawLyricEntry(timestamp, cleanText, words))
                 }
-                
-                lines.add(LyricLine(startTime = timestamp, content = cleanText, translation = translation, words = words))
-                i++
                 continue
             }
 
-            // 其次检查是否为标签 (tagRegex)
+            // 2. Check for metadata tags
             val tagMatch = tagRegex.find(rawLine)
             if (tagMatch != null) {
                 val key = tagMatch.groupValues[1].lowercase()
                 val value = tagMatch.groupValues[2].trim()
-                android.util.Log.d("LyricDebug", "Matched tag: $key -> $value")
                 when (key) {
                     "ti" -> title = value
                     "ar" -> artist = value
                     "al" -> album = value
                 }
-                i++
-                continue
             }
-
-            android.util.Log.w("LyricDebug", "Line skipped (no match): $rawLine")
-            i++
         }
+
+        // 3. Sort by timestamp and merge entries with identical timestamps
+        val sortedEntries = allLyricEntries.sortedBy { it.timestamp }
+        val mergedLines = mutableListOf<LyricLine>()
         
-        // 自动计算 endTime
-        val processedLines = lines.mapIndexed { index, line ->
-            val endTime = if (index < lines.size - 1) lines[index + 1].startTime else line.startTime + 5000
+        var current: RawLyricEntry? = null
+        for (entry in sortedEntries) {
+            if (current == null) {
+                current = entry
+            } else if (current.timestamp == entry.timestamp) {
+                // Merge as translation if text is different
+                if (current.text != entry.text) {
+                    current = if (current.translation == null) {
+                        current.copy(translation = entry.text)
+                    } else if (!current.translation.contains(entry.text)) {
+                        current.copy(translation = current.translation + "\n" + entry.text)
+                    } else {
+                        current
+                    }
+                }
+            } else {
+                mergedLines.add(current.toLyricLine())
+                current = entry
+            }
+        }
+        current?.let { mergedLines.add(it.toLyricLine()) }
+
+        // 4. Calculate endTimes
+        val processedLines = mergedLines.mapIndexed { index, line ->
+            val endTime = if (index < mergedLines.size - 1) mergedLines[index + 1].startTime else line.startTime + 5000
             line.copy(endTime = endTime)
         }
 
-        android.util.Log.d("LyricDebug", "LrcParser finished. Total lines added: ${processedLines.size}")
         return LyricData(title, artist, album, processedLines)
+    }
+
+    private data class RawLyricEntry(
+        val timestamp: Long,
+        val text: String,
+        val words: List<WordInfo> = emptyList(),
+        val translation: String? = null
+    ) {
+        fun toLyricLine() = LyricLine(
+            startTime = timestamp,
+            endTime = 0, // Placeholder
+            content = text,
+            translation = translation,
+            words = words
+        )
     }
 }
 

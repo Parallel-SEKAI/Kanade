@@ -51,7 +51,7 @@ sealed interface PlayerIntent {
     object Previous : PlayerIntent
     object Expand : PlayerIntent
     object Collapse : PlayerIntent
-    object RefreshList : PlayerIntent
+    data class RefreshList(val forceScriptRefresh: Boolean = true) : PlayerIntent
     object ToggleRepeat : PlayerIntent
     object ToggleShuffle : PlayerIntent
     data class FetchDetailList(val type: DetailType, val id: String) : PlayerIntent

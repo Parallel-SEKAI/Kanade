@@ -166,6 +166,7 @@ fun FluidBackground(
 fun KanadePlayerContainer(
     state: PlayerState,
     onIntent: (PlayerIntent) -> Unit,
+    onNavigateToSongInfo: () -> Unit = {},
     bottomPadding: Dp = 0.dp
 ) {
     if (state.currentSong == null) return
@@ -282,6 +283,7 @@ fun KanadePlayerContainer(
                     FullScreenContent(
                         state = state,
                         onIntent = onIntent,
+                        onNavigateToSongInfo = onNavigateToSongInfo,
                         expansionFraction = fraction,
                         offsetY = 0f
                     )
@@ -364,6 +366,7 @@ private fun MiniPlayerContent(
 private fun FullScreenContent(
     state: PlayerState,
     onIntent: (PlayerIntent) -> Unit,
+    onNavigateToSongInfo: () -> Unit,
     expansionFraction: Float,
     offsetY: Float
 ) {
@@ -560,13 +563,14 @@ private fun FullScreenContent(
             )
 
             // Apple Music 风格的三点按钮
+            var showMoreMenu by remember { mutableStateOf(false) }
             Box(
                 modifier = Modifier
                     .offset { IntOffset(currentMoreX.roundToPx(), currentMoreY.roundToPx()) }
                     .size(Dimens.PaddingExtraLarge) // 32.dp
                     .clip(CircleShape)
                     .background(Color.White.copy(alpha = 0.1f * expansionFraction))
-                    .clickable { /* More actions */ }
+                    .clickable { showMoreMenu = true }
                     .alpha(if (showLyrics || showPlaylist || expansionFraction < 1f) 1f else controlsAlpha),
                 contentAlignment = Alignment.Center
             ) {
@@ -576,6 +580,20 @@ private fun FullScreenContent(
                     tint = Color.White,
                     modifier = Modifier.size(Dimens.IconSizeMedium) // 20.dp
                 )
+
+                DropdownMenu(
+                    expanded = showMoreMenu,
+                    onDismissRequest = { showMoreMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.title_song_info)) },
+                        onClick = {
+                            showMoreMenu = false
+                            onNavigateToSongInfo()
+                        },
+                        leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) }
+                    )
+                }
             }
 
             Column(

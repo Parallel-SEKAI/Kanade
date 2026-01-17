@@ -54,6 +54,11 @@ class SourceManager private constructor(
         return source?.getHomeList() ?: emptyList()
     }
 
+    suspend fun getLyrics(sourceId: String, musicId: String): String? {
+        val source = getSource(sourceId)
+        return source?.getLyrics(musicId)
+    }
+
     suspend fun refreshScripts() {
         val manifests = scriptManager.scanScripts()
         _scriptSources.value = manifests.map { ScriptMusicSource(it, scriptManager) }

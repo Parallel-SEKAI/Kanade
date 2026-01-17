@@ -60,6 +60,7 @@ import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
 import org.parallel_sekai.kanade.ui.screens.player.KanadePlayerContainer
 import org.parallel_sekai.kanade.ui.screens.player.PlayerIntent
 import org.parallel_sekai.kanade.ui.screens.player.PlayerViewModel
+import org.parallel_sekai.kanade.ui.screens.player.SongInfoScreen
 import org.parallel_sekai.kanade.ui.theme.KanadeTheme
 import androidx.compose.ui.res.stringResource
 import org.parallel_sekai.kanade.ui.theme.Dimens
@@ -102,6 +103,7 @@ sealed class Screen(val route: String, val labelResId: Int, val icon: ImageVecto
     object PlaylistDetail : Screen("playlist_detail/{id}/{title}", R.string.label_playlists, null) {
         fun createRoute(id: String, title: String) = "playlist_detail/$id/$title"
     }
+    object SongInfo : Screen("song_info", R.string.title_song_info, null)
 }
 
 val items = listOf(
@@ -200,8 +202,8 @@ class MainActivity : ComponentActivity() {
                 }
 
                 LaunchedEffect(audioPermissionGranted) {
-                    if (audioPermissionGranted) {
-                        playerViewModel.handleIntent(PlayerIntent.RefreshList)
+                    if (audioPermissionGranted && playerViewModel.state.value.allMusicList.isEmpty()) {
+                        playerViewModel.handleIntent(PlayerIntent.RefreshList(forceScriptRefresh = false))
                     }
                 }
 
@@ -245,7 +247,7 @@ class MainActivity : ComponentActivity() {
                                 if (audioPermissionGranted) {
                                     LibraryScreen(
                                         state = state,
-                                        onSongClick = { song -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song)) },
+                                        onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) },
                                         onScriptClick = { id -> playerViewModel.handleIntent(PlayerIntent.ToggleActiveScript(id)) },
                                         onNavigateToArtists = { navController.navigate(Screen.Artists.route) },
                                         onNavigateToAlbums = { navController.navigate(Screen.Albums.route) },
@@ -414,6 +416,12 @@ class MainActivity : ComponentActivity() {
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }
+                            composable(Screen.SongInfo.route) {
+                                SongInfoScreen(
+                                    state = state,
+                                    onBackClick = { navController.popBackStack() }
+                                )
+                            }
                         }
                     }
 
@@ -421,6 +429,7 @@ class MainActivity : ComponentActivity() {
                     KanadePlayerContainer(
                         state = state,
                         onIntent = { playerViewModel.handleIntent(it) },
+                        onNavigateToSongInfo = { navController.navigate(Screen.SongInfo.route) },
                         bottomPadding = bottomPadding
                     )
                 }

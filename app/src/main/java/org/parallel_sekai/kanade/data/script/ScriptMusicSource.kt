@@ -20,6 +20,7 @@ class ScriptMusicSource(
         return try {
             val result = engine.callAsync(null, "search", query, 1)
             Log.d("ScriptMusicSource", "Raw result from [${manifest.name}]: $result")
+            if (result == "null") return emptyList()
             val items = json.decodeFromString<List<ScriptMusicItem>>(result)
             Log.d("ScriptMusicSource", "Parsed ${items.size} items from [${manifest.name}]")
             items.map { it.toMusicModel(sourceId) }
@@ -34,6 +35,7 @@ class ScriptMusicSource(
         Log.d("ScriptMusicSource", "Fetching home list from [${manifest.name}]")
         return try {
             val result = engine.callAsync(null, "getHomeList")
+            if (result == "null") return emptyList()
             val items = json.decodeFromString<List<ScriptMusicItem>>(result)
             Log.d("ScriptMusicSource", "Parsed ${items.size} home items from [${manifest.name}]")
             items.map { it.toMusicModel(sourceId) }
@@ -50,6 +52,7 @@ class ScriptMusicSource(
         return try {
             val result = engine.callAsync(null, "getMediaUrl", musicId)
             Log.d("ScriptMusicSource", "Raw media result from [${manifest.name}]: $result")
+            if (result == "null") return ""
             val streamInfo = json.decodeFromString<ScriptStreamInfo>(result)
             streamInfo.url
         } catch (e: Exception) {
@@ -62,7 +65,15 @@ class ScriptMusicSource(
         val engine = scriptManager.getEngine(manifest.id) ?: return null
         return try {
             // getLyrics is optional in the contract
-            engine.callAsync(null, "getLyrics", musicId)
+            val rawLyrics = engine.callAsync(null, "getLyrics", musicId)
+            // The bridge returns a JSON-stringified result, so we need to decode it
+            val decoded = try {
+                json.decodeFromString<String?>(rawLyrics)
+            } catch (e: Exception) {
+                rawLyrics // Fallback if it's already a plain string for some reason
+            }
+            // Normalize line endings: replace \r\n and \r with \n
+            decoded?.replace("\r\n", "\n")?.replace("\r", "\n")
         } catch (e: Exception) {
             null
         }
