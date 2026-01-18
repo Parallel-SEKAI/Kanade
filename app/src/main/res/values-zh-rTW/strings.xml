@@ -154,4 +154,15 @@
     <string name="fmt_cache_limit_gb">%s GB</string>
     <string name="action_clear_cache">清除快取</string>
     <string name="msg_confirm_clear_cache">確定要清除所有音訊和封面快取嗎？</string>
+
+    <!-- Lyric Share -->
+    <string name="title_share_lyrics">分享歌詞</string>
+    <string name="action_share">分享</string>
+    <string name="action_save">保存</string>
+    <string name="msg_lyric_saved">歌詞圖片已保存到相簿！</string>
+    <string name="app_branding">Parallel-SEKAI/Kanade</string>
+    <string name="pref_share_quality">分享圖片清晰度</string>
+    <string name="quality_standard">標準 (1080p)</string>
+    <string name="quality_high">高清 (2K)</string>
+    <string name="quality_ultra">超清 (4K)</string>
 </resources>

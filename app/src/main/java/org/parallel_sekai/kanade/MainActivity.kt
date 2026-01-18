@@ -179,6 +179,19 @@ class MainActivity : ComponentActivity() {
                 val currentRoute = navBackStackEntry?.destination?.route
                 val snackbarHostState = remember { SnackbarHostState() }
 
+                LaunchedEffect(Unit) {
+                    playerViewModel.effect.collect { effect ->
+                        when (effect) {
+                            is org.parallel_sekai.kanade.ui.screens.player.PlayerEffect.ShowError -> {
+                                snackbarHostState.showSnackbar(effect.message)
+                            }
+                            is org.parallel_sekai.kanade.ui.screens.player.PlayerEffect.ShowMessage -> {
+                                snackbarHostState.showSnackbar(effect.message)
+                            }
+                        }
+                    }
+                }
+
                 // 记录底部内边距以便播放器定位
                 var bottomPadding by remember { mutableStateOf<Dp>(0.dp) }
 

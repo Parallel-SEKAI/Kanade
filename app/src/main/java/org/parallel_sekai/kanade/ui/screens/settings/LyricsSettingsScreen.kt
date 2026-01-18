@@ -1,5 +1,6 @@
 package org.parallel_sekai.kanade.ui.screens.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,9 +12,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.ui.theme.Dimens
@@ -176,8 +179,101 @@ fun LyricsSettingsScreen(
                 }
             }
 
+            SettingsSectionHeader(title = stringResource(R.string.header_general))
+
+            // ListItem(
+            //     headlineContent = { Text(stringResource(R.string.pref_lyric_sharing)) },
+            //     supportingContent = { Text(stringResource(R.string.desc_lyric_sharing)) },
+            //     trailingContent = {
+            //         Switch(
+            //             checked = settings.isSharingEnabled,
+            //             onCheckedChange = { viewModel.updateLyricSharingEnabled(it) },
+            //         )
+            //     },
+            // )
+
+            var showQualityDialog by remember { mutableStateOf(false) }
+            val currentQualityLabel = when (settings.shareQuality) {
+                1.0f -> stringResource(R.string.quality_standard)
+                1.5f -> stringResource(R.string.quality_high)
+                2.0f -> stringResource(R.string.quality_ultra)
+                else -> stringResource(R.string.quality_standard)
+            }
+
+            Surface(
+                onClick = { showQualityDialog = true },
+                color = Color.Transparent
+            ) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.pref_share_quality)) },
+                    supportingContent = { Text(currentQualityLabel) },
+                )
+            }
+
+            if (showQualityDialog) {
+                AlertDialog(
+                    onDismissRequest = { showQualityDialog = false },
+                    title = { Text(stringResource(R.string.pref_share_quality)) },
+                    text = {
+                        Column {
+                            QualityOption(
+                                label = stringResource(R.string.quality_standard),
+                                selected = settings.shareQuality == 1.0f,
+                                onClick = {
+                                    viewModel.updateLyricShareQuality(1.0f)
+                                    showQualityDialog = false
+                                },
+                            )
+                            QualityOption(
+                                label = stringResource(R.string.quality_high),
+                                selected = settings.shareQuality == 1.5f,
+                                onClick = {
+                                    viewModel.updateLyricShareQuality(1.5f)
+                                    showQualityDialog = false
+                                },
+                            )
+                            QualityOption(
+                                label = stringResource(R.string.quality_ultra),
+                                selected = settings.shareQuality == 2.0f,
+                                onClick = {
+                                    viewModel.updateLyricShareQuality(2.0f)
+                                    showQualityDialog = false
+                                },
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showQualityDialog = false }) {
+                            Text(stringResource(R.string.action_cancel))
+                        }
+                    },
+                )
+            }
+
             // 为底部的 MiniPlayer 留出空间
             Spacer(modifier = Modifier.height(Dimens.MiniPlayerBottomPadding))
         }
+    }
+}
+
+@Composable
+private fun QualityOption(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = Dimens.PaddingSmall),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = onClick)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(start = Dimens.PaddingSmall),
+        )
     }
 }

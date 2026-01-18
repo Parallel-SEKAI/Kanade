@@ -12,7 +12,9 @@ import coil.request.SuccessResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -25,6 +27,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.data.model.*
 import org.parallel_sekai.kanade.data.parser.*
 import org.parallel_sekai.kanade.data.repository.ArtistParsingSettings
@@ -32,7 +35,9 @@ import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.data.source.MusicUtils
 import org.parallel_sekai.kanade.data.utils.LyricGetterManager
+import org.parallel_sekai.kanade.data.utils.LyricImageUtils
 import org.parallel_sekai.kanade.ui.screens.player.DetailType
+import org.parallel_sekai.kanade.ui.screens.player.PlayerEffect
 import org.parallel_sekai.kanade.ui.screens.player.PlayerIntent
 import org.parallel_sekai.kanade.ui.screens.player.PlayerState
 import org.parallel_sekai.kanade.ui.screens.player.RepeatMode
@@ -47,6 +52,9 @@ class PlayerViewModel(
 
     private val _state = MutableStateFlow(PlayerState())
     val state = _state.asStateFlow()
+
+    private val _effect = MutableSharedFlow<PlayerEffect>()
+    val effect = _effect.asSharedFlow()
 
     private var lastSentLyric: String? = null
     private var lastLyricUpdateTimestamp = 0L
@@ -473,7 +481,76 @@ class PlayerViewModel(
                     handleIntent(PlayerIntent.ReloadScripts) // Restart engine to apply config
                 }
             }
+            is PlayerIntent.OpenLyricShare -> {
+                _state.update {
+                    it.copy(
+                        showLyricShare = true,
+                        selectedLyricIndices = setOf(intent.index),
+                    )
+                }
+            }
+            is PlayerIntent.CloseLyricShare -> {
+                _state.update {
+                    it.copy(
+                        showLyricShare = false,
+                        selectedLyricIndices = emptySet(),
+                    )
+                }
+            }
+            is PlayerIntent.ToggleLyricSelection -> {
+                _state.update {
+                    val current = it.selectedLyricIndices
+                    val next = if (current.contains(intent.index)) {
+                        current - intent.index
+                    } else {
+                        current + intent.index
+                    }
+                    it.copy(selectedLyricIndices = next)
+                }
+            }
+            is PlayerIntent.SaveLyricImage -> {
+                viewModelScope.launch {
+                    val bitmap = prepareLyricBitmap()
+                    if (bitmap != null) {
+                        val uri = LyricImageUtils.saveBitmapToGallery(applicationContext, bitmap)
+                        if (uri != null) {
+                            _effect.emit(PlayerEffect.ShowMessage(applicationContext.getString(R.string.msg_lyric_saved)))
+                        }
+                        _state.update { it.copy(showLyricShare = false, selectedLyricIndices = emptySet()) }
+                    }
+                }
+            }
+            is PlayerIntent.ShareLyricImage -> {
+                viewModelScope.launch {
+                    val bitmap = prepareLyricBitmap()
+                    if (bitmap != null) {
+                        LyricImageUtils.shareBitmap(applicationContext, bitmap)
+                        _state.update { it.copy(showLyricShare = false, selectedLyricIndices = emptySet()) }
+                    }
+                }
+            }
         }
+    }
+
+    private suspend fun prepareLyricBitmap(): android.graphics.Bitmap? {
+        val song = state.value.currentSong ?: return null
+        val lyrics = state.value.lyricData?.lines ?: return null
+        val selectedIndices = state.value.selectedLyricIndices
+        val colors = state.value.gradientColors
+        val quality = state.value.lyricsSettings.shareQuality
+        val alignment = state.value.lyricsSettings.alignment
+        val artistJoinString = state.value.artistJoinString
+
+        return LyricImageUtils.generateLyricImage(
+            applicationContext,
+            song,
+            lyrics,
+            selectedIndices,
+            colors,
+            quality,
+            alignment,
+            artistJoinString
+        )
     }
 
     private suspend fun extractColors(song: MusicModel) {

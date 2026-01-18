@@ -17,6 +17,7 @@ data class LyricsSettings(
     val alignment: Int = 0, // 0 = Left, 1 = Center, 2 = Right
     val balanceLines: Boolean = false,
     val isSharingEnabled: Boolean = true,
+    val shareQuality: Float = 1.0f,
 )
 
 data class ArtistParsingSettings(
@@ -41,6 +42,7 @@ open class SettingsRepository(private val context: Context) {
     private val ALIGNMENT = intPreferencesKey("alignment")
     private val BALANCE_LINES = booleanPreferencesKey("balance_lines")
     private val LYRIC_SHARING_ENABLED = booleanPreferencesKey("lyric_sharing_enabled")
+    private val LYRIC_SHARE_QUALITY = floatPreferencesKey("lyric_share_quality")
     private val SEARCH_HISTORY = stringSetPreferencesKey("search_history")
     private val SEARCH_RESULT_AS_PLAYLIST = booleanPreferencesKey("search_result_as_playlist")
     private val EXCLUDED_FOLDERS = stringSetPreferencesKey("excluded_folders")
@@ -92,6 +94,7 @@ open class SettingsRepository(private val context: Context) {
                 alignment = preferences[ALIGNMENT] ?: 0,
                 balanceLines = preferences[BALANCE_LINES] ?: false,
                 isSharingEnabled = preferences[LYRIC_SHARING_ENABLED] ?: true,
+                shareQuality = preferences[LYRIC_SHARE_QUALITY] ?: 1.0f,
             )
         }
 
@@ -233,6 +236,12 @@ open class SettingsRepository(private val context: Context) {
     open suspend fun updateLyricSharingEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[LYRIC_SHARING_ENABLED] = enabled
+        }
+    }
+
+    open suspend fun updateLyricShareQuality(quality: Float) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRIC_SHARE_QUALITY] = quality
         }
     }
 

@@ -48,6 +48,8 @@ data class PlayerState(
     val homeMusicList: List<MusicModel> = emptyList(),
     val isHomeLoading: Boolean = false,
     val gradientColors: List<Color> = listOf(PlayerGradientStart, PlayerGradientEnd),
+    val showLyricShare: Boolean = false,
+    val selectedLyricIndices: Set<Int> = emptySet(),
 )
 
 sealed interface PlayerIntent {
@@ -71,8 +73,14 @@ sealed interface PlayerIntent {
     data class ImportScript(val uri: Uri) : PlayerIntent
     data class ToggleActiveScript(val scriptId: String?) : PlayerIntent
     data class UpdateScriptConfig(val scriptId: String, val key: String, val value: String) : PlayerIntent
+    data class OpenLyricShare(val index: Int) : PlayerIntent
+    object CloseLyricShare : PlayerIntent
+    data class ToggleLyricSelection(val index: Int) : PlayerIntent
+    object SaveLyricImage : PlayerIntent
+    object ShareLyricImage : PlayerIntent
 }
 
 sealed interface PlayerEffect {
     data class ShowError(val message: String) : PlayerEffect
+    data class ShowMessage(val message: String) : PlayerEffect
 }

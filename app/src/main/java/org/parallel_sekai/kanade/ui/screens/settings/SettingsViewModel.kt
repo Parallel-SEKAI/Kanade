@@ -145,6 +145,12 @@ open class SettingsViewModel(
         }
     }
 
+    fun updateLyricShareQuality(quality: Float) {
+        viewModelScope.launch {
+            repository.updateLyricShareQuality(quality)
+        }
+    }
+
     fun updateArtistSeparators(separators: List<String>) {
         viewModelScope.launch {
             repository.updateArtistSeparators(separators)

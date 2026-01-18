@@ -7,6 +7,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -286,6 +288,110 @@ fun KanadePlayerContainer(
                 }
             }
         }
+
+        if (state.showLyricShare) {
+            LyricShareBottomSheet(state, onIntent)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LyricShareBottomSheet(
+    state: PlayerState,
+    onIntent: (PlayerIntent) -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = { onIntent(PlayerIntent.CloseLyricShare) },
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = Dimens.PaddingSmall,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxHeight(0.8f)
+                .fillMaxWidth()
+                .padding(horizontal = Dimens.PaddingLarge),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.title_share_lyrics),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+
+                Row {
+                    TextButton(onClick = { onIntent(PlayerIntent.SaveLyricImage) }) {
+                        Text(stringResource(R.string.action_save))
+                    }
+                    Button(
+                        onClick = { onIntent(PlayerIntent.ShareLyricImage) },
+                        shape = RoundedCornerShape(Dimens.CornerRadiusMedium),
+                    ) {
+                        Text(stringResource(R.string.action_share))
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
+
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(bottom = Dimens.PaddingLarge),
+            ) {
+                itemsIndexed(state.lyricData?.lines ?: emptyList()) { index, line ->
+                    LyricShareItem(
+                        line = line,
+                        isSelected = state.selectedLyricIndices.contains(index),
+                        onClick = { onIntent(PlayerIntent.ToggleLyricSelection(index)) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LyricShareItem(
+    line: LyricLine,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent,
+        shape = RoundedCornerShape(Dimens.CornerRadiusSmall),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(Dimens.PaddingSmall),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Checkbox(
+                checked = isSelected,
+                onCheckedChange = { onClick() },
+            )
+            Column(modifier = Modifier.padding(start = Dimens.PaddingSmall)) {
+                Text(
+                    text = line.content,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                )
+                if (!line.translation.isNullOrBlank()) {
+                    Text(
+                        text = line.translation,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -519,15 +625,7 @@ private fun FullScreenContent(
                 contentScale = ContentScale.Crop,
             )
 
-            Text(
-                text = state.currentSong?.title ?: "",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontSize = currentTitleSize,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                ),
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            Column(
                 modifier = Modifier
                     .offset {
                         IntOffset(
@@ -537,26 +635,28 @@ private fun FullScreenContent(
                     }
                     .width(currentTextWidth)
                     .alpha(if (showLyrics || showPlaylist || expansionFraction < 1f) 1f else controlsAlpha),
-            )
+            ) {
+                Text(
+                    text = state.currentSong?.title ?: "",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = currentTitleSize,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    ),
+                    maxLines = 2, // Allow 2 lines for title to prevent overflow if too long
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                )
 
-            Text(
-                text = state.currentSong?.artists?.joinToString(state.artistJoinString) ?: "",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = currentArtistSize,
-                    color = currentArtistColor,
-                ),
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .offset {
-                        IntOffset(
-                            currentTextX.roundToPx(),
-                            currentArtistY.roundToPx(),
-                        )
-                    }
-                    .width(currentTextWidth)
-                    .alpha(if (showLyrics || showPlaylist || expansionFraction < 1f) 1f else controlsAlpha),
-            )
+                Text(
+                    text = state.currentSong?.artists?.joinToString(state.artistJoinString) ?: "",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = currentArtistSize,
+                        color = currentArtistColor,
+                    ),
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                )
+            }
 
             // Apple Music 风格的三点按钮
             var showMoreMenu by remember { mutableStateOf(false) }
@@ -1299,12 +1399,16 @@ fun LyricContent(
                             modifier = Modifier
                                 .matchParentSize()
                                 .padding(horizontal = 32.dp)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                ) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    onIntent(PlayerIntent.SeekTo(line.startTime))
+                                .pointerInput(index) {
+                                    detectTapGestures(
+                                        onTap = {
+                                            onIntent(PlayerIntent.SeekTo(line.startTime))
+                                        },
+                                        onLongPress = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            onIntent(PlayerIntent.OpenLyricShare(index))
+                                        },
+                                    )
                                 },
                         )
                     }

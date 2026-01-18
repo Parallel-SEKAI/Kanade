@@ -153,5 +153,16 @@
     <string name="fmt_cache_limit_gb">%s GB</string>
     <string name="action_clear_cache">Clear Cache</string>
     <string name="msg_confirm_clear_cache">Are you sure you want to clear all media and image caches?</string>
+
+    <!-- Lyric Share -->
+    <string name="title_share_lyrics">Share Lyrics</string>
+    <string name="action_share">Share</string>
+    <string name="action_save">Save</string>
+    <string name="msg_lyric_saved">Lyric image saved to gallery!</string>
+    <string name="app_branding">Parallel-SEKAI/Kanade</string>
+    <string name="pref_share_quality">Share Image Quality</string>
+    <string name="quality_standard">Standard (1080p)</string>
+    <string name="quality_high">High (2K)</string>
+    <string name="quality_ultra">Ultra (4K)</string>
 </resources>
         
