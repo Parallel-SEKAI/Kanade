@@ -6,7 +6,7 @@
 - **Background Playback**: Leveraging Android Media3 to ensure seamless audio sessions across the system.
 - **Modern UI/UX**: A reactive interface built with Jetpack Compose following Material 3 guidelines, featuring a floating MiniPlayer, a fullscreen immersive player with rich lyric sync and an Apple Music-style playlist (Up Next) view.
 - **Search Capability**: Integrated search for local music with history support and debounced querying.
-- **Multi-language Support**: Full internationalization support, currently including English and Simplified Chinese.
+- **Multi-language Support**: Full internationalization support, currently including English, Simplified Chinese and Traditional Chinese.
 
 ## 2. Tech Stack
 - **Language**: [Kotlin](https://kotlinlang.org/) (JVM 17)
@@ -105,7 +105,8 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Album detail page optimization (smart artist display, hidden track covers).
 - [x] Lyric-Getter-API & SuperLyricApi integration for system-wide lyric sharing.
 - [x] CI Setup (GitHub Actions).
-- [x] Multi-language support (EN/ZH).
+- [x] Multi-language support (EN/ZH-CN/ZH-TW).
+- [x] Added Traditional Chinese (ZH-TW) support.
 - [x] Playback state persistence (playlist, track, position, modes).
 - [x] Code structure and file organization optimization.
 - [x] Show full-screen player when clicking media notification.

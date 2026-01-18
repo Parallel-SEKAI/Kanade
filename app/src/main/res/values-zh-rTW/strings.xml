@@ -1,0 +1,157 @@
+<resources>
+    <string name="app_name">kanade</string>
+    <string name="various_artists">群星</string>
+
+    <!-- Common -->
+    <string name="desc_back">返回</string>
+    <string name="desc_clear">清除</string>
+    <string name="action_clear">清除</string>
+    <string name="action_cancel">取消</string>
+    <string name="desc_add">添加</string>
+    <string name="desc_remove">移除</string>
+    <string name="desc_delete">刪除</string>
+    <string name="error_unknown">未知錯誤</string>
+
+    <!-- Main Screens -->
+    <string name="title_library">媒體庫</string>
+    <string name="title_settings">設定</string>
+    <string name="title_more">更多</string>
+    <string name="label_about">關於</string>
+
+    <!-- Library Screen -->
+    <string name="header_your_library">你的資料庫</string>
+    <string name="header_all_music">所有音樂</string>
+    <string name="label_local">本地</string>
+    <string name="label_artists">藝術家</string>
+    <string name="label_albums">專輯</string>
+    <string name="label_playlists">播放列表</string>
+    <string name="label_folders">資料夾</string>
+    <string name="label_search">搜尋</string>
+    <string name="msg_grant_permission">請授予儲存權限以掃描音樂。</string>
+    <string name="msg_grant_notification_permission">請授予通知權限以顯示播放控制。</string>
+    <string name="fmt_albums_songs">%1$d 張專輯 • %2$d 首歌</string>
+    <string name="fmt_songs_count">%d 首歌</string>
+    <string name="fmt_item_info_songs">%1$s • %2$d 首歌</string>
+    <string name="fmt_folder_info">%1$s • %2$d 首歌</string>
+
+    <!-- Artist Screen -->
+    <string name="title_artists">藝術家</string>
+
+    <!-- Search Screen -->
+    <string name="hint_search_music">搜尋音樂...</string>
+    <string name="title_recent_searches">最近搜尋</string>
+    <string name="msg_no_results">未找到結果</string>
+
+    <!-- Player -->
+    <string name="header_playing_next">接下來播放</string>
+    <string name="desc_shuffle">隨機播放</string>
+    <string name="desc_repeat">循環播放</string>
+    <string name="msg_no_lyrics">無歌詞</string>
+
+    <!-- Settings: Main -->
+    <string name="header_interface">介面</string>
+    <string name="header_general">常規</string>
+    <string name="pref_lyrics_settings">歌詞設定</string>
+    <string name="pref_artist_parsing">藝術家解析</string>
+    <string name="desc_artist_parsing">自定義藝術家分隔符和顯示方式</string>
+    <string name="pref_search_as_playlist">將搜尋結果作為播放列表</string>
+    <string name="desc_search_as_playlist">從搜尋結果播放時，將整個列表設為目前隊列</string>
+    <string name="pref_excluded_folders">排除資料夾</string>
+    <string name="desc_excluded_folders_pref">隱藏特定資料夾中的音樂</string>
+
+    <!-- Settings: Lyrics -->
+    <string name="title_lyrics_settings">歌詞設定</string>
+    <string name="label_preview">預覽</string>
+    <string name="text_lyric_preview">這是一段歌詞預覽</string>
+    <string name="header_display">顯示</string>
+    <string name="pref_show_translation">顯示翻譯</string>
+    <string name="pref_blur_inactive">非活躍行模糊</string>
+    <string name="pref_balance_lines">平衡長行</string>
+    <string name="desc_balance_lines">自動切分過長的歌詞以使排版更整齊</string>
+    <string name="pref_lyric_sharing">啟用歌詞廣播</string>
+    <string name="desc_lyric_sharing">與其他應用程式分享目前歌詞 (例如 狀態列歌詞)</string>
+    <string name="label_font_size">字體大小 (%d sp)</string>
+    <string name="header_style">樣式</string>
+    <string name="label_font_weight">字體粗細 (%1$s - %2$d)</string>
+    <string name="label_alignment">對齊方式</string>
+    
+    <string name="weight_thin">極細</string>
+    <string name="weight_light">細</string>
+    <string name="weight_normal">常規</string>
+    <string name="weight_medium">中等</string>
+    <string name="weight_semi_bold">半粗</string>
+    <string name="weight_bold">加粗</string>
+    <string name="weight_extra_bold">極粗</string>
+
+    <string name="align_left">靠左</string>
+    <string name="align_center">居中</string>
+    <string name="align_right">靠右</string>
+
+    <!-- Settings: Artist Parsing -->
+    <string name="title_artist_parsing">藝術家解析</string>
+    <string name="header_artist_separators">藝術家分隔符 (優先級)</string>
+    <string name="desc_artist_separators">將使用列表中第一個匹配的分隔符來拆分藝術家。拖曳以重新排序。</string>
+    <string name="desc_reorder">排序</string>
+    <string name="label_separator">分隔符</string>
+    <string name="desc_delete_separator">刪除分隔符</string>
+    <string name="action_add_separator">新增分隔符</string>
+    <string name="header_artist_whitelist">藝術家白名單</string>
+    <string name="desc_artist_whitelist">此列表中的藝術家名稱即使包含分隔符也不會被拆分。</string>
+    <string name="label_whitelisted_artist">白名單藝術家</string>
+    <string name="desc_delete_whitelist">刪除白名單項</string>
+    <string name="action_add_whitelist">新增白名單項</string>
+    <string name="header_display_join_string">顯示連接符</string>
+    <string name="desc_display_join_string">用於連接多個藝術家以進行顯示 (例如 藝術家 A &amp; 藝術家 B)。</string>
+    <string name="label_join_string">連接符</string>
+
+    <!-- Settings: Excluded Folders -->
+    <string name="title_excluded_folders">排除資料夾</string>
+    <string name="msg_no_folders_excluded">沒有排除的資料夾。</string>
+    <string name="desc_excluded_folders_screen">這些資料夾中的音樂將從您的資料庫中隱藏。</string>
+    <string name="title_exclude_folder_dialog">排除資料夾</string>
+    <string name="msg_no_more_folders">資料庫中沒有更多可用資料夾。</string>
+    <string name="pref_lyrics_getter">Lyric Getter API</string>
+    <string name="desc_lyrics_getter">配置 Lyric Getter API 並檢查啟用狀態</string>
+    <string name="pref_super_lyric">Super Lyric API</string>
+    <string name="desc_super_lyric">配置 Super Lyric API 並檢查啟用狀態</string>
+    <string name="label_activation_status">啟用狀態</string>
+    <string name="label_lyric_getter_api">Lyric Getter API</string>
+    <string name="label_super_lyric_api">Super Lyric API</string>
+    <string name="status_activated">已啟用</string>
+    <string name="status_not_activated">未啟用</string>
+    <string name="desc_lyric_getter_api_info">Lyric Getter API 允許第三方應用程式（如狀態列歌詞應用程式）透過標準廣播接收並顯示來自 Kanade 的歌詞。如果顯示已啟用，則表示系統中存在相容的 Hook 或模組正在執行。</string>
+    <string name="desc_super_lyric_api_info">Super Lyric API 是一種高性能的歌詞共享協議。它允许 Kanade 將豐富的歌詞數據（包括逐詞同步和翻譯）推送到相容的系統模組或應用程式。</string>
+    <string name="title_scripts">腳本管理</string>
+    <string name="header_scripts">外部音源</string>
+    <string name="msg_no_scripts">未發現腳本</string>
+    <string name="btn_reload_scripts">重新載入腳本</string>
+    <string name="btn_import_script">匯入腳本</string>
+    <string name="header_discover">發現</string>
+    <string name="no_content">暫無內容</string>
+                
+    <!-- Song Info -->
+    <string name="title_song_info">歌曲資訊</string>
+    <string name="label_title">標題</string>
+    <string name="label_artist">藝術家</string>
+    <string name="label_album">專輯</string>
+    <string name="label_duration">時長</string>
+    <string name="label_file_path">檔案路徑</string>
+    <string name="label_file_size">檔案大小</string>
+    <string name="label_mime_type">MIME 類型</string>
+    <string name="label_bitrate">位元率</string>
+    <string name="label_sample_rate">取樣率</string>
+    <string name="label_source">音源</string>
+    <string name="label_metadata">原始中繼資料</string>
+    <string name="msg_copied_to_clipboard">已複製到剪貼簿！</string>
+
+    <!-- Settings: Cache -->
+    <string name="title_cache_settings">快取設定</string>
+    <string name="pref_cache_settings">快取設定</string>
+    <string name="desc_cache_settings">管理線上音樂的磁碟快取</string>
+    <string name="header_cache_usage">快取使用情況</string>
+    <string name="label_current_cache_size">已用空間</string>
+    <string name="label_cache_limit">快取上限</string>
+    <string name="fmt_cache_limit_gb">%s GB</string>
+    <string name="action_clear_cache">清除快取</string>
+    <string name="msg_confirm_clear_cache">確定要清除所有音訊和封面快取嗎？</string>
+</resources>
