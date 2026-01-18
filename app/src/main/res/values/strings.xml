@@ -21,6 +21,7 @@
     <!-- Library Screen -->
     <string name="header_your_library">Your Library</string>
     <string name="header_all_music">All Music</string>
+    <string name="label_local">Local</string>
     <string name="label_artists">Artists</string>
     <string name="label_albums">Albums</string>
     <string name="label_playlists">Playlists</string>
@@ -120,7 +121,6 @@
     <string name="status_not_activated">Not Activated</string>
     <string name="desc_lyric_getter_api_info">Lyric Getter API allows third-party apps (e.g. status bar lyric apps) to receive and display lyrics from Kanade via standard broadcast. If activated, it means a compatible hook or module is currently active on your system.</string>
     <string name="desc_super_lyric_api_info">Super Lyric API is a high-performance lyric sharing protocol. It allows Kanade to push rich lyric data (including word-by-word sync and translations) to compatible system modules or apps.</string>
-    <string name="label_scripts">Scripts</string>
     <string name="title_scripts">Script Management</string>
     <string name="header_scripts">External Sources</string>
     <string name="msg_no_scripts">No scripts found</string>

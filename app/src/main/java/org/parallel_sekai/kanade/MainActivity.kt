@@ -255,8 +255,7 @@ class MainActivity : ComponentActivity() {
                                         onNavigateToArtists = { navController.navigate(Screen.Artists.route) },
                                         onNavigateToAlbums = { navController.navigate(Screen.Albums.route) },
                                         onNavigateToPlaylists = { navController.navigate(Screen.Playlists.route) },
-                                        onNavigateToFolders = { navController.navigate(Screen.Folders.route) },
-                                        onNavigateToScripts = { navController.navigate(Screen.Scripts.route) }
+                                        onNavigateToFolders = { navController.navigate(Screen.Folders.route) }
                                     )
                                 } else {
                                     Box(

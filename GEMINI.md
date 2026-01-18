@@ -112,6 +112,7 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Redesigned playlist mode buttons in full-screen player for better UI consistency.
 - [x] Improved robustness for lyric sharing (SuperLyricApi integration).
 - [x] Enhanced permission handling with user feedback.
+- [x] Redesigned source selection on home screen using Tab layout (unified local and script sources).
 - [x] Initial implementation of Netease Music KSS script.
 - [x] Improved HostBridge to support HTTP headers and POST content types in KSS.
 - [x] Implemented Kanade Scripting System (KSS) for external media providers.

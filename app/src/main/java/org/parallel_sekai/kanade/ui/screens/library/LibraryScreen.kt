@@ -40,8 +40,7 @@ fun LibraryScreen(
     onNavigateToArtists: () -> Unit,
     onNavigateToAlbums: () -> Unit,
     onNavigateToPlaylists: () -> Unit,
-    onNavigateToFolders: () -> Unit,
-    onNavigateToScripts: () -> Unit
+    onNavigateToFolders: () -> Unit
 ) {
     val activeManifest = state.scriptManifests.find { it.id == state.activeScriptId }
     val isScriptActive = activeManifest != null
@@ -68,36 +67,45 @@ fun LibraryScreen(
                 onNavigateToArtists = onNavigateToArtists,
                 onNavigateToAlbums = onNavigateToAlbums,
                 onNavigateToPlaylists = onNavigateToPlaylists,
-                onNavigateToFolders = onNavigateToFolders,
-                onNavigateToScripts = onNavigateToScripts
+                onNavigateToFolders = onNavigateToFolders
             )
         }
 
-        // 外部音源入口展示
+        // 外部音源 Tab 切换
         if (state.scriptManifests.isNotEmpty()) {
             item {
-                SectionHeader(stringResource(R.string.header_scripts))
-            }
-            item {
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Dimens.PaddingSmall),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                val tabs = androidx.compose.runtime.remember(state.scriptManifests) {
+                    listOf(null) + state.scriptManifests.map { it.id }
+                }
+                val selectedIndex = androidx.compose.runtime.remember(tabs, state.activeScriptId) {
+                    tabs.indexOf(state.activeScriptId).coerceAtLeast(0)
+                }
+                val scriptNamesMap = androidx.compose.runtime.remember(state.scriptManifests) {
+                    state.scriptManifests.associate { it.id to it.name }
+                }
+
+                SecondaryScrollableTabRow(
+                    selectedTabIndex = selectedIndex,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingSmall),
+                    edgePadding = Dimens.PaddingMedium,
+                    divider = {}
                 ) {
-                    items(state.scriptManifests) { manifest ->
-                        SourceCard(
-                            manifest = manifest,
-                            isActive = state.activeScriptId == manifest.id,
-                            modifier = Modifier
-                                .width(120.dp)
-                                .clickable { 
-                                    if (state.activeScriptId == manifest.id) {
-                                        onScriptClick(null) // 取消激活
-                                    } else {
-                                        onScriptClick(manifest.id) // 激活
-                                    }
-                                }
+                    tabs.forEachIndexed { index, scriptId ->
+                        val title = if (scriptId == null) {
+                            stringResource(R.string.label_local)
+                        } else {
+                            scriptNamesMap[scriptId] ?: ""
+                        }
+                        Tab(
+                            selected = selectedIndex == index,
+                            onClick = { onScriptClick(scriptId) },
+                            text = {
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = if (selectedIndex == index) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
                         )
                     }
                 }
@@ -153,15 +161,13 @@ fun LibraryGrid(
     onNavigateToArtists: () -> Unit,
     onNavigateToAlbums: () -> Unit,
     onNavigateToPlaylists: () -> Unit,
-    onNavigateToFolders: () -> Unit,
-    onNavigateToScripts: () -> Unit
+    onNavigateToFolders: () -> Unit
 ) {
     val items = listOf(
         LibraryGridItem(stringResource(R.string.label_artists), Icons.Default.Person, onNavigateToArtists),
         LibraryGridItem(stringResource(R.string.label_albums), Icons.Default.Album, onNavigateToAlbums),
         LibraryGridItem(stringResource(R.string.label_playlists), Icons.AutoMirrored.Filled.PlaylistPlay, onNavigateToPlaylists),
-        LibraryGridItem(stringResource(R.string.label_folders), Icons.Default.Folder, onNavigateToFolders),
-        LibraryGridItem(stringResource(R.string.label_scripts), Icons.Default.Extension, onNavigateToScripts)
+        LibraryGridItem(stringResource(R.string.label_folders), Icons.Default.Folder, onNavigateToFolders)
     )
 
     Column(modifier = Modifier.padding(horizontal = Dimens.PaddingSmall)) {
@@ -172,37 +178,6 @@ fun LibraryGrid(
         Row(modifier = Modifier.fillMaxWidth()) {
             LibraryCard(items[2], Modifier.weight(1f))
             LibraryCard(items[3], Modifier.weight(1f))
-        }
-        Row(modifier = Modifier.fillMaxWidth()) {
-            LibraryCard(items[4], Modifier.weight(0.5f))
-            Spacer(modifier = Modifier.weight(0.5f))
-        }
-    }
-}
-
-@Composable
-fun SourceCard(manifest: ScriptManifest, isActive: Boolean, modifier: Modifier = Modifier) {
-    val backgroundColor = if (isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-    val contentColor = if (isActive) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-
-    ElevatedCard(
-        modifier = modifier.padding(Dimens.PaddingSmall),
-        shape = RoundedCornerShape(Dimens.CornerRadiusLarge),
-        colors = CardDefaults.elevatedCardColors(containerColor = backgroundColor, contentColor = contentColor)
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(Dimens.PaddingMedium)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Default.Extension, 
-                contentDescription = null, 
-                tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
-            )
-            Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
-            Text(text = manifest.name, style = MaterialTheme.typography.labelLarge, maxLines = 1)
         }
     }
 }
