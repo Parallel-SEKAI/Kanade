@@ -107,7 +107,7 @@ fun LibraryScreen(
         // 主列表部分：根据音源状态切换
         item {
             val title = if (isScriptActive) {
-                activeManifest?.name ?: stringResource(R.string.header_discover)
+                activeManifest.name
             } else {
                 stringResource(R.string.header_all_music)
             }
@@ -159,7 +159,7 @@ fun LibraryGrid(
     val items = listOf(
         LibraryGridItem(stringResource(R.string.label_artists), Icons.Default.Person, onNavigateToArtists),
         LibraryGridItem(stringResource(R.string.label_albums), Icons.Default.Album, onNavigateToAlbums),
-        LibraryGridItem(stringResource(R.string.label_playlists), Icons.Default.PlaylistPlay, onNavigateToPlaylists),
+        LibraryGridItem(stringResource(R.string.label_playlists), Icons.AutoMirrored.Filled.PlaylistPlay, onNavigateToPlaylists),
         LibraryGridItem(stringResource(R.string.label_folders), Icons.Default.Folder, onNavigateToFolders),
         LibraryGridItem(stringResource(R.string.label_scripts), Icons.Default.Extension, onNavigateToScripts)
     )
@@ -387,7 +387,7 @@ fun PlaylistListScreen(
                     supportingContent = { Text(stringResource(R.string.fmt_songs_count, playlist.songCount)) },
                     leadingContent = {
                         Icon(
-                            Icons.Default.PlaylistPlay,
+                            Icons.AutoMirrored.Filled.PlaylistPlay,
                             contentDescription = null,
                             modifier = Modifier.size(Dimens.IconSizeHuge).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Dimens.CornerRadiusMedium)).padding(Dimens.PaddingSmall)
                         )

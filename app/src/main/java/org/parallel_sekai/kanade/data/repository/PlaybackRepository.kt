@@ -63,7 +63,7 @@ open class PlaybackRepository(
         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
         val refreshRate = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             try {
-                context.display?.refreshRate ?: 60f
+                context.display.refreshRate
             } catch (e: Exception) {
                 60f
             }

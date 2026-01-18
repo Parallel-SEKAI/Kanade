@@ -271,6 +271,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
         return getMusicListWithSelection(selection, arrayOf("$path/%"))
     }
 
+    @Suppress("DEPRECATION")
     override suspend fun getPlaylistList(): List<PlaylistModel> = withContext(Dispatchers.IO) {
         val playlistList = mutableListOf<PlaylistModel>()
         val projection = arrayOf(
@@ -303,6 +304,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
         playlistList
     }
 
+    @Suppress("DEPRECATION")
     override suspend fun getSongsByPlaylist(playlistId: String): List<MusicModel> = withContext(Dispatchers.IO) {
         val musicList = mutableListOf<MusicModel>()
         val uri = MediaStore.Audio.Playlists.Members.getContentUri("external", playlistId.toLong())

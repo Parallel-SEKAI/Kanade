@@ -37,6 +37,7 @@ fun SongInfoScreen(
 ) {
     val song = state.currentSong ?: return
     val context = LocalContext.current
+    @Suppress("DEPRECATION")
     val clipboardManager = LocalClipboardManager.current
     
     val metadata = remember(song) {
@@ -173,7 +174,7 @@ fun SongInfoScreen(
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Text(
-                                text = state.lyrics ?: "",
+                                text = state.lyrics,
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontFamily = FontFamily.Monospace,
                                     fontSize = 12.sp,
@@ -184,7 +185,7 @@ fun SongInfoScreen(
                                     .pointerInput(state.lyrics) {
                                         detectTapGestures(
                                             onLongPress = {
-                                                clipboardManager.setText(AnnotatedString(state.lyrics ?: ""))
+                                                clipboardManager.setText(AnnotatedString(state.lyrics))
                                                 Toast.makeText(context, R.string.msg_copied_to_clipboard, Toast.LENGTH_SHORT).show()
                                             }
                                         )

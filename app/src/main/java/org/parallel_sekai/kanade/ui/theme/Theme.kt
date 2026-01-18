@@ -42,7 +42,6 @@ fun KanadeTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.surface.toArgb()
             // 适配 Android 16 沉浸式，确保手势导航栏透明
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
