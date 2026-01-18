@@ -11,7 +11,7 @@ import java.util.concurrent.Executors
 
 class ScriptEngine : Closeable {
     private val TAG = "ScriptEngine"
-    
+
     // Create a single thread with a larger stack size (2MB) for QuickJS
     private val executor = Executors.newSingleThreadExecutor { runnable ->
         Thread(null, runnable, "quickjs-worker", 2 * 1024 * 1024)
@@ -32,21 +32,26 @@ class ScriptEngine : Closeable {
             try {
                 val js = QuickJs.create()
                 quickJs = js
-                
-                js.set("__kanade_bridge", PromiseBridge::class.java, object : PromiseBridge {
-                    override fun resolve(id: String, result: String?) {
-                        Log.d(TAG, "Bridge resolved: $id")
-                        callbacks[id]?.complete(result ?: "null")
-                    }
 
-                    override fun reject(id: String, error: String?) {
-                        Log.e(TAG, "Bridge rejected: $id, error: $error")
-                        callbacks[id]?.completeExceptionally(Exception(error ?: "Unknown JS Error"))
-                    }
-                })
+                js.set(
+                    "__kanade_bridge",
+                    PromiseBridge::class.java,
+                    object : PromiseBridge {
+                        override fun resolve(id: String, result: String?) {
+                            Log.d(TAG, "Bridge resolved: $id")
+                            callbacks[id]?.complete(result ?: "null")
+                        }
+
+                        override fun reject(id: String, error: String?) {
+                            Log.e(TAG, "Bridge rejected: $id, error: $error")
+                            callbacks[id]?.completeExceptionally(Exception(error ?: "Unknown JS Error"))
+                        }
+                    },
+                )
 
                 // Use a more compatible way to find the global object and handle undefined results
-                js.evaluate("""
+                js.evaluate(
+                    """
                     (function() {
                         const global = (typeof globalThis !== 'undefined') ? globalThis : 
                                      (typeof window !== 'undefined') ? window : 
@@ -134,8 +139,9 @@ class ScriptEngine : Closeable {
                             }
                         };
                     })();
-                """.trimIndent())
-                
+                    """.trimIndent(),
+                )
+
                 engineReady.complete(Unit)
                 Log.d(TAG, "QuickJS Engine initialized on dedicated thread")
             } catch (e: Exception) {
@@ -152,7 +158,7 @@ class ScriptEngine : Closeable {
         }
     }
 
-    suspend fun evaluate(script: String, fileName: String = "script.js") : Any? {
+    suspend fun evaluate(script: String, fileName: String = "script.js"): Any? {
         engineReady.await()
         return withContext(executor) {
             quickJs?.evaluate(script, fileName)
@@ -173,7 +179,7 @@ class ScriptEngine : Closeable {
 
             val argsJson = args.joinToString(", ") { toJson(it) }
             val callScript = "__kanade_call_async(${if (objectName != null) "'$objectName'" else "null"}, '$methodName', [$argsJson], '$callbackId')"
-            
+
             try {
                 quickJs?.evaluate(callScript)
             } catch (e: Exception) {
@@ -194,37 +200,35 @@ class ScriptEngine : Closeable {
         }
     }
 
-    private fun toJson(arg: Any?): String {
-        return when (arg) {
-            null -> "null"
-            is String -> Json.encodeToString(arg)
-            is Number, is Boolean -> arg.toString()
-            is Map<*, *> -> {
-                try {
-                    // Convert Map to JSON object string
-                    val entries = arg.entries.joinToString(", ") { entry ->
-                        val k = entry.key.toString()
-                        val v = entry.value
-                        "\"$k\": ${toJson(v)}"
-                    }
-                    "{$entries}"
-                } catch (e: Exception) {
-                    "{}"
+    private fun toJson(arg: Any?): String = when (arg) {
+        null -> "null"
+        is String -> Json.encodeToString(arg)
+        is Number, is Boolean -> arg.toString()
+        is Map<*, *> -> {
+            try {
+                // Convert Map to JSON object string
+                val entries = arg.entries.joinToString(", ") { entry ->
+                    val k = entry.key.toString()
+                    val v = entry.value
+                    "\"$k\": ${toJson(v)}"
                 }
-            }
-            is Iterable<*> -> {
-                val items = arg.joinToString(", ") { toJson(it) }
-                "[$items]"
-            }
-            is Array<*> -> {
-                val items = arg.joinToString(", ") { toJson(it) }
-                "[$items]"
-            }
-            else -> try {
-                Json.encodeToString(arg.toString())
+                "{$entries}"
             } catch (e: Exception) {
-                "null"
+                "{}"
             }
+        }
+        is Iterable<*> -> {
+            val items = arg.joinToString(", ") { toJson(it) }
+            "[$items]"
+        }
+        is Array<*> -> {
+            val items = arg.joinToString(", ") { toJson(it) }
+            "[$items]"
+        }
+        else -> try {
+            Json.encodeToString(arg.toString())
+        } catch (e: Exception) {
+            "null"
         }
     }
 

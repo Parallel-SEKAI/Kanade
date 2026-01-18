@@ -22,8 +22,8 @@ class FakeSettingsRepository(context: Context) : SettingsRepository(context) {
         ArtistParsingSettings(
             separators = listOf("/", ";", " & "),
             whitelist = listOf("Leo/need", "Artist with / in name"),
-            joinString = " | "
-        )
+            joinString = " | ",
+        ),
     )
     override val artistParsingSettingsFlow: StateFlow<ArtistParsingSettings> = _fakeArtistParsingSettingsFlow.asStateFlow()
 

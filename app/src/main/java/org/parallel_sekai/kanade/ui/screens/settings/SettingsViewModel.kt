@@ -2,7 +2,6 @@ package org.parallel_sekai.kanade.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,9 +16,9 @@ import org.parallel_sekai.kanade.data.utils.LyricGetterManager
 
 open class SettingsViewModel(
     private val repository: SettingsRepository,
-    private val lyricGetterManager: LyricGetterManager
+    private val lyricGetterManager: LyricGetterManager,
 ) : ViewModel() {
-    
+
     val isLyricsGetterActivated: Boolean get() = lyricGetterManager.isLyricGetterActivated
     val isSuperLyricActivated: Boolean get() = lyricGetterManager.isSuperLyricActivated
     val isAnyLyricApiActivated: Boolean get() = lyricGetterManager.isActivated
@@ -28,28 +27,28 @@ open class SettingsViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = LyricsSettings()
+            initialValue = LyricsSettings(),
         )
 
     val searchResultAsPlaylist: StateFlow<Boolean> = repository.searchResultAsPlaylistFlow
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = true
+            initialValue = true,
         )
 
     val excludedFolders: StateFlow<Set<String>> = repository.excludedFoldersFlow
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptySet()
+            initialValue = emptySet(),
         )
 
     val maxCacheSize: StateFlow<Long> = repository.maxCacheSizeFlow
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = 500 * 1024 * 1024L
+            initialValue = 500 * 1024 * 1024L,
         )
 
     private val _currentCacheSize = MutableStateFlow(0L)
@@ -59,7 +58,7 @@ open class SettingsViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = ArtistParsingSettings()
+            initialValue = ArtistParsingSettings(),
         )
 
     init {

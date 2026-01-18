@@ -1,19 +1,24 @@
 package org.parallel_sekai.kanade.ui.screens.player
 
-import androidx.compose.ui.graphics.Color
 import android.net.Uri
-import org.parallel_sekai.kanade.data.repository.LyricsSettings
+import androidx.compose.ui.graphics.Color
 import org.parallel_sekai.kanade.data.model.*
+import org.parallel_sekai.kanade.data.repository.LyricsSettings
 import org.parallel_sekai.kanade.data.script.ScriptManifest
 import org.parallel_sekai.kanade.ui.theme.PlayerGradientEnd
 import org.parallel_sekai.kanade.ui.theme.PlayerGradientStart
 
 enum class RepeatMode {
-    OFF, ONE, ALL
+    OFF,
+    ONE,
+    ALL,
 }
 
 enum class DetailType {
-    ARTIST, ALBUM, FOLDER, PLAYLIST
+    ARTIST,
+    ALBUM,
+    FOLDER,
+    PLAYLIST,
 }
 
 /**
@@ -29,7 +34,7 @@ data class PlayerState(
     val playlistList: List<PlaylistModel> = emptyList(),
     val detailMusicList: List<MusicModel> = emptyList(), // 详情页显示的歌曲列表
     val isPlaying: Boolean = false,
-    val isExpanded: Boolean = false, 
+    val isExpanded: Boolean = false,
     val progress: Long = 0L,
     val duration: Long = 0L,
     val repeatMode: RepeatMode = RepeatMode.OFF,
@@ -42,7 +47,7 @@ data class PlayerState(
     val activeScriptId: String? = null,
     val homeMusicList: List<MusicModel> = emptyList(),
     val isHomeLoading: Boolean = false,
-    val gradientColors: List<Color> = listOf(PlayerGradientStart, PlayerGradientEnd)
+    val gradientColors: List<Color> = listOf(PlayerGradientStart, PlayerGradientEnd),
 )
 
 sealed interface PlayerIntent {

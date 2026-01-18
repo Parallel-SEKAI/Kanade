@@ -4,20 +4,16 @@ import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.AnchoredDraggableState
-import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.anchoredDraggable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -35,76 +31,74 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import org.parallel_sekai.kanade.data.repository.LyricsSettings
-import org.parallel_sekai.kanade.data.model.*
-import org.parallel_sekai.kanade.data.utils.*
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
+import org.parallel_sekai.kanade.R
+import org.parallel_sekai.kanade.data.model.*
+import org.parallel_sekai.kanade.data.repository.LyricsSettings
+import org.parallel_sekai.kanade.data.utils.*
+import org.parallel_sekai.kanade.ui.theme.Dimens
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
-import org.parallel_sekai.kanade.R
-import org.parallel_sekai.kanade.ui.theme.Dimens
 
 enum class PlayerExpansionValue {
-    Collapsed, Expanded
+    Collapsed,
+    Expanded,
 }
 
 @Composable
 fun FluidBackground(
     colors: List<Color>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "FluidBackground")
-    
+
     val offset1 by infiniteTransition.animateValue(
         initialValue = IntOffset(0, 0),
         targetValue = IntOffset(300, 400),
         typeConverter = IntOffset.VectorConverter,
         animationSpec = infiniteRepeatable(
             animation = tween(10000, easing = LinearEasing),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
         ),
-        label = "Blob1Offset"
+        label = "Blob1Offset",
     )
-    
+
     val offset2 by infiniteTransition.animateValue(
         initialValue = IntOffset(400, 200),
         targetValue = IntOffset(0, 500),
         typeConverter = IntOffset.VectorConverter,
         animationSpec = infiniteRepeatable(
             animation = tween(12000, easing = LinearEasing),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
         ),
-        label = "Blob2Offset"
+        label = "Blob2Offset",
     )
 
     val offset3 by infiniteTransition.animateValue(
@@ -113,9 +107,9 @@ fun FluidBackground(
         typeConverter = IntOffset.VectorConverter,
         animationSpec = infiniteRepeatable(
             animation = tween(15000, easing = LinearEasing),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
         ),
-        label = "Blob3Offset"
+        label = "Blob3Offset",
     )
 
     val color1 by animateColorAsState(colors.getOrElse(0) { Color.DarkGray }, tween(1500))
@@ -125,27 +119,27 @@ fun FluidBackground(
     Box(modifier = modifier.fillMaxSize().blur(100.dp)) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawRect(color = color2)
-            
+
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(color1, Color.Transparent),
                     center = androidx.compose.ui.geometry.Offset(offset1.x.toFloat(), offset1.y.toFloat()),
                     radius = size.width,
-                    tileMode = TileMode.Clamp
+                    tileMode = TileMode.Clamp,
                 ),
                 radius = size.width,
-                center = androidx.compose.ui.geometry.Offset(offset1.x.toFloat(), offset1.y.toFloat())
+                center = androidx.compose.ui.geometry.Offset(offset1.x.toFloat(), offset1.y.toFloat()),
             )
-            
+
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(color3, Color.Transparent),
                     center = androidx.compose.ui.geometry.Offset(size.width - offset2.x, offset2.y.toFloat()),
                     radius = size.width * 0.8f,
-                    tileMode = TileMode.Clamp
+                    tileMode = TileMode.Clamp,
                 ),
                 radius = size.width * 0.8f,
-                center = androidx.compose.ui.geometry.Offset(size.width - offset2.x, offset2.y.toFloat())
+                center = androidx.compose.ui.geometry.Offset(size.width - offset2.x, offset2.y.toFloat()),
             )
 
             drawCircle(
@@ -153,10 +147,10 @@ fun FluidBackground(
                     colors = listOf(color2, Color.Transparent),
                     center = androidx.compose.ui.geometry.Offset(offset3.x.toFloat(), size.height - offset3.y),
                     radius = size.width * 1.2f,
-                    tileMode = TileMode.Clamp
+                    tileMode = TileMode.Clamp,
                 ),
                 radius = size.width * 1.2f,
-                center = androidx.compose.ui.geometry.Offset(offset3.x.toFloat(), size.height - offset3.y)
+                center = androidx.compose.ui.geometry.Offset(offset3.x.toFloat(), size.height - offset3.y),
             )
         }
     }
@@ -167,17 +161,17 @@ fun KanadePlayerContainer(
     state: PlayerState,
     onIntent: (PlayerIntent) -> Unit,
     onNavigateToSongInfo: () -> Unit = {},
-    bottomPadding: Dp = 0.dp
+    bottomPadding: Dp = 0.dp,
 ) {
     if (state.currentSong == null) return
 
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
-    
+
     val miniPlayerHeightPx = with(density) { (Dimens.MiniPlayerHeight + Dimens.PaddingMedium).toPx() } // MiniPlayer height + vertical padding
     val bottomPaddingPx = with(density) { bottomPadding.toPx() }
-    
+
     val collapsedOffset = screenHeightPx - miniPlayerHeightPx - bottomPaddingPx
     val expandedOffset = 0f
 
@@ -195,7 +189,9 @@ fun KanadePlayerContainer(
 
     val fraction = if (collapsedOffset != expandedOffset) {
         ((collapsedOffset - offsetY.value) / (collapsedOffset - expandedOffset)).coerceIn(0f, 1f)
-    } else 0f
+    } else {
+        0f
+    }
 
     var predictiveBackProgress by remember { mutableFloatStateOf(0f) }
 
@@ -218,9 +214,9 @@ fun KanadePlayerContainer(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(lerp(Dimens.MiniPlayerHeight + Dimens.PaddingMedium, configuration.screenHeightDp.dp, fraction))
-                .offset { 
+                .offset {
                     val backOffset = (predictiveBackProgress * 100.dp.toPx()).roundToInt()
-                    IntOffset(0, offsetY.value.roundToInt() + backOffset) 
+                    IntOffset(0, offsetY.value.roundToInt() + backOffset)
                 }
                 .graphicsLayer {
                     val scale = 1f - (predictiveBackProgress * 0.05f)
@@ -240,10 +236,10 @@ fun KanadePlayerContainer(
                         val target = when {
                             velocity < -1000f -> expandedOffset // 快速上滑
                             velocity > 1000f -> collapsedOffset // 快速下滑
-                            fraction > 0.5f -> expandedOffset   // 超过一半向上弹
-                            else -> collapsedOffset             // 未过一半向下弹
+                            fraction > 0.5f -> expandedOffset // 超过一半向上弹
+                            else -> collapsedOffset // 未过一半向下弹
                         }
-                        
+
                         scope.launch {
                             offsetY.animateTo(target, spring(stiffness = Spring.StiffnessMediumLow))
                             if (target == expandedOffset && !state.isExpanded) {
@@ -252,8 +248,8 @@ fun KanadePlayerContainer(
                                 onIntent(PlayerIntent.Collapse)
                             }
                         }
-                    }
-                )
+                    },
+                ),
         ) {
             val isTransitioning = fraction > 0f
 
@@ -263,12 +259,12 @@ fun KanadePlayerContainer(
                     modifier = Modifier
                         .fillMaxWidth()
                         .zIndex(if (isTransitioning) 0f else 1f)
-                        .alpha((1f - fraction * 1.25f).coerceIn(0f, 1f))
+                        .alpha((1f - fraction * 1.25f).coerceIn(0f, 1f)),
                 ) {
                     MiniPlayerContent(
                         state = state,
                         onIntent = onIntent,
-                        showContent = fraction <= 0f
+                        showContent = fraction <= 0f,
                     )
                 }
             }
@@ -278,14 +274,14 @@ fun KanadePlayerContainer(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .zIndex(if (isTransitioning) 1f else 0f) // 滑动时在前面，切换前在后面
+                        .zIndex(if (isTransitioning) 1f else 0f), // 滑动时在前面，切换前在后面
                 ) {
                     FullScreenContent(
                         state = state,
                         onIntent = onIntent,
                         onNavigateToSongInfo = onNavigateToSongInfo,
                         expansionFraction = fraction,
-                        offsetY = 0f
+                        offsetY = 0f,
                     )
                 }
             }
@@ -297,7 +293,7 @@ fun KanadePlayerContainer(
 private fun MiniPlayerContent(
     state: PlayerState,
     onIntent: (PlayerIntent) -> Unit,
-    showContent: Boolean = true
+    showContent: Boolean = true,
 ) {
     val progressFraction = if (state.duration > 0) state.progress.toFloat() / state.duration else 0f
     val playedColor = MaterialTheme.colorScheme.primaryContainer
@@ -310,7 +306,7 @@ private fun MiniPlayerContent(
             .height(Dimens.MiniPlayerHeight),
         shape = RoundedCornerShape(Dimens.CornerRadiusLarge),
         color = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 0.dp
+        tonalElevation = 0.dp,
     ) {
         Row(
             modifier = Modifier
@@ -318,10 +314,10 @@ private fun MiniPlayerContent(
                 .drawBehind {
                     drawRect(
                         color = playedColor,
-                        size = Size(width = size.width * progressFraction, height = size.height)
+                        size = Size(width = size.width * progressFraction, height = size.height),
                     )
                 },
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (showContent) {
                 AsyncImage(
@@ -334,21 +330,21 @@ private fun MiniPlayerContent(
                         .padding(Dimens.PaddingSmall)
                         .size(Dimens.AlbumCoverSizeMiniPlayer)
                         .clip(RoundedCornerShape(Dimens.CornerRadiusSmall)),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
                 )
                 Column(modifier = Modifier.weight(1f).padding(start = Dimens.PaddingExtraSmall)) {
                     Text(
                         text = state.currentSong?.title ?: "",
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
                     Text(
                         text = state.currentSong?.artists?.joinToString(state.artistJoinString) ?: "",
                         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
                 }
                 IconButton(onClick = { onIntent(PlayerIntent.PlayPause) }) {
@@ -368,18 +364,18 @@ private fun FullScreenContent(
     onIntent: (PlayerIntent) -> Unit,
     onNavigateToSongInfo: () -> Unit,
     expansionFraction: Float,
-    offsetY: Float
+    offsetY: Float,
 ) {
     var showLyrics by remember { mutableStateOf(false) }
     var showPlaylist by remember { mutableStateOf(false) }
     var controlsVisible by remember { mutableStateOf(true) }
     val density = LocalDensity.current
-    
+
     // 新增：歌词模式切换动画进度
     val lyricTransitionFraction by animateFloatAsState(
         targetValue = if (showLyrics || showPlaylist) 1f else 0f,
         animationSpec = spring(stiffness = Spring.StiffnessLow),
-        label = "LyricTransition"
+        label = "LyricTransition",
     )
 
     // 仅在显示歌词或列表且正在播放时，5秒后自动隐藏控件
@@ -399,16 +395,16 @@ private fun FullScreenContent(
             .fillMaxSize()
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) { 
+                indication = null,
+            ) {
                 // 仅在歌词或列表模式下允许手动切换控件可见性
                 if (showLyrics || showPlaylist) {
-                    controlsVisible = !controlsVisible 
+                    controlsVisible = !controlsVisible
                 } else {
                     controlsVisible = true
                 }
             },
-        color = Color.Transparent
+        color = Color.Transparent,
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             val screenWidth = maxWidth
@@ -418,11 +414,11 @@ private fun FullScreenContent(
             Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = expansionFraction)))
 
             // 1. 定义三种状态下的基础值
-            
+
             // 小播放器 (Mini)
             val miniArtSize = Dimens.AlbumCoverSizeMiniPlayer
-            val miniArtX = Dimens.PaddingMedium 
-            val miniArtY = Dimens.PaddingMedium 
+            val miniArtX = Dimens.PaddingMedium
+            val miniArtY = Dimens.PaddingMedium
             val miniTitleSize = 14.sp
             val miniArtistSize = 12.sp
             val miniTextX = 72.dp
@@ -452,7 +448,7 @@ private fun FullScreenContent(
             val fullTargetArtX = lerp(fullCoverArtX, fullLyricArtX, lyricTransitionFraction)
             val fullTargetArtY = lerp(fullCoverArtY, fullLyricArtY, lyricTransitionFraction)
             val fullTargetArtCornerRadius = lerp(24.dp, 4.dp, lyricTransitionFraction)
-            
+
             val fullTargetTitleSize = lerp(fullCoverTitleSize, fullLyricTitleSize, lyricTransitionFraction)
             val fullTargetArtistSize = lerp(fullCoverArtistSize, fullLyricArtistSize, lyricTransitionFraction)
             val fullTargetTitleY = lerp(fullCoverTitleY, fullLyricTitleY, lyricTransitionFraction)
@@ -480,7 +476,7 @@ private fun FullScreenContent(
             val currentTitleY = lerp(miniArtY + Dimens.PaddingSmall, fullTargetTitleY, expansionFraction)
             val currentArtistY = lerp(miniArtY + Dimens.PaddingExtraLarge, fullTargetArtistY, expansionFraction)
             val currentTextX = lerp(miniTextX, fullTargetTextX, expansionFraction)
-            
+
             val miniTextWidth = screenWidth - miniTextX - Dimens.IconSizeGigantic // Mini player right padding for controls (100.dp)
             val currentTextWidth = lerp(miniTextWidth, fullTargetTextWidth, expansionFraction)
 
@@ -494,12 +490,12 @@ private fun FullScreenContent(
             val controlsAlpha by animateFloatAsState(
                 targetValue = if (controlsVisible) 1f else 0f,
                 animationSpec = tween(500),
-                label = "ControlsAlpha"
+                label = "ControlsAlpha",
             )
 
             FluidBackground(
                 colors = state.gradientColors,
-                modifier = Modifier.fillMaxSize().alpha(0.8f * expansionFraction)
+                modifier = Modifier.fillMaxSize().alpha(0.8f * expansionFraction),
             )
             Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.2f * expansionFraction)))
 
@@ -511,16 +507,16 @@ private fun FullScreenContent(
                     .build(),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset { 
+                    .offset {
                         IntOffset(
                             currentArtX.roundToPx(),
-                            currentArtY.roundToPx()
+                            currentArtY.roundToPx(),
                         )
                     }
                     .size(currentArtSize)
                     .clip(RoundedCornerShape(currentArtCornerRadius))
                     .background(Color.DarkGray),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
             )
 
             Text(
@@ -528,38 +524,38 @@ private fun FullScreenContent(
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontSize = currentTitleSize,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = Color.White,
                 ),
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 modifier = Modifier
-                    .offset { 
+                    .offset {
                         IntOffset(
                             currentTextX.roundToPx(),
-                            currentTitleY.roundToPx()
+                            currentTitleY.roundToPx(),
                         )
                     }
                     .width(currentTextWidth)
-                    .alpha(if (showLyrics || showPlaylist || expansionFraction < 1f) 1f else controlsAlpha)
+                    .alpha(if (showLyrics || showPlaylist || expansionFraction < 1f) 1f else controlsAlpha),
             )
 
             Text(
                 text = state.currentSong?.artists?.joinToString(state.artistJoinString) ?: "",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = currentArtistSize,
-                    color = currentArtistColor
+                    color = currentArtistColor,
                 ),
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 modifier = Modifier
-                    .offset { 
+                    .offset {
                         IntOffset(
                             currentTextX.roundToPx(),
-                            currentArtistY.roundToPx()
+                            currentArtistY.roundToPx(),
                         )
                     }
                     .width(currentTextWidth)
-                    .alpha(if (showLyrics || showPlaylist || expansionFraction < 1f) 1f else controlsAlpha)
+                    .alpha(if (showLyrics || showPlaylist || expansionFraction < 1f) 1f else controlsAlpha),
             )
 
             // Apple Music 风格的三点按钮
@@ -572,18 +568,18 @@ private fun FullScreenContent(
                     .background(Color.White.copy(alpha = 0.1f * expansionFraction))
                     .clickable { showMoreMenu = true }
                     .alpha(if (showLyrics || showPlaylist || expansionFraction < 1f) 1f else controlsAlpha),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.MoreHoriz,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(Dimens.IconSizeMedium) // 20.dp
+                    modifier = Modifier.size(Dimens.IconSizeMedium), // 20.dp
                 )
 
                 DropdownMenu(
                     expanded = showMoreMenu,
-                    onDismissRequest = { showMoreMenu = false }
+                    onDismissRequest = { showMoreMenu = false },
                 ) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.title_song_info)) },
@@ -591,7 +587,7 @@ private fun FullScreenContent(
                             showMoreMenu = false
                             onNavigateToSongInfo()
                         },
-                        leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) }
+                        leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
                     )
                 }
             }
@@ -602,7 +598,7 @@ private fun FullScreenContent(
                     .statusBarsPadding()
                     .navigationBarsPadding()
                     .alpha(expansionFraction),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // 顶部拉动指示器
                 Box(
@@ -610,18 +606,18 @@ private fun FullScreenContent(
                         .fillMaxWidth()
                         .height(88.dp) // Keep as is for now, as it's a specific UI element
                         .padding(horizontal = Dimens.PaddingLarge),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     androidx.compose.animation.AnimatedVisibility(
                         visible = controlsVisible,
                         enter = fadeIn(tween(500)),
-                        exit = fadeOut(tween(500))
+                        exit = fadeOut(tween(500)),
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(vertical = Dimens.CornerRadiusLarge), // 12.dp
-                            contentAlignment = Alignment.Center
+                            contentAlignment = Alignment.Center,
                         ) {
                             Box(modifier = Modifier.size(Dimens.IconSizeExtraLarge, Dimens.PaddingExtraSmall).clip(RoundedCornerShape(Dimens.CornerRadiusSmall)).background(Color.White.copy(alpha = 0.3f)).align(Alignment.TopCenter)) // 36.dp, 4.dp, 2.dp
                         }
@@ -630,12 +626,12 @@ private fun FullScreenContent(
 
                 Box(
                     modifier = Modifier.weight(1f).fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     androidx.compose.animation.AnimatedVisibility(
                         visible = showLyrics && expansionFraction > 0.9f,
                         enter = fadeIn(tween(500)) + expandVertically(expandFrom = Alignment.CenterVertically),
-                        exit = fadeOut(tween(500)) + shrinkVertically(shrinkTowards = Alignment.CenterVertically)
+                        exit = fadeOut(tween(500)) + shrinkVertically(shrinkTowards = Alignment.CenterVertically),
                     ) {
                         LyricContent(state, onIntent)
                     }
@@ -643,27 +639,28 @@ private fun FullScreenContent(
                     androidx.compose.animation.AnimatedVisibility(
                         visible = showPlaylist && expansionFraction > 0.9f,
                         enter = fadeIn(tween(500)) + expandVertically(expandFrom = Alignment.CenterVertically),
-                        exit = fadeOut(tween(500)) + shrinkVertically(shrinkTowards = Alignment.CenterVertically)
+                        exit = fadeOut(tween(500)) + shrinkVertically(shrinkTowards = Alignment.CenterVertically),
                     ) {
                         PlaylistContent(state, onIntent)
                     }
-                    
+
                     if (!showLyrics && !showPlaylist) {
-                        Box(modifier = Modifier
-                            .offset { 
-                                IntOffset(
-                                    currentArtX.roundToPx(),
-                                    currentArtY.roundToPx()
-                                )
-                            }
-                            .size(currentArtSize)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) { 
-                                showLyrics = true 
-                                controlsVisible = true
-                            }
+                        Box(
+                            modifier = Modifier
+                                .offset {
+                                    IntOffset(
+                                        currentArtX.roundToPx(),
+                                        currentArtY.roundToPx(),
+                                    )
+                                }
+                                .size(currentArtSize)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                ) {
+                                    showLyrics = true
+                                    controlsVisible = true
+                                },
                         )
                     }
                 }
@@ -671,22 +668,26 @@ private fun FullScreenContent(
                 androidx.compose.animation.AnimatedVisibility(
                     visible = controlsVisible && expansionFraction > 0.8f,
                     enter = fadeIn(tween(500)) + expandVertically(expandFrom = Alignment.Bottom),
-                    exit = fadeOut(tween(500)) + shrinkVertically(shrinkTowards = Alignment.Bottom)
+                    exit = fadeOut(tween(500)) + shrinkVertically(shrinkTowards = Alignment.Bottom),
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = Dimens.PaddingLarge)
-                            .padding(horizontal = Dimens.PaddingLarge)
+                            .padding(horizontal = Dimens.PaddingLarge),
                     ) {
                         val dynamicSpacerHeightValue by animateFloatAsState(
                             targetValue = if (showLyrics || showPlaylist) 0f else 160f, // Keep 160f as it is a specific layout value
                             animationSpec = tween(500, easing = FastOutSlowInEasing),
-                            label = "LyricAreaHeightAnimation"
+                            label = "LyricAreaHeightAnimation",
                         )
                         Spacer(modifier = Modifier.height(dynamicSpacerHeightValue.dp))
-                        PlayerControlsSection(state, onIntent, showLyrics, showPlaylist,
-                            onToggleLyrics = { 
+                        PlayerControlsSection(
+                            state,
+                            onIntent,
+                            showLyrics,
+                            showPlaylist,
+                            onToggleLyrics = {
                                 showLyrics = it
                                 if (it) showPlaylist = false
                                 controlsVisible = true
@@ -695,15 +696,15 @@ private fun FullScreenContent(
                                 showPlaylist = it
                                 if (it) showLyrics = false
                                 controlsVisible = true
-                            }
+                            },
                         )
                     }
                 }
-                
+
                 val bottomSafeMarginValue by animateFloatAsState(
                     targetValue = if (controlsVisible) 0f else Dimens.PaddingLarge.value, // 24.dp
                     animationSpec = tween(500),
-                    label = "BottomSafeMarginAnimation"
+                    label = "BottomSafeMarginAnimation",
                 )
                 Spacer(modifier = Modifier.height(bottomSafeMarginValue.dp))
             }
@@ -712,17 +713,11 @@ private fun FullScreenContent(
 }
 
 // 辅助插值函数
-private fun lerp(start: Dp, stop: Dp, fraction: Float): Dp {
-    return start + (stop - start) * fraction
-}
+private fun lerp(start: Dp, stop: Dp, fraction: Float): Dp = start + (stop - start) * fraction
 
-private fun lerp(start: TextUnit, stop: TextUnit, fraction: Float): TextUnit {
-    return (start.value + (stop.value - start.value) * fraction).sp
-}
+private fun lerp(start: TextUnit, stop: TextUnit, fraction: Float): TextUnit = (start.value + (stop.value - start.value) * fraction).sp
 
-private fun lerp(start: Color, stop: Color, fraction: Float): Color {
-    return androidx.compose.ui.graphics.lerp(start, stop, fraction)
-}
+private fun lerp(start: Color, stop: Color, fraction: Float): Color = androidx.compose.ui.graphics.lerp(start, stop, fraction)
 
 @Composable
 private fun PlayerControlsSection(
@@ -731,7 +726,7 @@ private fun PlayerControlsSection(
     showLyrics: Boolean,
     showPlaylist: Boolean,
     onToggleLyrics: (Boolean) -> Unit,
-    onTogglePlaylist: (Boolean) -> Unit
+    onTogglePlaylist: (Boolean) -> Unit,
 ) {
     var sliderPosition by remember { mutableFloatStateOf(state.progress.toFloat()) }
     val isDragging = remember { mutableStateOf(false) }
@@ -741,22 +736,26 @@ private fun PlayerControlsSection(
 
     Slider(
         value = sliderPosition,
-        onValueChange = { isDragging.value = true; sliderPosition = it },
+        onValueChange = {
+            isDragging.value = true
+            sliderPosition = it
+        },
         onValueChangeFinished = {
-            isDragging.value = false; onIntent(PlayerIntent.SeekTo(sliderPosition.toLong()))
+            isDragging.value = false
+            onIntent(PlayerIntent.SeekTo(sliderPosition.toLong()))
         },
         valueRange = 0f..(state.duration.toFloat().coerceAtLeast(1f)),
         modifier = Modifier.fillMaxWidth(),
         colors = SliderDefaults.colors(
             thumbColor = Color.White,
             activeTrackColor = Color.White,
-            inactiveTrackColor = Color.White.copy(alpha = 0.2f)
-        )
+            inactiveTrackColor = Color.White.copy(alpha = 0.2f),
+        ),
     )
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.PaddingExtraSmall),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(text = formatTime(state.progress), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
         Text(text = "-" + formatTime(state.duration - state.progress), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
@@ -767,7 +766,7 @@ private fun PlayerControlsSection(
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = { onIntent(PlayerIntent.Previous) }) {
             Icon(Icons.Default.SkipPrevious, contentDescription = null, modifier = Modifier.size(Dimens.IconSizeSuperHuge), tint = Color.White)
@@ -785,7 +784,7 @@ private fun PlayerControlsSection(
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = { onToggleLyrics(!showLyrics) }) {
             Icon(imageVector = Icons.Default.Lyrics, contentDescription = null, tint = if (showLyrics) Color.White else Color.White.copy(alpha = 0.5f), modifier = Modifier.size(Dimens.IconSizeMedium))
@@ -808,10 +807,10 @@ private fun formatTime(millis: Long): String {
 @Composable
 fun PlaylistContent(
     state: PlayerState,
-    onIntent: (PlayerIntent) -> Unit
+    onIntent: (PlayerIntent) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    
+
     LaunchedEffect(state.currentSong) {
         val index = state.currentPlaylist.indexOf(state.currentSong)
         if (index >= 0) {
@@ -820,38 +819,38 @@ fun PlaylistContent(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Dimens.PaddingLarge)
+                .padding(horizontal = Dimens.PaddingLarge),
         ) {
             // 缩减顶部占位，标题紧贴上方信息
             Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
-            
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = Dimens.PaddingMedium),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = stringResource(R.string.header_playing_next),
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
-                
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     PlaylistModeButton(
                         icon = Icons.Default.Shuffle,
                         isActive = state.shuffleModeEnabled,
                         onClick = { onIntent(PlayerIntent.ToggleShuffle) },
-                        contentDescription = stringResource(R.string.desc_shuffle)
+                        contentDescription = stringResource(R.string.desc_shuffle),
                     )
-                    
+
                     Spacer(modifier = Modifier.width(Dimens.SpacingExtraSmall))
 
                     PlaylistModeButton(
@@ -861,7 +860,7 @@ fun PlaylistContent(
                         },
                         isActive = state.repeatMode != RepeatMode.OFF,
                         onClick = { onIntent(PlayerIntent.ToggleRepeat) },
-                        contentDescription = stringResource(R.string.desc_repeat)
+                        contentDescription = stringResource(R.string.desc_repeat),
                     )
                 }
             }
@@ -878,52 +877,53 @@ fun PlaylistContent(
                             0f to Color.Transparent,
                             0.05f to Color.Black,
                             0.95f to Color.Black,
-                            1f to Color.Transparent
+                            1f to Color.Transparent,
                         )
                         drawRect(brush = fadingBrush, blendMode = BlendMode.DstIn)
                     },
-                contentPadding = PaddingValues(bottom = 100.dp)
+                contentPadding = PaddingValues(bottom = 100.dp),
             ) {
                 itemsIndexed(state.currentPlaylist) { index, music ->
                     val isCurrent = music.id == state.currentSong?.id
-                    
+
                     Surface(
                         onClick = { onIntent(PlayerIntent.SelectSong(music)) },
                         color = if (isCurrent) Color.White.copy(alpha = 0.1f) else Color.Transparent,
                         shape = RoundedCornerShape(Dimens.PaddingSmall),
-                        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingExtraSmall)
+                        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingExtraSmall),
                     ) {
                         Row(
                             modifier = Modifier.padding(Dimens.PaddingSmall),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             AsyncImage(
                                 model = music.coverUrl,
                                 contentDescription = null,
                                 modifier = Modifier.size(Dimens.AlbumCoverSizeMiniPlayer).clip(RoundedCornerShape(Dimens.CornerRadiusSmall)),
-                                contentScale = ContentScale.Crop
+                                contentScale = ContentScale.Crop,
                             )
-                            Column(modifier = Modifier.weight(1f).padding(horizontal = Dimens.CornerRadiusLarge)) { // 12.dp
+                            Column(modifier = Modifier.weight(1f).padding(horizontal = Dimens.CornerRadiusLarge)) {
+                                // 12.dp
                                 Text(
                                     text = music.title,
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = if (isCurrent) MaterialTheme.colorScheme.primary else Color.White,
                                     maxLines = 1,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                 )
                                 Text(
                                     text = music.artists.joinToString(state.artistJoinString),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color.White.copy(alpha = 0.6f),
                                     maxLines = 1,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                 )
                             }
                             Icon(
                                 imageVector = Icons.Default.DragHandle,
                                 contentDescription = null,
                                 tint = Color.White.copy(alpha = 0.3f),
-                                modifier = Modifier.size(Dimens.IconSizeMedium)
+                                modifier = Modifier.size(Dimens.IconSizeMedium),
                             )
                         }
                     }
@@ -941,28 +941,32 @@ private fun KaraokeWord(
     currentProgress: Long,
     isActiveLine: Boolean,
     textStyle: androidx.compose.ui.text.TextStyle,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val duration = endTime - startTime
     val shouldGlow = duration > 500
 
     val fillProgress = remember(currentProgress, startTime, endTime) {
-        if (currentProgress >= endTime) 1f
-        else if (currentProgress < startTime) 0f
-        else (currentProgress - startTime).toFloat() / (endTime - startTime).coerceAtLeast(1).toFloat()
+        if (currentProgress >= endTime) {
+            1f
+        } else if (currentProgress < startTime) {
+            0f
+        } else {
+            (currentProgress - startTime).toFloat() / (endTime - startTime).coerceAtLeast(1).toFloat()
+        }
     }.coerceIn(0f, 1f)
 
     val isWordActive = currentProgress in startTime until endTime
     val wordScale by animateFloatAsState(
         targetValue = if (isActiveLine && isWordActive) 1.05f else 1f,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "WordScale"
+        label = "WordScale",
     )
 
     val glowRadius by animateFloatAsState(
         targetValue = if (isActiveLine && isWordActive && shouldGlow) 20f else 0f,
         animationSpec = tween(300),
-        label = "GlowRadius"
+        label = "GlowRadius",
     )
 
     val baseAlpha = if (isActiveLine) 0.35f else 1f
@@ -973,13 +977,13 @@ private fun KaraokeWord(
                 scaleX = wordScale
                 scaleY = wordScale
                 transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.5f)
-            }
+            },
     ) {
         Text(
             text = text,
             style = textStyle,
             color = Color.White.copy(alpha = baseAlpha),
-            softWrap = false
+            softWrap = false,
         )
 
         if (isActiveLine && fillProgress > 0f) {
@@ -987,9 +991,11 @@ private fun KaraokeWord(
                 Shadow(
                     color = Color.White.copy(alpha = (glowRadius / 20f) * 0.7f),
                     blurRadius = glowRadius,
-                    offset = Offset.Zero
+                    offset = Offset.Zero,
                 )
-            } else null
+            } else {
+                null
+            }
 
             Text(
                 text = text,
@@ -1000,7 +1006,7 @@ private fun KaraokeWord(
                     clipRect(right = size.width * fillProgress) {
                         this@drawWithContent.drawContent()
                     }
-                }
+                },
             )
         }
     }
@@ -1013,7 +1019,7 @@ fun WordByWordLine(
     currentProgress: Long,
     isActive: Boolean,
     textStyle: TextStyle,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val horizontalArrangement = when (textStyle.textAlign) {
         TextAlign.Center -> Arrangement.Center
@@ -1023,7 +1029,7 @@ fun WordByWordLine(
 
     FlowRow(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = horizontalArrangement
+        horizontalArrangement = horizontalArrangement,
     ) {
         words.forEach { word ->
             KaraokeWord(
@@ -1032,7 +1038,7 @@ fun WordByWordLine(
                 endTime = word.endTime,
                 currentProgress = currentProgress,
                 isActiveLine = isActive,
-                textStyle = textStyle
+                textStyle = textStyle,
             )
         }
     }
@@ -1048,26 +1054,26 @@ fun BalancedLyricView(
     settings: LyricsSettings,
     textAlign: TextAlign,
     horizontalAlignment: Alignment.Horizontal,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    
+
     BoxWithConstraints(modifier = modifier) {
         val maxWidthPx = with(density) { maxWidth.toPx() }
         val horizontalPaddingPx = with(density) { (Dimens.LyricHorizontalPadding * 2).toPx() } // 32.dp * 2
         val availableWidthPx = (maxWidthPx - horizontalPaddingPx).coerceAtLeast(0f)
-        
+
         // 缓存计算结果
         val splitResult = remember(line.content, availableWidthPx, settings.balanceLines, baseTextStyle) {
             if (!settings.balanceLines) return@remember null
-            
+
             val layoutResult = textMeasurer.measure(
                 text = line.content,
                 style = baseTextStyle,
-                constraints = androidx.compose.ui.unit.Constraints(maxWidth = availableWidthPx.toInt())
+                constraints = androidx.compose.ui.unit.Constraints(maxWidth = availableWidthPx.toInt()),
             )
-            
+
             // 如果行数 > 1，或者单行长度超过可用宽度的 80%，则尝试平衡（为了视觉整齐）
             if (layoutResult.lineCount > 1 || layoutResult.size.width > availableWidthPx * 0.8f) {
                 LyricSplitter.findBestSplit(line.content, line.words.ifEmpty { null })
@@ -1079,7 +1085,7 @@ fun BalancedLyricView(
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = horizontalAlignment,
-            verticalArrangement = Arrangement.spacedBy(Dimens.LyricLineSpacing)
+            verticalArrangement = Arrangement.spacedBy(Dimens.LyricLineSpacing),
         ) {
             if (splitResult != null) {
                 RenderLyricLine(
@@ -1088,7 +1094,7 @@ fun BalancedLyricView(
                     currentProgress = currentProgress,
                     isActive = isActive,
                     textStyle = baseTextStyle,
-                    textAlign = textAlign
+                    textAlign = textAlign,
                 )
                 RenderLyricLine(
                     content = splitResult.line2,
@@ -1096,7 +1102,7 @@ fun BalancedLyricView(
                     currentProgress = currentProgress,
                     isActive = isActive,
                     textStyle = baseTextStyle,
-                    textAlign = textAlign
+                    textAlign = textAlign,
                 )
             } else {
                 RenderLyricLine(
@@ -1105,7 +1111,7 @@ fun BalancedLyricView(
                     currentProgress = currentProgress,
                     isActive = isActive,
                     textStyle = baseTextStyle,
-                    textAlign = textAlign
+                    textAlign = textAlign,
                 )
             }
 
@@ -1115,7 +1121,7 @@ fun BalancedLyricView(
                     style = translationTextStyle,
                     color = Color.White.copy(alpha = 0.8f),
                     textAlign = textAlign,
-                    modifier = Modifier.padding(top = Dimens.PaddingExtraSmall).padding(horizontal = Dimens.LyricHorizontalPadding)
+                    modifier = Modifier.padding(top = Dimens.PaddingExtraSmall).padding(horizontal = Dimens.LyricHorizontalPadding),
                 )
             }
         }
@@ -1129,7 +1135,7 @@ private fun RenderLyricLine(
     currentProgress: Long,
     isActive: Boolean,
     textStyle: TextStyle,
-    textAlign: TextAlign
+    textAlign: TextAlign,
 ) {
     if (words.isNotEmpty()) {
         WordByWordLine(
@@ -1137,7 +1143,7 @@ private fun RenderLyricLine(
             currentProgress = currentProgress,
             isActive = isActive,
             textStyle = textStyle.copy(textAlign = textAlign),
-            modifier = Modifier.padding(horizontal = Dimens.LyricHorizontalPadding)
+            modifier = Modifier.padding(horizontal = Dimens.LyricHorizontalPadding),
         )
     } else {
         Text(
@@ -1145,7 +1151,7 @@ private fun RenderLyricLine(
             style = textStyle,
             color = Color.White,
             textAlign = textAlign,
-            modifier = Modifier.padding(horizontal = Dimens.LyricHorizontalPadding)
+            modifier = Modifier.padding(horizontal = Dimens.LyricHorizontalPadding),
         )
     }
 }
@@ -1153,20 +1159,20 @@ private fun RenderLyricLine(
 @Composable
 fun LyricContent(
     state: PlayerState,
-    onIntent: (PlayerIntent) -> Unit
+    onIntent: (PlayerIntent) -> Unit,
 ) {
     val lyricData = state.lyricData
     val currentProgress = state.progress
     val haptic = LocalHapticFeedback.current
     val settings = state.lyricsSettings
-    
+
     val activeLineIndex = remember(lyricData, currentProgress) {
         lyricData?.lines?.indexOfLast { it.startTime <= currentProgress } ?: -1
     }
 
     val listState = rememberLazyListState()
     val isDragged by listState.interactionSource.collectIsDraggedAsState()
-    
+
     val density = LocalDensity.current
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val screenHeightDp = configuration.screenHeightDp.dp
@@ -1181,13 +1187,13 @@ fun LyricContent(
     val baseTextStyle = MaterialTheme.typography.headlineLarge.copy(
         fontSize = settings.fontSize.sp,
         fontWeight = FontWeight(settings.fontWeight),
-        lineHeight = settings.fontSize.sp * 1.3f
+        lineHeight = settings.fontSize.sp * 1.3f,
     )
 
     val translationTextStyle = MaterialTheme.typography.titleLarge.copy(
         fontSize = (settings.fontSize * 0.75f).sp,
         fontWeight = FontWeight(settings.fontWeight),
-        lineHeight = (settings.fontSize * 0.75f).sp * 1.3f
+        lineHeight = (settings.fontSize * 0.75f).sp * 1.3f,
     )
 
     val lyricTextAlign = when (settings.alignment) {
@@ -1212,50 +1218,52 @@ fun LyricContent(
                     0f to Color.Transparent,
                     0.05f to Color.Black,
                     0.85f to Color.Black,
-                    1f to Color.Transparent
+                    1f to Color.Transparent,
                 )
                 drawRect(brush = fadingBrush, blendMode = BlendMode.DstIn)
             },
-        contentAlignment = Alignment.TopStart
+        contentAlignment = Alignment.TopStart,
     ) {
         if (lyricData == null || lyricData.lines.isEmpty()) {
             Text(
                 text = stringResource(R.string.msg_no_lyrics),
                 style = MaterialTheme.typography.headlineMedium,
                 color = Color.White.copy(alpha = 0.4f),
-                modifier = Modifier.align(Alignment.Center)
+                modifier = Modifier.align(Alignment.Center),
             )
         } else {
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(top = 40.dp, bottom = 500.dp), // Keep 40.dp and 500.dp for now, these seem specific layout values
-                horizontalAlignment = lyricHorizontalAlignment
+                horizontalAlignment = lyricHorizontalAlignment,
             ) {
                 itemsIndexed(lyricData.lines) { index, line ->
                     val isActive = index == activeLineIndex
                     val distance = if (activeLineIndex == -1) 0 else kotlin.math.abs(index - activeLineIndex)
-                    
+
                     val targetAlpha = if (isActive || isDragged) 1f else (0.6f - (distance * 0.07f)).coerceAtLeast(0.25f)
                     val alpha by animateFloatAsState(
                         targetValue = targetAlpha,
                         animationSpec = tween(600),
-                        label = "LyricAlpha"
+                        label = "LyricAlpha",
                     )
                     val scale by animateFloatAsState(
                         targetValue = if (isActive) 1.06f else 1f,
                         animationSpec = spring(Spring.DampingRatioLowBouncy, Spring.StiffnessLow),
-                        label = "LyricScale"
+                        label = "LyricScale",
                     )
-                    
+
                     val targetBlur = if (settings.blurEnabled && (isActive || isDragged).not()) {
                         (distance.toFloat() * 4f).dp.coerceAtMost(Dimens.PaddingMedium) // 16.dp
-                    } else 0.dp
-                    
+                    } else {
+                        0.dp
+                    }
+
                     val blurRadius by animateDpAsState(
                         targetValue = targetBlur,
                         animationSpec = tween(600),
-                        label = "LyricBlur"
+                        label = "LyricBlur",
                     )
 
                     Box(modifier = Modifier.fillMaxWidth()) {
@@ -1281,10 +1289,10 @@ fun LyricContent(
                                             0 -> 0f
                                             1 -> 0.5f
                                             else -> 1f
-                                        }, 
-                                        0.5f
+                                        },
+                                        0.5f,
                                     )
-                                }
+                                },
                         )
 
                         Box(
@@ -1293,11 +1301,11 @@ fun LyricContent(
                                 .padding(horizontal = 32.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
+                                    indication = null,
                                 ) {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     onIntent(PlayerIntent.SeekTo(line.startTime))
-                                }
+                                },
                         )
                     }
                 }
@@ -1311,20 +1319,20 @@ private fun PlaylistModeButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     isActive: Boolean,
     onClick: () -> Unit,
-    contentDescription: String?
+    contentDescription: String?,
 ) {
     Surface(
         onClick = onClick,
         color = if (isActive) Color.White.copy(alpha = 0.2f) else Color.Transparent,
         shape = RoundedCornerShape(Dimens.CornerRadiusLarge),
-        modifier = Modifier.size(Dimens.IconSizeHuge)
+        modifier = Modifier.size(Dimens.IconSizeHuge),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,
                 tint = if (isActive) Color.White else Color.White.copy(alpha = 0.5f),
-                modifier = Modifier.size(Dimens.IconSizeMedium)
+                modifier = Modifier.size(Dimens.IconSizeMedium),
             )
         }
     }

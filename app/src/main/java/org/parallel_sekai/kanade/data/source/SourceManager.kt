@@ -5,24 +5,24 @@ import android.net.Uri
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.parallel_sekai.kanade.data.model.MusicModel
+import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.data.script.ScriptManager
 import org.parallel_sekai.kanade.data.script.ScriptMusicSource
 import org.parallel_sekai.kanade.data.source.local.LocalMusicSource
-import org.parallel_sekai.kanade.data.repository.SettingsRepository
 
 class SourceManager private constructor(
     context: Context,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
 ) {
     private val scriptManager = ScriptManager(context, settingsRepository)
     val localMusicSource = LocalMusicSource(context)
-    
+
     private val scope = MainScope()
     private val _scriptSources = MutableStateFlow<List<ScriptMusicSource>>(emptyList())
     val scriptSources = _scriptSources.asStateFlow()
 
     private val _activeScriptId = MutableStateFlow<String?>(null)
-    
+
     val activeScriptSource: Flow<ScriptMusicSource?> = combine(_activeScriptId, _scriptSources) { id, sources ->
         sources.find { it.manifest.id == id }
     }
@@ -39,9 +39,7 @@ class SourceManager private constructor(
         }
     }
 
-    fun getAllSources(): List<IMusicSource> {
-        return listOf(localMusicSource) + _scriptSources.value
-    }
+    fun getAllSources(): List<IMusicSource> = listOf(localMusicSource) + _scriptSources.value
 
     fun getSource(sourceId: String): IMusicSource? {
         if (sourceId == localMusicSource.sourceId) return localMusicSource
@@ -66,7 +64,7 @@ class SourceManager private constructor(
                 }
             }
         }
-        
+
         // Return in the original order of mediaIds
         val musicMap = allMusic.associateBy { "${it.sourceId}:${it.id}" }
         return mediaIds.mapNotNull { musicMap[it] }
@@ -74,10 +72,10 @@ class SourceManager private constructor(
 
     suspend fun getHomeList(): List<MusicModel> {
         val activeId = _activeScriptId.value ?: return emptyList()
-        
+
         // 等待目标音源对象出现
         val source = withTimeoutOrNull(3000) {
-            _scriptSources.filter { sources -> 
+            _scriptSources.filter { sources ->
                 sources.any { it.manifest.id == activeId }
             }.first().find { it.manifest.id == activeId }
         } ?: return emptyList()
@@ -112,10 +110,8 @@ class SourceManager private constructor(
         @Volatile
         private var instance: SourceManager? = null
 
-        fun getInstance(context: Context, settingsRepository: SettingsRepository): SourceManager {
-            return instance ?: synchronized(this) {
-                instance ?: SourceManager(context.applicationContext, settingsRepository).also { instance = it }
-            }
+        fun getInstance(context: Context, settingsRepository: SettingsRepository): SourceManager = instance ?: synchronized(this) {
+            instance ?: SourceManager(context.applicationContext, settingsRepository).also { instance = it }
         }
     }
 }

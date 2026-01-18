@@ -24,7 +24,7 @@ fun ScriptConfigScreen(
     state: PlayerState,
     settingsRepository: SettingsRepository,
     onIntent: (PlayerIntent) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     val manifest = state.scriptManifests.find { it.id == scriptId } ?: return
     val configs = manifest.configs ?: return
@@ -48,17 +48,17 @@ fun ScriptConfigScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
+            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding),
         ) {
             items(configs) { item ->
                 val value = currentValues[item.key] ?: item.default
-                
+
                 ListItem(
                     headlineContent = { Text(item.label) },
                     supportingContent = {
@@ -68,34 +68,34 @@ fun ScriptConfigScreen(
                                     value = value,
                                     onValueChange = { onIntent(PlayerIntent.UpdateScriptConfig(scriptId, item.key, it)) },
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                                    singleLine = true
+                                    singleLine = true,
                                 )
                             }
                             "boolean" -> {
                                 Switch(
                                     checked = value.lowercase() == "true",
-                                    onCheckedChange = { onIntent(PlayerIntent.UpdateScriptConfig(scriptId, item.key, it.toString())) }
+                                    onCheckedChange = { onIntent(PlayerIntent.UpdateScriptConfig(scriptId, item.key, it.toString())) },
                                 )
                             }
                             "select" -> {
                                 var expanded by remember { mutableStateOf(false) }
                                 val options = item.options ?: emptyList()
-                                
+
                                 ExposedDropdownMenuBox(
                                     expanded = expanded,
                                     onExpandedChange = { expanded = !expanded },
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                 ) {
                                     OutlinedTextField(
                                         value = value,
                                         onValueChange = {},
                                         readOnly = true,
                                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
+                                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(),
                                     )
                                     ExposedDropdownMenu(
                                         expanded = expanded,
-                                        onDismissRequest = { expanded = false }
+                                        onDismissRequest = { expanded = false },
                                     ) {
                                         options.forEach { option ->
                                             DropdownMenuItem(
@@ -103,14 +103,14 @@ fun ScriptConfigScreen(
                                                 onClick = {
                                                     onIntent(PlayerIntent.UpdateScriptConfig(scriptId, item.key, option))
                                                     expanded = false
-                                                }
+                                                },
                                             )
                                         }
                                     }
                                 }
                             }
                         }
-                    }
+                    },
                 )
             }
         }

@@ -16,13 +16,13 @@ data class LyricsSettings(
     val blurEnabled: Boolean = true,
     val alignment: Int = 0, // 0 = Left, 1 = Center, 2 = Right
     val balanceLines: Boolean = false,
-    val isSharingEnabled: Boolean = true
+    val isSharingEnabled: Boolean = true,
 )
 
 data class ArtistParsingSettings(
     val separators: List<String> = listOf("/", ";", "|", " & ", " feat. ", " ft. ", ","),
     val whitelist: List<String> = listOf("Leo/need"),
-    val joinString: String = ", "
+    val joinString: String = ", ",
 )
 
 data class PlaybackState(
@@ -30,7 +30,7 @@ data class PlaybackState(
     val shuffleMode: Boolean = false,
     val lastMediaId: String? = null,
     val lastPosition: Long = 0L,
-    val lastPlaylistJson: String? = null
+    val lastPlaylistJson: String? = null,
 )
 
 open class SettingsRepository(private val context: Context) {
@@ -91,7 +91,7 @@ open class SettingsRepository(private val context: Context) {
                 blurEnabled = preferences[BLUR_ENABLED] ?: true,
                 alignment = preferences[ALIGNMENT] ?: 0,
                 balanceLines = preferences[BALANCE_LINES] ?: false,
-                isSharingEnabled = preferences[LYRIC_SHARING_ENABLED] ?: true
+                isSharingEnabled = preferences[LYRIC_SHARING_ENABLED] ?: true,
             )
         }
 
@@ -115,7 +115,7 @@ open class SettingsRepository(private val context: Context) {
             ArtistParsingSettings(
                 separators = preferences[ARTIST_SEPARATORS]?.toList() ?: listOf("/", ";", "|", " & ", " feat. ", " ft. ", ","),
                 whitelist = preferences[ARTIST_WHITELIST]?.toList() ?: listOf("Leo/need"),
-                joinString = preferences[ARTIST_JOIN_STRING] ?: ", "
+                joinString = preferences[ARTIST_JOIN_STRING] ?: ", ",
             )
         }
 
@@ -243,7 +243,7 @@ open class SettingsRepository(private val context: Context) {
                 shuffleMode = preferences[SHUFFLE_MODE] ?: false,
                 lastMediaId = preferences[LAST_PLAYED_MEDIA_ID],
                 lastPosition = preferences[LAST_PLAYED_POSITION] ?: 0L,
-                lastPlaylistJson = preferences[LAST_PLAYLIST_JSON]
+                lastPlaylistJson = preferences[LAST_PLAYLIST_JSON],
             )
         }
 

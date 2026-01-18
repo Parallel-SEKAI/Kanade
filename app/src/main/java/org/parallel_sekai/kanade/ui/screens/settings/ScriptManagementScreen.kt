@@ -28,10 +28,10 @@ fun ScriptManagementScreen(
     state: PlayerState,
     onIntent: (PlayerIntent) -> Unit,
     onNavigateToScriptConfig: (String) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.GetContent(),
     ) { pickedUri ->
         pickedUri?.let { uri -> onIntent(PlayerIntent.ImportScript(uri)) }
     }
@@ -52,9 +52,9 @@ fun ScriptManagementScreen(
                     IconButton(onClick = { onIntent(PlayerIntent.ReloadScripts) }) {
                         Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.btn_reload_scripts))
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         if (state.scriptManifests.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
@@ -77,10 +77,9 @@ fun ScriptManagementScreen(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
+                contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding),
             ) {
-                items(state.scriptManifests) {
-                    manifest ->
+                items(state.scriptManifests) { manifest ->
                     val isActive = state.activeScriptId == manifest.id
                     ListItem(
                         headlineContent = { Text(manifest.name) },
@@ -99,10 +98,10 @@ fun ScriptManagementScreen(
                                     checked = isActive,
                                     onCheckedChange = { checked ->
                                         onIntent(PlayerIntent.ToggleActiveScript(if (checked) manifest.id else null))
-                                    }
+                                    },
                                 )
                             }
-                        }
+                        },
                     )
                 }
             }

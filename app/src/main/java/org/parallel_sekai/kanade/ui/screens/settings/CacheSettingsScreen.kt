@@ -10,7 +10,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.ui.theme.Dimens
 import java.util.*
@@ -19,7 +18,7 @@ import java.util.*
 @Composable
 fun CacheSettingsScreen(
     viewModel: SettingsViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
     val maxCacheSize by viewModel.maxCacheSize.collectAsState()
@@ -36,8 +35,8 @@ fun CacheSettingsScreen(
         val gb = Math.pow(2.0, (7 * n - 1).toDouble()).toFloat()
         return when {
             gb < 2f -> (Math.round(gb * 10f) / 10f) // 2GB以下保留一位小数
-            gb < 10f -> (Math.round(gb * 2f) / 2f)  // 10GB以下按0.5步进
-            else -> Math.round(gb).toFloat()        // 10GB以上按1GB步进
+            gb < 10f -> (Math.round(gb * 2f) / 2f) // 10GB以下按0.5步进
+            else -> Math.round(gb).toFloat() // 10GB以上按1GB步进
         }
     }
 
@@ -46,8 +45,8 @@ fun CacheSettingsScreen(
         return ((logValue + 1) / 7).toFloat().coerceIn(0f, 1f)
     }
 
-    var sliderPosition by remember(maxCacheSize) { 
-        mutableFloatStateOf(gbToNormalized(maxCacheSize.toFloat() / (1024 * 1024 * 1024))) 
+    var sliderPosition by remember(maxCacheSize) {
+        mutableFloatStateOf(gbToNormalized(maxCacheSize.toFloat() / (1024 * 1024 * 1024)))
     }
     val displayGb = normalizedToGb(sliderPosition)
 
@@ -63,7 +62,7 @@ fun CacheSettingsScreen(
                     onClick = {
                         viewModel.clearCache(context)
                         showClearConfirm = false
-                    }
+                    },
                 ) {
                     Text(stringResource(R.string.action_clear))
                 }
@@ -72,7 +71,7 @@ fun CacheSettingsScreen(
                 TextButton(onClick = { showClearConfirm = false }) {
                     Text(stringResource(R.string.action_cancel))
                 }
-            }
+            },
         )
     }
 
@@ -84,15 +83,15 @@ fun CacheSettingsScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(scrollState)
+                .verticalScroll(scrollState),
         ) {
             SettingsSectionHeader(title = stringResource(R.string.header_cache_usage))
 
@@ -103,7 +102,7 @@ fun CacheSettingsScreen(
                     TextButton(onClick = { showClearConfirm = true }) {
                         Text(stringResource(R.string.action_clear))
                     }
-                }
+                },
             )
 
             Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
@@ -112,26 +111,29 @@ fun CacheSettingsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Dimens.PaddingMedium)
+                    .padding(horizontal = Dimens.PaddingMedium),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                 ) {
                     Text(
                         text = stringResource(R.string.label_cache_limit),
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
                     )
                     Text(
                         text = stringResource(
                             R.string.fmt_cache_limit_gb,
-                            if (displayGb < 10f && displayGb % 1f != 0f) String.format(Locale.US, "%.1f", displayGb)
-                            else displayGb.toInt().toString()
+                            if (displayGb < 10f && displayGb % 1f != 0f) {
+                                String.format(Locale.US, "%.1f", displayGb)
+                            } else {
+                                displayGb.toInt().toString()
+                            },
                         ),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                 }
 
@@ -143,7 +145,7 @@ fun CacheSettingsScreen(
                         viewModel.updateMaxCacheSize((finalGb * 1024 * 1024 * 1024).toLong())
                     },
                     valueRange = 0f..1f,
-                    modifier = Modifier.padding(top = Dimens.PaddingSmall)
+                    modifier = Modifier.padding(top = Dimens.PaddingSmall),
                 )
             }
 

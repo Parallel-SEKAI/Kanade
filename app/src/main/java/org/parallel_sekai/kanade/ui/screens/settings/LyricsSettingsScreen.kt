@@ -1,9 +1,9 @@
 package org.parallel_sekai.kanade.ui.screens.settings
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -14,19 +14,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.ui.theme.Dimens
-
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LyricsSettingsScreen(
     viewModel: SettingsViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     val settings by viewModel.lyricsSettings.collectAsState()
     val scrollState = rememberScrollState()
@@ -49,41 +45,41 @@ fun LyricsSettingsScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(scrollState)
+                .verticalScroll(scrollState),
         ) {
             // Preview Section
             Text(
                 text = stringResource(R.string.label_preview),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall)
+                modifier = Modifier.padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall),
             )
-            
+
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Dimens.PaddingMedium)
                     .clip(RoundedCornerShape(Dimens.CornerRadiusLarge)),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             ) {
                 Column(
                     modifier = Modifier.padding(Dimens.PaddingMedium),
-                    horizontalAlignment = previewAlignment
+                    horizontalAlignment = previewAlignment,
                 ) {
                     Text(
                         text = stringResource(R.string.text_lyric_preview),
                         fontSize = settings.fontSize.sp,
                         fontWeight = FontWeight(settings.fontWeight),
                         color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = previewTextAlign
+                        textAlign = previewTextAlign,
                     )
                     if (settings.showTranslation) {
                         Text(
@@ -92,7 +88,7 @@ fun LyricsSettingsScreen(
                             fontWeight = FontWeight(settings.fontWeight),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = Dimens.PaddingExtraSmall),
-                            textAlign = previewTextAlign
+                            textAlign = previewTextAlign,
                         )
                     }
                 }
@@ -100,15 +96,15 @@ fun LyricsSettingsScreen(
 
             Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
             SettingsSectionHeader(title = stringResource(R.string.header_display))
-            
+
             ListItem(
                 headlineContent = { Text(stringResource(R.string.pref_show_translation)) },
                 trailingContent = {
                     Switch(
                         checked = settings.showTranslation,
-                        onCheckedChange = { viewModel.updateShowTranslation(it) }
+                        onCheckedChange = { viewModel.updateShowTranslation(it) },
                     )
-                }
+                },
             )
 
             ListItem(
@@ -116,9 +112,9 @@ fun LyricsSettingsScreen(
                 trailingContent = {
                     Switch(
                         checked = settings.blurEnabled,
-                        onCheckedChange = { viewModel.updateBlurEnabled(it) }
+                        onCheckedChange = { viewModel.updateBlurEnabled(it) },
                     )
-                }
+                },
             )
 
             ListItem(
@@ -127,9 +123,9 @@ fun LyricsSettingsScreen(
                 trailingContent = {
                     Switch(
                         checked = settings.balanceLines,
-                        onCheckedChange = { viewModel.updateBalanceLines(it) }
+                        onCheckedChange = { viewModel.updateBalanceLines(it) },
                     )
-                }
+                },
             )
 
             Column(modifier = Modifier.padding(Dimens.PaddingMedium)) {
@@ -138,12 +134,12 @@ fun LyricsSettingsScreen(
                     value = settings.fontSize,
                     onValueChange = { viewModel.updateFontSize(it) },
                     valueRange = 12f..32f,
-                    modifier = Modifier.padding(top = Dimens.PaddingSmall)
+                    modifier = Modifier.padding(top = Dimens.PaddingSmall),
                 )
             }
 
             SettingsSectionHeader(title = stringResource(R.string.header_style))
-            
+
             Column(modifier = Modifier.padding(Dimens.PaddingMedium)) {
                 val weightLabel = when (settings.fontWeight) {
                     in 100..299 -> stringResource(R.string.weight_thin)
@@ -159,20 +155,20 @@ fun LyricsSettingsScreen(
                     value = settings.fontWeight.toFloat(),
                     onValueChange = { viewModel.updateFontWeight(it.toInt()) },
                     valueRange = 100f..900f,
-                    modifier = Modifier.padding(top = Dimens.PaddingSmall)
+                    modifier = Modifier.padding(top = Dimens.PaddingSmall),
                 )
             }
 
             Column(modifier = Modifier.padding(Dimens.PaddingMedium)) {
                 Text(text = stringResource(R.string.label_alignment), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(bottom = Dimens.PaddingSmall))
-                
+
                 val alignments = listOf(stringResource(R.string.align_left), stringResource(R.string.align_center), stringResource(R.string.align_right))
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     alignments.forEachIndexed { index, label ->
                         SegmentedButton(
                             shape = SegmentedButtonDefaults.itemShape(index = index, count = alignments.size),
                             onClick = { viewModel.updateAlignment(index) },
-                            selected = settings.alignment == index
+                            selected = settings.alignment == index,
                         ) {
                             Text(label)
                         }
@@ -185,4 +181,3 @@ fun LyricsSettingsScreen(
         }
     }
 }
-

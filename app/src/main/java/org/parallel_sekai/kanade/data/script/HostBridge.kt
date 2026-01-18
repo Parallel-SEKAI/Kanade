@@ -6,7 +6,6 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import java.util.concurrent.TimeUnit
 
 interface HttpBridge {
     fun get(url: String, options: String?): String
@@ -30,19 +29,20 @@ interface CryptoBridge {
     fun aesDecrypt(hex: String, key: String, mode: String, padding: String): String
 }
 
-class HostBridge(private val client: OkHttpClient) : HttpBridge, LogBridge, CryptoBridge {
+class HostBridge(private val client: OkHttpClient) :
+    HttpBridge,
+    LogBridge,
+    CryptoBridge {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    override fun md5(text: String): String {
-        return try {
-            val md = java.security.MessageDigest.getInstance("MD5")
-            val bytes = md.digest(text.toByteArray())
-            bytes.joinToString("") { "%02x".format(it) }
-        } catch (e: Exception) {
-            Log.e("HostBridge", "MD5 failed", e)
-            ""
-        }
+    override fun md5(text: String): String = try {
+        val md = java.security.MessageDigest.getInstance("MD5")
+        val bytes = md.digest(text.toByteArray())
+        bytes.joinToString("") { "%02x".format(it) }
+    } catch (e: Exception) {
+        Log.e("HostBridge", "MD5 failed", e)
+        ""
     }
 
     override fun aesEncrypt(text: String, key: String, mode: String, padding: String): String {
@@ -65,7 +65,7 @@ class HostBridge(private val client: OkHttpClient) : HttpBridge, LogBridge, Cryp
             val cipher = javax.crypto.Cipher.getInstance(transformation)
             val skey = javax.crypto.spec.SecretKeySpec(key.toByteArray(), "AES")
             cipher.init(javax.crypto.Cipher.DECRYPT_MODE, skey)
-            
+
             val bytes = hex.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
             val decrypted = cipher.doFinal(bytes)
             String(decrypted)
@@ -80,7 +80,7 @@ class HostBridge(private val client: OkHttpClient) : HttpBridge, LogBridge, Cryp
         return try {
             val builder = Request.Builder().url(url)
             var responseType = "text"
-            
+
             options?.let { parseOptions(it) }?.let { opt ->
                 opt["headers"]?.jsonObject?.forEach { (k, v) ->
                     val value = v.jsonPrimitive.content
@@ -90,13 +90,13 @@ class HostBridge(private val client: OkHttpClient) : HttpBridge, LogBridge, Cryp
                     responseType = it
                 }
             }
-            
+
             val request = builder.build()
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
                     Log.e("HostBridge", "GET failed with code ${response.code}: $url")
                 }
-                
+
                 if (responseType == "hex") {
                     response.body?.bytes()?.joinToString("") { "%02x".format(it) } ?: ""
                 } else {
@@ -116,7 +116,7 @@ class HostBridge(private val client: OkHttpClient) : HttpBridge, LogBridge, Cryp
             val builder = Request.Builder().url(url)
             var contentType = "text/plain"
             var responseType = "text"
-            
+
             options?.let { parseOptions(it) }?.let { opt ->
                 opt["headers"]?.jsonObject?.forEach { (k, v) ->
                     val value = v.jsonPrimitive.content
@@ -139,7 +139,7 @@ class HostBridge(private val client: OkHttpClient) : HttpBridge, LogBridge, Cryp
                 if (!response.isSuccessful) {
                     Log.e("HostBridge", "POST failed with code ${response.code}: $url")
                 }
-                
+
                 if (responseType == "hex") {
                     response.body?.bytes()?.joinToString("") { "%02x".format(it) } ?: ""
                 } else {

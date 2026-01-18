@@ -17,7 +17,7 @@ import org.parallel_sekai.kanade.ui.theme.Dimens
 @Composable
 fun LyricsGetterApiScreen(
     viewModel: SettingsViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     val settings by viewModel.lyricsSettings.collectAsState()
     val isLyricGetterActivated = viewModel.isLyricsGetterActivated
@@ -31,34 +31,34 @@ fun LyricsGetterApiScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(scrollState)
+                .verticalScroll(scrollState),
         ) {
             SettingsSectionHeader(title = stringResource(R.string.label_activation_status))
-            
+
             ListItem(
                 headlineContent = { Text(stringResource(R.string.label_lyric_getter_api)) },
                 trailingContent = {
                     Text(
                         text = if (isLyricGetterActivated) stringResource(R.string.status_activated) else stringResource(R.string.status_not_activated),
                         color = if (isLyricGetterActivated) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
-                }
+                },
             )
 
             Text(
                 text = stringResource(R.string.desc_lyric_getter_api_info),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(Dimens.PaddingMedium)
+                modifier = Modifier.padding(Dimens.PaddingMedium),
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
@@ -71,9 +71,9 @@ fun LyricsGetterApiScreen(
                 trailingContent = {
                     Switch(
                         checked = settings.isSharingEnabled,
-                        onCheckedChange = { viewModel.updateLyricSharingEnabled(it) }
+                        onCheckedChange = { viewModel.updateLyricSharingEnabled(it) },
                     )
-                }
+                },
             )
 
             // 为底部的 MiniPlayer 留出空间

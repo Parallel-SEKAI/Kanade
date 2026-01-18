@@ -20,58 +20,54 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import coil.ImageLoader
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
-import org.parallel_sekai.kanade.ui.screens.library.LibraryScreen
-import org.parallel_sekai.kanade.ui.screens.artist.ArtistListScreen
+import org.parallel_sekai.kanade.data.utils.CacheManager
+import org.parallel_sekai.kanade.data.utils.LyricGetterManager
 import org.parallel_sekai.kanade.ui.screens.artist.ArtistDetailScreen
-import org.parallel_sekai.kanade.ui.screens.library.AlbumListScreen
+import org.parallel_sekai.kanade.ui.screens.artist.ArtistListScreen
 import org.parallel_sekai.kanade.ui.screens.library.AlbumDetailScreen
-import org.parallel_sekai.kanade.ui.screens.library.PlaylistListScreen
-import org.parallel_sekai.kanade.ui.screens.library.PlaylistDetailScreen
-import org.parallel_sekai.kanade.ui.screens.library.FolderListScreen
+import org.parallel_sekai.kanade.ui.screens.library.AlbumListScreen
 import org.parallel_sekai.kanade.ui.screens.library.FolderDetailScreen
+import org.parallel_sekai.kanade.ui.screens.library.FolderListScreen
+import org.parallel_sekai.kanade.ui.screens.library.LibraryScreen
+import org.parallel_sekai.kanade.ui.screens.library.PlaylistDetailScreen
+import org.parallel_sekai.kanade.ui.screens.library.PlaylistListScreen
 import org.parallel_sekai.kanade.ui.screens.more.MoreScreen
 import org.parallel_sekai.kanade.ui.screens.player.DetailType
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
-import org.parallel_sekai.kanade.ui.screens.search.SearchScreen
-import org.parallel_sekai.kanade.ui.screens.search.SearchViewModel
-import org.parallel_sekai.kanade.ui.screens.settings.SettingsScreen
-import org.parallel_sekai.kanade.ui.screens.settings.LyricsSettingsScreen
-import org.parallel_sekai.kanade.ui.screens.settings.LyricsGetterApiScreen
-import org.parallel_sekai.kanade.ui.screens.settings.SuperLyricApiScreen
-import org.parallel_sekai.kanade.ui.screens.settings.ExcludedFoldersScreen
-import org.parallel_sekai.kanade.ui.screens.settings.CacheSettingsScreen
-import org.parallel_sekai.kanade.ui.screens.settings.ArtistParsingSettingsScreen
-import org.parallel_sekai.kanade.ui.screens.settings.ScriptConfigScreen
-import org.parallel_sekai.kanade.ui.screens.settings.ScriptManagementScreen
-import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
 import org.parallel_sekai.kanade.ui.screens.player.KanadePlayerContainer
 import org.parallel_sekai.kanade.ui.screens.player.PlayerIntent
 import org.parallel_sekai.kanade.ui.screens.player.PlayerViewModel
 import org.parallel_sekai.kanade.ui.screens.player.SongInfoScreen
+import org.parallel_sekai.kanade.ui.screens.search.SearchScreen
+import org.parallel_sekai.kanade.ui.screens.search.SearchViewModel
+import org.parallel_sekai.kanade.ui.screens.settings.ArtistParsingSettingsScreen
+import org.parallel_sekai.kanade.ui.screens.settings.CacheSettingsScreen
+import org.parallel_sekai.kanade.ui.screens.settings.ExcludedFoldersScreen
+import org.parallel_sekai.kanade.ui.screens.settings.LyricsGetterApiScreen
+import org.parallel_sekai.kanade.ui.screens.settings.LyricsSettingsScreen
+import org.parallel_sekai.kanade.ui.screens.settings.ScriptConfigScreen
+import org.parallel_sekai.kanade.ui.screens.settings.ScriptManagementScreen
+import org.parallel_sekai.kanade.ui.screens.settings.SettingsScreen
+import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
+import org.parallel_sekai.kanade.ui.screens.settings.SuperLyricApiScreen
 import org.parallel_sekai.kanade.ui.theme.KanadeTheme
-import androidx.compose.ui.res.stringResource
-import org.parallel_sekai.kanade.ui.theme.Dimens
-import coil.ImageLoader
-import coil.disk.DiskCache
-import coil.memory.MemoryCache
-import org.parallel_sekai.kanade.data.utils.CacheManager
-import org.parallel_sekai.kanade.data.utils.LyricGetterManager
-import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.lifecycle.lifecycleScope
 
 sealed class Screen(val route: String, val labelResId: Int, val icon: ImageVector?) {
     object Library : Screen("library", R.string.title_library, Icons.Filled.Home)
@@ -138,14 +134,14 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         enableEdgeToEdge()
 
         val settingsRepository = SettingsRepository(applicationContext)
         val playbackRepository = PlaybackRepository(
             context = applicationContext,
             settingsRepository = settingsRepository,
-            scope = ProcessLifecycleOwner.get().lifecycleScope
+            scope = ProcessLifecycleOwner.get().lifecycleScope,
         )
         val imageLoader = ImageLoader.Builder(applicationContext)
             .memoryCache {
@@ -162,13 +158,13 @@ class MainActivity : ComponentActivity() {
             .respectCacheHeaders(false) // 强制缓存，忽略服务器的不可缓存头
             .build()
         val lyricGetterManager = LyricGetterManager(applicationContext)
-        
+
         playerViewModel = PlayerViewModel(
             playbackRepository = playbackRepository,
             settingsRepository = settingsRepository,
             applicationContext = applicationContext,
             imageLoader = imageLoader,
-            lyricGetterManager = lyricGetterManager
+            lyricGetterManager = lyricGetterManager,
         )
         val settingsViewModel = SettingsViewModel(settingsRepository, lyricGetterManager)
         val searchViewModel = SearchViewModel(playbackRepository, settingsRepository)
@@ -198,8 +194,8 @@ class MainActivity : ComponentActivity() {
 
                 val multiplePermissionsState = rememberMultiplePermissionsState(permissions)
 
-                val audioPermissionGranted = multiplePermissionsState.permissions.any { 
-                    (it.permission == Manifest.permission.READ_MEDIA_AUDIO || it.permission == Manifest.permission.READ_EXTERNAL_STORAGE) && it.status.isGranted 
+                val audioPermissionGranted = multiplePermissionsState.permissions.any {
+                    (it.permission == Manifest.permission.READ_MEDIA_AUDIO || it.permission == Manifest.permission.READ_EXTERNAL_STORAGE) && it.status.isGranted
                 }
 
                 val notificationPermissionDenied = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -246,11 +242,11 @@ class MainActivity : ComponentActivity() {
                                                 launchSingleTop = true
                                                 restoreState = true
                                             }
-                                        }
+                                        },
                                     )
                                 }
                             }
-                        }
+                        },
                     ) { innerPadding ->
                         bottomPadding = innerPadding.calculateBottomPadding()
                         // NavHost 始终填充全屏
@@ -259,7 +255,7 @@ class MainActivity : ComponentActivity() {
                             startDestination = Screen.Library.route,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(bottom = bottomPadding)
+                                .padding(bottom = bottomPadding),
                         ) {
                             composable(Screen.Library.route) {
                                 if (audioPermissionGranted) {
@@ -271,12 +267,12 @@ class MainActivity : ComponentActivity() {
                                         onNavigateToArtists = { navController.navigate(Screen.Artists.route) },
                                         onNavigateToAlbums = { navController.navigate(Screen.Albums.route) },
                                         onNavigateToPlaylists = { navController.navigate(Screen.Playlists.route) },
-                                        onNavigateToFolders = { navController.navigate(Screen.Folders.route) }
+                                        onNavigateToFolders = { navController.navigate(Screen.Folders.route) },
                                     )
                                 } else {
                                     Box(
                                         modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center
+                                        contentAlignment = Alignment.Center,
                                     ) {
                                         Text(text = stringResource(R.string.msg_grant_permission))
                                     }
@@ -290,7 +286,7 @@ class MainActivity : ComponentActivity() {
                                     onArtistClick = { name ->
                                         playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.ARTIST, name))
                                         navController.navigate(Screen.ArtistDetail.createRoute(name))
-                                    }
+                                    },
                                 )
                             }
                             composable(Screen.Albums.route) {
@@ -301,7 +297,7 @@ class MainActivity : ComponentActivity() {
                                     onAlbumClick = { id, title ->
                                         playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.ALBUM, id))
                                         navController.navigate(Screen.AlbumDetail.createRoute(id, title))
-                                    }
+                                    },
                                 )
                             }
                             composable(Screen.Playlists.route) {
@@ -312,7 +308,7 @@ class MainActivity : ComponentActivity() {
                                     onPlaylistClick = { id, title ->
                                         playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.PLAYLIST, id))
                                         navController.navigate(Screen.PlaylistDetail.createRoute(id, title))
-                                    }
+                                    },
                                 )
                             }
                             composable(Screen.Folders.route) {
@@ -323,7 +319,7 @@ class MainActivity : ComponentActivity() {
                                     onFolderClick = { path ->
                                         playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.FOLDER, path))
                                         navController.navigate(Screen.FolderDetail.createRoute(path))
-                                    }
+                                    },
                                 )
                             }
                             composable(Screen.ArtistDetail.route) { backStackEntry ->
@@ -332,7 +328,7 @@ class MainActivity : ComponentActivity() {
                                     name = name,
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
-                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
+                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) },
                                 )
                             }
                             composable(Screen.AlbumDetail.route) { backStackEntry ->
@@ -343,7 +339,7 @@ class MainActivity : ComponentActivity() {
                                     title = title,
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
-                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
+                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) },
                                 )
                             }
                             composable(Screen.PlaylistDetail.route) { backStackEntry ->
@@ -354,7 +350,7 @@ class MainActivity : ComponentActivity() {
                                     title = title,
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
-                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
+                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) },
                                 )
                             }
                             composable(Screen.FolderDetail.route) { backStackEntry ->
@@ -363,19 +359,19 @@ class MainActivity : ComponentActivity() {
                                     path = path,
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
-                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) }
+                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) },
                                 )
                             }
                             composable(Screen.Search.route) {
                                 SearchScreen(
                                     viewModel = searchViewModel,
-                                    onBackClick = { navController.popBackStack() }
+                                    onBackClick = { navController.popBackStack() },
                                 )
                             }
                             composable(Screen.More.route) {
                                 MoreScreen(
                                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                                    onNavigateToScripts = { navController.navigate(Screen.Scripts.route) }
+                                    onNavigateToScripts = { navController.navigate(Screen.Scripts.route) },
                                 )
                             }
                             composable(Screen.Settings.route) {
@@ -387,44 +383,44 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToArtistParsingSettings = { navController.navigate(Screen.ArtistParsingSettings.route) },
                                     onNavigateToCacheSettings = { navController.navigate(Screen.CacheSettings.route) },
                                     onNavigateToLyricsGetterApi = { navController.navigate(Screen.LyricsGetterApi.route) },
-                                    onNavigateToSuperLyricApi = { navController.navigate(Screen.SuperLyricApi.route) }
+                                    onNavigateToSuperLyricApi = { navController.navigate(Screen.SuperLyricApi.route) },
                                 )
                             }
                             composable(Screen.LyricsSettings.route) {
                                 LyricsSettingsScreen(
                                     viewModel = settingsViewModel,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { navController.popBackStack() },
                                 )
                             }
                             composable(Screen.LyricsGetterApi.route) {
                                 LyricsGetterApiScreen(
                                     viewModel = settingsViewModel,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { navController.popBackStack() },
                                 )
                             }
                             composable(Screen.SuperLyricApi.route) {
                                 SuperLyricApiScreen(
                                     viewModel = settingsViewModel,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { navController.popBackStack() },
                                 )
                             }
                             composable(Screen.ExcludedFolders.route) {
                                 ExcludedFoldersScreen(
                                     viewModel = settingsViewModel,
                                     allFolders = state.folderList,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { navController.popBackStack() },
                                 )
                             }
                             composable(Screen.CacheSettings.route) {
                                 CacheSettingsScreen(
                                     viewModel = settingsViewModel,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { navController.popBackStack() },
                                 )
                             }
                             composable(Screen.ArtistParsingSettings.route) {
                                 ArtistParsingSettingsScreen(
                                     viewModel = settingsViewModel,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { navController.popBackStack() },
                                 )
                             }
                             composable(Screen.Scripts.route) {
@@ -432,7 +428,7 @@ class MainActivity : ComponentActivity() {
                                     state = state,
                                     onIntent = { playerViewModel.handleIntent(it) },
                                     onNavigateToScriptConfig = { id -> navController.navigate(Screen.ScriptConfig.createRoute(id)) },
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { navController.popBackStack() },
                                 )
                             }
                             composable(Screen.ScriptConfig.route) { backStackEntry ->
@@ -442,13 +438,13 @@ class MainActivity : ComponentActivity() {
                                     state = state,
                                     settingsRepository = settingsRepository,
                                     onIntent = { playerViewModel.handleIntent(it) },
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { navController.popBackStack() },
                                 )
                             }
                             composable(Screen.SongInfo.route) {
                                 SongInfoScreen(
                                     state = state,
-                                    onBackClick = { navController.popBackStack() }
+                                    onBackClick = { navController.popBackStack() },
                                 )
                             }
                         }
@@ -459,7 +455,7 @@ class MainActivity : ComponentActivity() {
                         state = state,
                         onIntent = { playerViewModel.handleIntent(it) },
                         onNavigateToSongInfo = { navController.navigate(Screen.SongInfo.route) },
-                        bottomPadding = bottomPadding
+                        bottomPadding = bottomPadding,
                     )
                 }
             }

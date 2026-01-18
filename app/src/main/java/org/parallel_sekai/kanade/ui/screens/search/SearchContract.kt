@@ -22,7 +22,7 @@ data class SearchState(
     val isLoading: Boolean = false,
     val isSearching: Boolean = false,
     val searchResultAsPlaylist: Boolean = true,
-    val artistJoinString: String = ", "
+    val artistJoinString: String = ", ",
 )
 
 sealed interface SearchEffect {

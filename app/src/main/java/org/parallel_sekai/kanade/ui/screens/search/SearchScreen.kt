@@ -9,9 +9,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,13 +31,13 @@ import org.parallel_sekai.kanade.ui.theme.Dimens
 @Composable
 fun SearchScreen(
     viewModel: SearchViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
-    
+
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
@@ -46,7 +46,7 @@ fun SearchScreen(
                         snackbarHostState.showSnackbar(
                             message = context.getString(effect.messageResId, *effect.formatArgs.toTypedArray()),
                             actionLabel = null,
-                            withDismissAction = true
+                            withDismissAction = true,
                         )
                     }
                 }
@@ -55,13 +55,13 @@ fun SearchScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .padding(innerPadding)
+                .padding(innerPadding),
         ) {
             SearchBar(
                 inputField = {
@@ -79,14 +79,14 @@ fun SearchScreen(
                                     Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.desc_clear))
                                 }
                             }
-                        }
+                        },
                     )
                 },
                 expanded = false,
                 onExpandedChange = {},
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Dimens.PaddingMedium)
+                    .padding(horizontal = Dimens.PaddingMedium),
             ) {}
 
             Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
@@ -94,14 +94,14 @@ fun SearchScreen(
             SourceSelector(
                 availableSources = state.availableSources,
                 selectedSourceIds = state.selectedSourceIds,
-                onToggleSource = { viewModel.handleIntent(SearchIntent.ToggleSource(it)) }
+                onToggleSource = { viewModel.handleIntent(SearchIntent.ToggleSource(it)) },
             )
 
             Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
+                contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding),
             ) {
                 if (state.searchQuery.isEmpty()) {
                     if (state.searchHistory.isNotEmpty()) {
@@ -111,12 +111,12 @@ fun SearchScreen(
                                     .fillMaxWidth()
                                     .padding(Dimens.PaddingMedium),
                                 horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
                                     text = stringResource(R.string.title_recent_searches),
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
                                 )
                                 TextButton(onClick = { viewModel.handleIntent(SearchIntent.ClearHistory) }) {
                                     Text(stringResource(R.string.action_clear))
@@ -128,7 +128,7 @@ fun SearchScreen(
                             HistoryItem(
                                 query = query,
                                 onClick = { viewModel.handleIntent(SearchIntent.PerformSearch(query)) },
-                                onRemove = { viewModel.handleIntent(SearchIntent.RemoveHistoryItem(query)) }
+                                onRemove = { viewModel.handleIntent(SearchIntent.RemoveHistoryItem(query)) },
                             )
                         }
                     }
@@ -139,7 +139,7 @@ fun SearchScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(Dimens.PaddingExtraLarge),
-                                contentAlignment = Alignment.Center
+                                contentAlignment = Alignment.Center,
                             ) {
                                 CircularProgressIndicator()
                             }
@@ -150,7 +150,7 @@ fun SearchScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(Dimens.PaddingExtraLarge),
-                                contentAlignment = Alignment.Center
+                                contentAlignment = Alignment.Center,
                             ) {
                                 Text(stringResource(R.string.msg_no_results), style = MaterialTheme.typography.bodyLarge)
                             }
@@ -160,7 +160,7 @@ fun SearchScreen(
                             SearchSongListItem(
                                 song = song,
                                 onClick = { viewModel.handleIntent(SearchIntent.PlayMusic(song, state.searchResults)) },
-                                artistJoinString = state.artistJoinString
+                                artistJoinString = state.artistJoinString,
                             )
                         }
                     }
@@ -175,12 +175,12 @@ fun SearchScreen(
 fun SourceSelector(
     availableSources: List<SourceInfo>,
     selectedSourceIds: Set<String>,
-    onToggleSource: (String) -> Unit
+    onToggleSource: (String) -> Unit,
 ) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = Dimens.PaddingMedium),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(availableSources) { source ->
             val isSelected = selectedSourceIds.contains(source.id)
@@ -193,12 +193,12 @@ fun SourceSelector(
                         Icon(
                             imageVector = Icons.Default.Done,
                             contentDescription = null,
-                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            modifier = Modifier.size(FilterChipDefaults.IconSize),
                         )
                     }
                 } else {
                     null
-                }
+                },
             )
         }
     }
@@ -208,33 +208,33 @@ fun SourceSelector(
 fun HistoryItem(
     query: String,
     onClick: () -> Unit,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.CornerRadiusLarge),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = Icons.Default.History,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             text = query,
             modifier = Modifier
                 .padding(start = Dimens.PaddingMedium)
                 .weight(1f),
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
         )
         IconButton(onClick = onRemove) {
             Icon(
                 imageVector = Icons.Default.Clear,
                 contentDescription = stringResource(R.string.desc_remove),
                 modifier = Modifier.size(Dimens.IconSizeSmall),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -244,14 +244,14 @@ fun HistoryItem(
 fun SearchSongListItem(
     song: MusicModel,
     onClick: () -> Unit,
-    artistJoinString: String
+    artistJoinString: String,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
             model = song.coverUrl,
@@ -260,19 +260,19 @@ fun SearchSongListItem(
                 .size(Dimens.AlbumCoverSizeListItem)
                 .clip(RoundedCornerShape(Dimens.CornerRadiusMedium))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
         )
         Column(modifier = Modifier.padding(start = Dimens.PaddingMedium).weight(1f)) {
             Text(
                 text = song.title,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
             )
             Text(
                 text = "${song.artists.joinToString(artistJoinString)} • ${song.album}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
+                maxLines = 1,
             )
         }
     }

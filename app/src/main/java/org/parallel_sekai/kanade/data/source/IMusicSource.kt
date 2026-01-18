@@ -1,6 +1,5 @@
 package org.parallel_sekai.kanade.data.source
 
-import kotlinx.coroutines.flow.Flow
 import org.parallel_sekai.kanade.data.model.*
 
 /**
@@ -14,7 +13,7 @@ interface IMusicSource {
      * 获取搜索结果或歌单内容
      */
     suspend fun getMusicList(query: String): List<MusicModel>
-    
+
     /**
      * 获取首页推荐列表
      */

@@ -8,7 +8,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -18,7 +17,7 @@ import java.io.FileOutputStream
 
 class ScriptManager(
     private val context: Context,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
 ) {
     private val TAG = "ScriptManager"
     private val scope = MainScope()
@@ -66,14 +65,14 @@ class ScriptManager(
         // Allow optional '*' and whitespace before the tag to support standard JSDoc multiline comments
         val regex = Regex("""/\*\*?.*?[*\s]+${Regex.escape(tagName)}\s*(.*?)\*/""", RegexOption.DOT_MATCHES_ALL)
         val match = regex.find(content)
-        
+
         return match?.groupValues?.get(1)?.let { rawJson ->
             // Clean up possible leading '*' and whitespace from multi-line comments
             val cleanedJson = rawJson.lines()
                 .map { it.trim().removePrefix("*").trim() }
                 .joinToString("\n")
                 .trim()
-            
+
             try {
                 json.decodeFromString<ScriptManifest>(cleanedJson)
             } catch (e: Exception) {
@@ -93,7 +92,7 @@ class ScriptManager(
                 try {
                     val engine = ScriptEngine()
                     val bridge = HostBridge(client)
-                    
+
                     engine.registerInterface("__kanade_http_bridge", HttpBridge::class.java, bridge)
                     engine.registerInterface("__kanade_log_bridge", LogBridge::class.java, bridge)
                     engine.registerInterface("__kanade_crypto_bridge", CryptoBridge::class.java, bridge)
@@ -101,17 +100,17 @@ class ScriptManager(
                     val scriptFile = scriptFiles[scriptId]
                     if (scriptFile != null && scriptFile.exists()) {
                         engine.evaluate(scriptFile.readText(), scriptFile.name)
-                        
+
                         // Pass configuration
                         val configsJson = settingsRepository.scriptConfigsFlow.first()
-                        val allConfigs = configsJson?.let { 
+                        val allConfigs = configsJson?.let {
                             try {
                                 Json.decodeFromString<Map<String, Map<String, String>>>(it)
                             } catch (e: Exception) {
                                 emptyMap()
                             }
                         } ?: emptyMap()
-                        
+
                         val scriptConfig = allConfigs[scriptId] ?: emptyMap()
                         engine.callInit(scriptConfig)
                     }

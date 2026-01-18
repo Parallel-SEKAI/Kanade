@@ -7,16 +7,14 @@ import org.parallel_sekai.kanade.data.source.IMusicSource
 
 class ScriptMusicSource(
     val manifest: ScriptManifest,
-    private val scriptManager: ScriptManager
+    private val scriptManager: ScriptManager,
 ) : IMusicSource {
     override val sourceId: String = "script_${manifest.id}"
     override val sourceName: String = manifest.name
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private suspend fun ensureEngine(): ScriptEngine? {
-        return scriptManager.getEngine(manifest.id)
-    }
+    private suspend fun ensureEngine(): ScriptEngine? = scriptManager.getEngine(manifest.id)
 
     override suspend fun getMusicList(query: String): List<MusicModel> {
         val engine = ensureEngine() ?: return emptyList()
@@ -44,7 +42,7 @@ class ScriptMusicSource(
             Log.d("ScriptMusicSource", "Parsed ${items.size} home items from [${manifest.name}]")
             items.map { it.toMusicModel(sourceId) }
         } catch (e: Exception) {
-            // Optional function, don't log error if not found? 
+            // Optional function, don't log error if not found?
             // Actually, callAsync logs "is not a function" as reject.
             emptyList()
         }
@@ -108,16 +106,14 @@ class ScriptMusicSource(
         }
     }
 
-    private fun ScriptMusicItem.toMusicModel(sourceId: String): MusicModel {
-        return MusicModel(
-            id = id,
-            title = title,
-            artists = artist.split(",").map { it.trim() },
-            album = album ?: "",
-            coverUrl = cover ?: "",
-            mediaUri = "", // Remote sources need getPlayUrl
-            duration = (duration ?: 0L) * 1000, // Convert to ms
-            sourceId = sourceId
-        )
-    }
+    private fun ScriptMusicItem.toMusicModel(sourceId: String): MusicModel = MusicModel(
+        id = id,
+        title = title,
+        artists = artist.split(",").map { it.trim() },
+        album = album ?: "",
+        coverUrl = cover ?: "",
+        mediaUri = "", // Remote sources need getPlayUrl
+        duration = (duration ?: 0L) * 1000, // Convert to ms
+        sourceId = sourceId,
+    )
 }

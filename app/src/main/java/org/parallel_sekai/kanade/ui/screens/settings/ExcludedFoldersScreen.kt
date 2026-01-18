@@ -25,7 +25,7 @@ import org.parallel_sekai.kanade.ui.theme.Dimens
 fun ExcludedFoldersScreen(
     viewModel: SettingsViewModel,
     allFolders: List<FolderModel>,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     val excludedFolders by viewModel.excludedFolders.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
@@ -38,45 +38,45 @@ fun ExcludedFoldersScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
-                }
+                },
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                modifier = Modifier.padding(bottom = Dimens.MiniPlayerBottomPadding)
+                modifier = Modifier.padding(bottom = Dimens.MiniPlayerBottomPadding),
             ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.desc_add))
             }
-        }
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
         ) {
             if (excludedFolders.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = stringResource(R.string.msg_no_folders_excluded),
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding) // Added bottom padding
+                    contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding), // Added bottom padding
                 ) {
                     item {
                         Text(
                             text = stringResource(R.string.desc_excluded_folders_screen),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(Dimens.PaddingMedium)
+                            modifier = Modifier.padding(Dimens.PaddingMedium),
                         )
                     }
                     items(excludedFolders.toList()) { path ->
@@ -88,7 +88,7 @@ fun ExcludedFoldersScreen(
                                 IconButton(onClick = { viewModel.removeExcludedFolder(path) }) {
                                     Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.desc_remove))
                                 }
-                            }
+                            },
                         )
                     }
                 }
@@ -103,7 +103,7 @@ fun ExcludedFoldersScreen(
                 onConfirm = { path ->
                     viewModel.addExcludedFolder(path)
                     showAddDialog = false
-                }
+                },
             )
         }
     }
@@ -114,7 +114,7 @@ fun AddFolderDialog(
     allFolders: List<FolderModel>,
     excludedFolders: Set<String>,
     onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
+    onConfirm: (String) -> Unit,
 ) {
     val availableFolders = allFolders.filter { it.path !in excludedFolders }
 
@@ -130,7 +130,7 @@ fun AddFolderDialog(
                         ListItem(
                             headlineContent = { Text(folder.name) },
                             supportingContent = { Text(folder.path) },
-                            modifier = Modifier.clickable { onConfirm(folder.path) }
+                            modifier = Modifier.clickable { onConfirm(folder.path) },
                         )
                     }
                 }
@@ -140,6 +140,6 @@ fun AddFolderDialog(
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.action_cancel))
             }
-        }
+        },
     )
 }

@@ -47,7 +47,7 @@ class LyricGetterManager(context: Context) {
         translation: String? = null,
         song: MusicModel? = null,
         delay: Long = 0,
-        words: List<org.parallel_sekai.kanade.data.model.WordInfo> = emptyList()
+        words: List<org.parallel_sekai.kanade.data.model.WordInfo> = emptyList(),
     ) {
         if (lyric.isBlank()) {
             clearLyric()
@@ -71,19 +71,19 @@ class LyricGetterManager(context: Context) {
                 .setLyric(lyric)
                 .setPackageName(packageName)
                 .setDelay(safeDelay)
-            
+
             translation?.let { data.setTranslation(it) }
-            
+
             if (words.isNotEmpty()) {
-                val enhancedData = words.map { 
+                val enhancedData = words.map {
                     val duration = (it.endTime - it.startTime).coerceIn(0, Int.MAX_VALUE.toLong()).toInt()
                     SuperLyricData.EnhancedLRCData(it.text, duration)
                 }.toTypedArray()
                 data.setEnhancedLRCData(enhancedData)
             }
-            
+
             // Note: MediaMetadata and PlaybackState can be added here if needed
-            
+
             SuperLyricPush.onSuperLyric(data)
         } catch (e: Exception) {
             Log.e("LyricGetterManager", "Failed to send to SuperLyricApi", e)

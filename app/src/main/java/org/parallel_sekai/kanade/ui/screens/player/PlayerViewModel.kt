@@ -1,54 +1,48 @@
 package org.parallel_sekai.kanade.ui.screens.player
 
 import android.content.Context
+import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.async
-import kotlinx.coroutines.Job
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import androidx.palette.graphics.Palette
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import androidx.palette.graphics.Palette
-import androidx.compose.ui.graphics.Color
-import androidx.core.graphics.drawable.toBitmap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import org.parallel_sekai.kanade.data.model.*
+import org.parallel_sekai.kanade.data.parser.*
 import org.parallel_sekai.kanade.data.repository.ArtistParsingSettings
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
-import org.parallel_sekai.kanade.data.model.*
-import org.parallel_sekai.kanade.data.parser.*
 import org.parallel_sekai.kanade.data.source.MusicUtils
 import org.parallel_sekai.kanade.data.utils.LyricGetterManager
-import org.parallel_sekai.kanade.ui.theme.PlayerGradientEnd
-import org.parallel_sekai.kanade.ui.theme.PlayerGradientStart
+import org.parallel_sekai.kanade.ui.screens.player.DetailType
 import org.parallel_sekai.kanade.ui.screens.player.PlayerIntent
 import org.parallel_sekai.kanade.ui.screens.player.PlayerState
 import org.parallel_sekai.kanade.ui.screens.player.RepeatMode
-import org.parallel_sekai.kanade.ui.screens.player.DetailType
 
 class PlayerViewModel(
     private val playbackRepository: PlaybackRepository,
     private val settingsRepository: SettingsRepository,
     private val applicationContext: Context,
     private val imageLoader: ImageLoader,
-    private val lyricGetterManager: LyricGetterManager
+    private val lyricGetterManager: LyricGetterManager,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PlayerState())
@@ -100,13 +94,13 @@ class PlayerViewModel(
                         title = item.mediaMetadata.title?.toString() ?: "",
                         artists = MusicUtils.parseArtists(
                             artistString = item.mediaMetadata.artist?.toString(),
-                            settings = _artistParsingSettings.value // 传入设置
+                            settings = _artistParsingSettings.value, // 传入设置
                         ),
                         album = item.mediaMetadata.albumTitle?.toString() ?: "",
                         coverUrl = item.mediaMetadata.artworkUri?.toString() ?: "",
                         mediaUri = item.requestMetadata.mediaUri?.toString() ?: "",
                         duration = item.mediaMetadata.extras?.getLong("duration") ?: 0L,
-                        sourceId = item.mediaMetadata.extras?.getString("source_id") ?: "unknown"
+                        sourceId = item.mediaMetadata.extras?.getString("source_id") ?: "unknown",
                     )
                 }
                 _state.update { it.copy(currentPlaylist = list) }
@@ -116,15 +110,17 @@ class PlayerViewModel(
         // 加载初始音乐列表 (仅加载本地音乐)
         viewModelScope.launch {
             _state.update { it.copy(isHomeLoading = true) }
-            
+
             val list = playbackRepository.fetchMusicList()
-            
-            _state.update { it.copy(
-                allMusicList = list,
-                // 如果当前没有播放列表，则将本地列表设为当前队列（防止初次启动时列表为空）
-                currentPlaylist = if (it.currentPlaylist.isEmpty()) list else it.currentPlaylist,
-                isHomeLoading = false
-            ) }
+
+            _state.update {
+                it.copy(
+                    allMusicList = list,
+                    // 如果当前没有播放列表，则将本地列表设为当前队列（防止初次启动时列表为空）
+                    currentPlaylist = if (it.currentPlaylist.isEmpty()) list else it.currentPlaylist,
+                    isHomeLoading = false,
+                )
+            }
 
             // 只有当当前没有歌曲时，才使用本地第一首作为预览（但不播放）
             if (_state.value.currentSong == null) {
@@ -155,32 +151,36 @@ class PlayerViewModel(
                         title = mediaItem.mediaMetadata.title?.toString() ?: "",
                         artists = MusicUtils.parseArtists(
                             artistString = mediaItem.mediaMetadata.artist?.toString(),
-                            settings = _artistParsingSettings.value
+                            settings = _artistParsingSettings.value,
                         ),
                         album = mediaItem.mediaMetadata.albumTitle?.toString() ?: "",
                         coverUrl = mediaItem.mediaMetadata.artworkUri?.toString() ?: "",
                         mediaUri = mediaItem.requestMetadata.mediaUri?.toString() ?: "",
                         duration = mediaItem.mediaMetadata.extras?.getLong("duration") ?: 0L,
-                        sourceId = mediaItem.mediaMetadata.extras?.getString("source_id") ?: "unknown"
+                        sourceId = mediaItem.mediaMetadata.extras?.getString("source_id") ?: "unknown",
                     )
 
                     if (song.id != state.value.currentSong?.id || song.sourceId != state.value.currentSong?.sourceId) {
-                        _state.update { it.copy(
-                            currentSong = song,
-                            lyrics = null // 重置旧歌词
-                        ) }
+                        _state.update {
+                            it.copy(
+                                currentSong = song,
+                                lyrics = null, // 重置旧歌词
+                            )
+                        }
                         lyricGetterManager.clearLyric()
                         lastSentLyric = null
-                        
+
                         // 异步加载歌词和颜色
                         viewModelScope.launch {
                             extractColors(song)
                             val lyrics = playbackRepository.fetchLyrics(song.id, song.sourceId)
                             val lyricData = lyrics?.let { LyricParserFactory.getParser(it).parse(it) }
-                            _state.update { it.copy(
-                                lyrics = lyrics,
-                                lyricData = lyricData
-                            ) }
+                            _state.update {
+                                it.copy(
+                                    lyrics = lyrics,
+                                    lyricData = lyricData,
+                                )
+                            }
                         }
                     }
                 }
@@ -207,7 +207,7 @@ class PlayerViewModel(
             .onEach { id ->
                 val previousId = _state.value.activeScriptId
                 _state.update { it.copy(activeScriptId = id) }
-                
+
                 // 只有当 ID 真正改变（且不是第一次恢复状态）时才刷新
                 if (previousId != null && previousId != id) {
                     handleIntent(PlayerIntent.RefreshList(forceScriptRefresh = true))
@@ -225,10 +225,12 @@ class PlayerViewModel(
         // 监听进度流
         playbackRepository.progressFlow
             .onEach { (pos, duration) ->
-                _state.update { it.copy(
-                    progress = pos,
-                    duration = duration
-                ) }
+                _state.update {
+                    it.copy(
+                        progress = pos,
+                        duration = duration,
+                    )
+                }
 
                 // 发送歌词到外部 API (带节流和重复内容过滤)
                 val now = System.currentTimeMillis()
@@ -239,7 +241,7 @@ class PlayerViewModel(
                         val currentLineIndex = lines?.indexOfLast { it.startTime <= pos } ?: -1
                         val currentLine = lines?.getOrNull(currentLineIndex)
                         val lyricContent = currentLine?.content ?: ""
-                        
+
                         if (lyricContent != lastSentLyric) {
                             val nextLine = lines?.getOrNull(currentLineIndex + 1)
                             val delay = if (currentLine != null && nextLine != null) {
@@ -255,7 +257,7 @@ class PlayerViewModel(
                                 translation = currentLine?.translation,
                                 song = state.value.currentSong,
                                 delay = delay,
-                                words = currentLine?.words ?: emptyList()
+                                words = currentLine?.words ?: emptyList(),
                             )
                             lastSentLyric = lyricContent
                         }
@@ -286,11 +288,11 @@ class PlayerViewModel(
                 refreshJob = viewModelScope.launch {
                     val currentScriptId = state.value.activeScriptId
                     val shouldRefreshHome = intent.forceScriptRefresh && (currentScriptId != null)
-                    
+
                     if (shouldRefreshHome) {
                         _state.update { it.copy(isHomeLoading = true) }
                     }
-                    
+
                     val list = playbackRepository.fetchMusicList()
 
                     if (shouldRefreshHome) {
@@ -307,18 +309,22 @@ class PlayerViewModel(
                             }
                             retryCount++
                         }
-                        
-                        _state.update { it.copy(
-                            homeMusicList = homeItems,
-                            isHomeLoading = false
-                        ) }
+
+                        _state.update {
+                            it.copy(
+                                homeMusicList = homeItems,
+                                isHomeLoading = false,
+                            )
+                        }
                         lastRefreshedScriptId = currentScriptId
                     }
-                    
-                    _state.update { it.copy(
-                        allMusicList = list,
-                        currentSong = it.currentSong ?: list.firstOrNull()
-                    ) }
+
+                    _state.update {
+                        it.copy(
+                            allMusicList = list,
+                            currentSong = it.currentSong ?: list.firstOrNull(),
+                        )
+                    }
                 }
             }
             is PlayerIntent.RefreshArtists -> {
@@ -351,7 +357,7 @@ class PlayerViewModel(
                     refreshJob?.cancel()
                     refreshJob = viewModelScope.launch {
                         _state.update { it.copy(isHomeLoading = true) }
-                        
+
                         var homeItems = emptyList<MusicModel>()
                         var retryCount = 0
                         while (homeItems.isEmpty() && retryCount < 2) {
@@ -366,10 +372,12 @@ class PlayerViewModel(
                             retryCount++
                         }
 
-                        _state.update { it.copy(
-                            homeMusicList = homeItems,
-                            isHomeLoading = false
-                        ) }
+                        _state.update {
+                            it.copy(
+                                homeMusicList = homeItems,
+                                isHomeLoading = false,
+                            )
+                        }
                         lastRefreshedScriptId = currentScriptId
                     }
                 }
@@ -386,24 +394,28 @@ class PlayerViewModel(
                 }
             }
             is PlayerIntent.SelectSong -> {
-                _state.update { it.copy(
-                    currentSong = intent.song,
-                    lyrics = null
-                ) }
+                _state.update {
+                    it.copy(
+                        currentSong = intent.song,
+                        lyrics = null,
+                    )
+                }
                 // 异步加载歌词
                 viewModelScope.launch {
                     val lyrics = playbackRepository.fetchLyrics(intent.song.id, intent.song.sourceId)
                     val lyricData = lyrics?.let { LyricParserFactory.getParser(it).parse(it) }
-                    _state.update { it.copy(
-                        lyrics = lyrics,
-                        lyricData = lyricData
-                    ) }
+                    _state.update {
+                        it.copy(
+                            lyrics = lyrics,
+                            lyricData = lyricData,
+                        )
+                    }
                 }
-                
+
                 val isScriptActive = state.value.activeScriptId != null
-                val listToPlay = intent.customList 
+                val listToPlay = intent.customList
                     ?: (if (isScriptActive) state.value.homeMusicList else state.value.allMusicList)
-                
+
                 val index = listToPlay.indexOf(intent.song).coerceAtLeast(0)
                 playbackRepository.setPlaylist(listToPlay, index)
             }
@@ -453,10 +465,10 @@ class PlayerViewModel(
                             mutableMapOf<String, MutableMap<String, String>>()
                         }
                     } ?: mutableMapOf<String, MutableMap<String, String>>()
-                    
+
                     val scriptConfig = allConfigs.getOrPut(intent.scriptId) { mutableMapOf<String, String>() }
                     scriptConfig[intent.key] = intent.value
-                    
+
                     settingsRepository.updateScriptConfigs(Json.encodeToString(allConfigs))
                     handleIntent(PlayerIntent.ReloadScripts) // Restart engine to apply config
                 }
@@ -479,7 +491,7 @@ class PlayerViewModel(
                     palette.getVibrantColor(0),
                     palette.getMutedColor(0),
                     palette.getDominantColor(0),
-                    palette.getDarkVibrantColor(0)
+                    palette.getDarkVibrantColor(0),
                 ).filter { it != 0 }
                     .distinct()
                     .map { Color(it) }

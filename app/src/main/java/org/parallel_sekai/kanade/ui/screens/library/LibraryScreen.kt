@@ -4,12 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -26,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.data.model.*
-import org.parallel_sekai.kanade.data.script.ScriptManifest
 import org.parallel_sekai.kanade.ui.screens.player.PlayerState
 import org.parallel_sekai.kanade.ui.theme.Dimens
 
@@ -40,7 +38,7 @@ fun LibraryScreen(
     onNavigateToArtists: () -> Unit,
     onNavigateToAlbums: () -> Unit,
     onNavigateToPlaylists: () -> Unit,
-    onNavigateToFolders: () -> Unit
+    onNavigateToFolders: () -> Unit,
 ) {
     val activeManifest = state.scriptManifests.find { it.id == state.activeScriptId }
     val isScriptActive = activeManifest != null
@@ -55,8 +53,8 @@ fun LibraryScreen(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
             top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
-            bottom = Dimens.MiniPlayerBottomPadding // Space for MiniPlayer
-        )
+            bottom = Dimens.MiniPlayerBottomPadding, // Space for MiniPlayer
+        ),
     ) {
         item {
             SectionHeader(stringResource(R.string.header_your_library))
@@ -67,7 +65,7 @@ fun LibraryScreen(
                 onNavigateToArtists = onNavigateToArtists,
                 onNavigateToAlbums = onNavigateToAlbums,
                 onNavigateToPlaylists = onNavigateToPlaylists,
-                onNavigateToFolders = onNavigateToFolders
+                onNavigateToFolders = onNavigateToFolders,
             )
         }
 
@@ -88,7 +86,7 @@ fun LibraryScreen(
                     selectedTabIndex = selectedIndex,
                     modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingSmall),
                     edgePadding = Dimens.PaddingMedium,
-                    divider = {}
+                    divider = {},
                 ) {
                     tabs.forEachIndexed { index, scriptId ->
                         val title = if (scriptId == null) {
@@ -103,9 +101,9 @@ fun LibraryScreen(
                                 Text(
                                     text = title,
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = if (selectedIndex == index) FontWeight.Bold else FontWeight.Normal
+                                    fontWeight = if (selectedIndex == index) FontWeight.Bold else FontWeight.Normal,
                                 )
-                            }
+                            },
                         )
                     }
                 }
@@ -124,12 +122,12 @@ fun LibraryScreen(
         }
 
         val displayList = if (isScriptActive) state.homeMusicList else state.allMusicList
-        
+
         if (isScriptActive && state.isHomeLoading) {
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingExtraLarge),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
                 }
@@ -138,7 +136,7 @@ fun LibraryScreen(
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingExtraLarge),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(text = stringResource(R.string.no_content), style = MaterialTheme.typography.bodyLarge)
                 }
@@ -149,7 +147,7 @@ fun LibraryScreen(
                     song = song,
                     isSelected = state.currentSong?.id == song.id,
                     onClick = { onSongClick(song, displayList) },
-                    artistJoinString = state.artistJoinString
+                    artistJoinString = state.artistJoinString,
                 )
             }
         }
@@ -161,13 +159,13 @@ fun LibraryGrid(
     onNavigateToArtists: () -> Unit,
     onNavigateToAlbums: () -> Unit,
     onNavigateToPlaylists: () -> Unit,
-    onNavigateToFolders: () -> Unit
+    onNavigateToFolders: () -> Unit,
 ) {
     val items = listOf(
         LibraryGridItem(stringResource(R.string.label_artists), Icons.Default.Person, onNavigateToArtists),
         LibraryGridItem(stringResource(R.string.label_albums), Icons.Default.Album, onNavigateToAlbums),
         LibraryGridItem(stringResource(R.string.label_playlists), Icons.AutoMirrored.Filled.PlaylistPlay, onNavigateToPlaylists),
-        LibraryGridItem(stringResource(R.string.label_folders), Icons.Default.Folder, onNavigateToFolders)
+        LibraryGridItem(stringResource(R.string.label_folders), Icons.Default.Folder, onNavigateToFolders),
     )
 
     Column(modifier = Modifier.padding(horizontal = Dimens.PaddingSmall)) {
@@ -189,13 +187,13 @@ fun LibraryCard(item: LibraryGridItem, modifier: Modifier = Modifier) {
     ElevatedCard(
         onClick = item.onClick,
         modifier = modifier.padding(Dimens.PaddingSmall),
-        shape = RoundedCornerShape(Dimens.CornerRadiusLarge)
+        shape = RoundedCornerShape(Dimens.CornerRadiusLarge),
     ) {
         Column(
             modifier = Modifier
                 .padding(Dimens.PaddingMedium)
                 .fillMaxWidth(),
-            horizontalAlignment = Alignment.Start
+            horizontalAlignment = Alignment.Start,
         ) {
             Icon(item.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
@@ -208,21 +206,21 @@ fun LibraryCard(item: LibraryGridItem, modifier: Modifier = Modifier) {
 fun SectionHeader(title: String, icon: ImageVector? = null) {
     Row(
         modifier = Modifier.padding(Dimens.PaddingMedium),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.primary,
             )
             Spacer(modifier = Modifier.width(8.dp))
         }
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
     }
 }
@@ -234,14 +232,14 @@ fun SongListItem(
     onClick: () -> Unit,
     artistJoinString: String,
     showCover: Boolean = true,
-    showArtist: Boolean = true
+    showArtist: Boolean = true,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         if (showCover) {
             AsyncImage(
@@ -251,13 +249,13 @@ fun SongListItem(
                     .size(Dimens.AlbumCoverSizeListItem)
                     .clip(RoundedCornerShape(Dimens.CornerRadiusMedium))
                     .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
             )
         }
         Column(
             modifier = Modifier
                 .padding(start = if (showCover) Dimens.PaddingMedium else 0.dp)
-                .weight(1f)
+                .weight(1f),
         ) {
             val color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
             Text(
@@ -265,21 +263,19 @@ fun SongListItem(
                 style = MaterialTheme.typography.bodyLarge,
                 color = color,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                maxLines = 1
+                maxLines = 1,
             )
             if (showArtist) {
                 Text(
                     text = song.artists.joinToString(artistJoinString),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
+                    maxLines = 1,
                 )
             }
         }
     }
 }
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -287,7 +283,7 @@ fun AlbumListScreen(
     state: PlayerState,
     onIntent: (org.parallel_sekai.kanade.ui.screens.player.PlayerIntent) -> Unit,
     onBackClick: () -> Unit,
-    onAlbumClick: (String, String) -> Unit
+    onAlbumClick: (String, String) -> Unit,
 ) {
     androidx.compose.runtime.LaunchedEffect(Unit) {
         onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.RefreshAlbums)
@@ -301,13 +297,13 @@ fun AlbumListScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
+            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding),
         ) {
             items(state.albumList) { album ->
                 ListItem(
@@ -318,10 +314,10 @@ fun AlbumListScreen(
                             model = album.coverUrl,
                             contentDescription = null,
                             modifier = Modifier.size(Dimens.AlbumCoverSizeListItem).clip(RoundedCornerShape(Dimens.CornerRadiusMedium)).background(MaterialTheme.colorScheme.surfaceVariant),
-                            contentScale = ContentScale.Crop
+                            contentScale = ContentScale.Crop,
                         )
                     },
-                    modifier = Modifier.clickable { onAlbumClick(album.id, album.title) }
+                    modifier = Modifier.clickable { onAlbumClick(album.id, album.title) },
                 )
             }
         }
@@ -334,7 +330,7 @@ fun PlaylistListScreen(
     state: PlayerState,
     onIntent: (org.parallel_sekai.kanade.ui.screens.player.PlayerIntent) -> Unit,
     onBackClick: () -> Unit,
-    onPlaylistClick: (String, String) -> Unit
+    onPlaylistClick: (String, String) -> Unit,
 ) {
     androidx.compose.runtime.LaunchedEffect(Unit) {
         onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.RefreshPlaylists)
@@ -348,13 +344,13 @@ fun PlaylistListScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
+            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding),
         ) {
             items(state.playlistList) { playlist ->
                 ListItem(
@@ -364,10 +360,10 @@ fun PlaylistListScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.PlaylistPlay,
                             contentDescription = null,
-                            modifier = Modifier.size(Dimens.IconSizeHuge).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Dimens.CornerRadiusMedium)).padding(Dimens.PaddingSmall)
+                            modifier = Modifier.size(Dimens.IconSizeHuge).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Dimens.CornerRadiusMedium)).padding(Dimens.PaddingSmall),
                         )
                     },
-                    modifier = Modifier.clickable { onPlaylistClick(playlist.id, playlist.name) }
+                    modifier = Modifier.clickable { onPlaylistClick(playlist.id, playlist.name) },
                 )
             }
         }
@@ -380,7 +376,7 @@ fun FolderListScreen(
     state: PlayerState,
     onIntent: (org.parallel_sekai.kanade.ui.screens.player.PlayerIntent) -> Unit,
     onBackClick: () -> Unit,
-    onFolderClick: (String) -> Unit
+    onFolderClick: (String) -> Unit,
 ) {
     androidx.compose.runtime.LaunchedEffect(Unit) {
         onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.RefreshFolders)
@@ -394,13 +390,13 @@ fun FolderListScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
+            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding),
         ) {
             items(state.folderList) { folder ->
                 ListItem(
@@ -410,10 +406,10 @@ fun FolderListScreen(
                         Icon(
                             Icons.Default.Folder,
                             contentDescription = null,
-                            modifier = Modifier.size(Dimens.IconSizeHuge).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Dimens.CornerRadiusMedium)).padding(Dimens.PaddingSmall)
+                            modifier = Modifier.size(Dimens.IconSizeHuge).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Dimens.CornerRadiusMedium)).padding(Dimens.PaddingSmall),
                         )
                     },
-                    modifier = Modifier.clickable { onFolderClick(folder.path) }
+                    modifier = Modifier.clickable { onFolderClick(folder.path) },
                 )
             }
         }
@@ -432,7 +428,7 @@ fun MusicListDetailScreen(
     showSongCover: Boolean = true,
     showSongArtist: Boolean = true,
     onBackClick: () -> Unit,
-    onSongClick: (MusicModel, List<MusicModel>) -> Unit
+    onSongClick: (MusicModel, List<MusicModel>) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -444,52 +440,52 @@ fun MusicListDetailScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-                )
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                ),
             )
-        }
+        },
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
+            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding),
         ) {
             if (coverUrl != null) {
                 item {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(Dimens.AlbumCoverSizeFullScreenPlayer)
+                            .height(Dimens.AlbumCoverSizeFullScreenPlayer),
                     ) {
                         AsyncImage(
                             model = coverUrl,
                             contentDescription = null,
                             modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
+                            contentScale = ContentScale.Crop,
                         )
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(
                                     Brush.verticalGradient(
-                                        listOf(Color.Transparent, MaterialTheme.colorScheme.surface)
-                                    )
-                                )
+                                        listOf(Color.Transparent, MaterialTheme.colorScheme.surface),
+                                    ),
+                                ),
                         )
                         Column(
                             modifier = Modifier
                                 .align(Alignment.BottomStart)
-                                .padding(Dimens.PaddingMedium)
+                                .padding(Dimens.PaddingMedium),
                         ) {
                             Text(
                                 text = title,
                                 style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                             if (subtitle != null) {
                                 Text(
                                     text = subtitle,
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         }
@@ -501,7 +497,7 @@ fun MusicListDetailScreen(
                         Text(
                             text = subtitle,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -514,14 +510,12 @@ fun MusicListDetailScreen(
                     onClick = { onSongClick(song, songs) },
                     artistJoinString = artistJoinString,
                     showCover = showSongCover,
-                    showArtist = showSongArtist
+                    showArtist = showSongArtist,
                 )
             }
         }
     }
 }
-
-
 
 @Composable
 fun AlbumDetailScreen(
@@ -529,10 +523,10 @@ fun AlbumDetailScreen(
     title: String,
     state: PlayerState,
     onBackClick: () -> Unit,
-    onSongClick: (MusicModel, List<MusicModel>) -> Unit
+    onSongClick: (MusicModel, List<MusicModel>) -> Unit,
 ) {
     val coverUrl = state.detailMusicList.firstOrNull()?.coverUrl
-    
+
     // Calculate intersection of artists for all songs in the album
     val allArtistsList = state.detailMusicList.map { it.artists.toSet() }
     val commonArtists = if (allArtistsList.isNotEmpty()) {
@@ -540,17 +534,17 @@ fun AlbumDetailScreen(
     } else {
         emptySet()
     }
-    
+
     val albumArtist = if (commonArtists.isNotEmpty()) {
         commonArtists.joinToString(state.artistJoinString)
     } else {
         ""
     }
-    
+
     // Determine if we show artist for each song
     // Hide artist if all songs share the exact same set of artists (equal to the intersection)
     val allSongsHaveSameArtists = state.detailMusicList.all { it.artists.toSet() == commonArtists }
-    
+
     MusicListDetailScreen(
         title = title,
         subtitle = albumArtist.ifEmpty { null },
@@ -561,7 +555,7 @@ fun AlbumDetailScreen(
         showSongCover = false,
         showSongArtist = !allSongsHaveSameArtists,
         onBackClick = onBackClick,
-        onSongClick = onSongClick
+        onSongClick = onSongClick,
     )
 }
 
@@ -570,7 +564,7 @@ fun FolderDetailScreen(
     path: String,
     state: PlayerState,
     onBackClick: () -> Unit,
-    onSongClick: (MusicModel, List<MusicModel>) -> Unit
+    onSongClick: (MusicModel, List<MusicModel>) -> Unit,
 ) {
     MusicListDetailScreen(
         title = path.split("/").last(),
@@ -579,7 +573,7 @@ fun FolderDetailScreen(
         currentSong = state.currentSong,
         artistJoinString = state.artistJoinString,
         onBackClick = onBackClick,
-        onSongClick = onSongClick
+        onSongClick = onSongClick,
     )
 }
 
@@ -589,7 +583,7 @@ fun PlaylistDetailScreen(
     title: String,
     state: PlayerState,
     onBackClick: () -> Unit,
-    onSongClick: (MusicModel, List<MusicModel>) -> Unit
+    onSongClick: (MusicModel, List<MusicModel>) -> Unit,
 ) {
     MusicListDetailScreen(
         title = title,
@@ -597,6 +591,6 @@ fun PlaylistDetailScreen(
         currentSong = state.currentSong,
         artistJoinString = state.artistJoinString,
         onBackClick = onBackClick,
-        onSongClick = onSongClick
+        onSongClick = onSongClick,
     )
 }

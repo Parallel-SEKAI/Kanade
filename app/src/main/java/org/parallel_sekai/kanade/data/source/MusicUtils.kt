@@ -6,14 +6,15 @@ object MusicUtils {
 
     fun parseArtists(
         artistString: String?,
-        settings: ArtistParsingSettings = ArtistParsingSettings() // 提供默认值
+        settings: ArtistParsingSettings = ArtistParsingSettings(), // 提供默认值
     ): List<String> {
         if (artistString.isNullOrBlank()) return listOf("Unknown Artist")
 
         // 1. Placeholder replacement for whitelist items
         var tempString: String = artistString
         val placeholderMap = mutableMapOf<String, String>()
-        settings.whitelist.forEachIndexed { index, name -> // 使用 settings.whitelist
+        settings.whitelist.forEachIndexed { index, name ->
+            // 使用 settings.whitelist
             val placeholder = "__WHITELIST_${index}__"
             val regex = Regex(Regex.escape(name), RegexOption.IGNORE_CASE)
             if (regex.containsMatchIn(tempString)) {

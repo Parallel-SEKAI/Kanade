@@ -26,7 +26,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
 
     override suspend fun getMusicList(query: String): List<MusicModel> = withContext(Dispatchers.IO) {
         val musicList = mutableListOf<MusicModel>()
-        
+
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
@@ -34,7 +34,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             MediaStore.Audio.Media.ALBUM,
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.ALBUM_ID,
-            MediaStore.Audio.Media.DATA
+            MediaStore.Audio.Media.DATA,
         )
 
         // 只扫描时长大于 30 秒的音频，过滤掉系统提示音
@@ -46,7 +46,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             projection,
             selection,
             null,
-            sortOrder
+            sortOrder,
         )?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
@@ -63,17 +63,17 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
 
                 val id = cursor.getLong(idColumn)
                 val albumId = cursor.getLong(albumIdColumn)
-                
+
                 // 构建音频的 Uri
                 val contentUri = ContentUris.withAppendedId(
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                    id
+                    id,
                 )
 
                 // 恢复：使用专辑封面的 Uri
                 val albumArtUri = ContentUris.withAppendedId(
                     Uri.parse("content://media/external/audio/albumart"),
-                    albumId
+                    albumId,
                 ).toString()
 
                 musicList.add(
@@ -86,15 +86,15 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                         mediaUri = contentUri.toString(), // 填充 content:// URI
                         duration = cursor.getLong(durationColumn),
                         sourceId = sourceId,
-                        lyrics = null // Initial scan doesn't fetch lyrics for performance
-                    )
+                        lyrics = null, // Initial scan doesn't fetch lyrics for performance
+                    ),
                 )
             }
         }
-        
+
         // 如果有搜索词，进行简单的内存过滤
         if (query.isNotEmpty()) {
-            return@withContext musicList.filter { 
+            return@withContext musicList.filter {
                 it.title.contains(query, ignoreCase = true) || it.artists.any { artist -> artist.contains(query, ignoreCase = true) }
             }
         }
@@ -108,7 +108,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
         val projection = arrayOf(
             MediaStore.Audio.Media.ARTIST,
             MediaStore.Audio.Media.ALBUM,
-            MediaStore.Audio.Media.DATA
+            MediaStore.Audio.Media.DATA,
         )
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND ${MediaStore.Audio.Media.DURATION} >= 30000"
 
@@ -117,7 +117,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             projection,
             selection,
             null,
-            null
+            null,
         )?.use { cursor ->
             val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
             val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
@@ -130,9 +130,9 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
 
                 val artistString = cursor.getString(artistColumn)
                 val album = cursor.getString(albumColumn) ?: "Unknown Album"
-                
+
                 val parsedArtists = MusicUtils.parseArtists(artistString)
-                
+
                 parsedArtists.forEach { artistName ->
                     val stats = artistStats.getOrPut(artistName) { 0 to mutableSetOf() }
                     // Update song count (using Pair's first component is immutable, need to replace)
@@ -148,7 +148,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                 id = name, // Use name as ID for parsed artists
                 name = name,
                 albumCount = stats.second.size,
-                songCount = stats.first
+                songCount = stats.first,
             )
         }.sortedBy { it.name }
     }
@@ -161,7 +161,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             MediaStore.Audio.Media.ALBUM_ID,
             MediaStore.Audio.Media.ALBUM,
             MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.DATA
+            MediaStore.Audio.Media.DATA,
         )
 
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND ${MediaStore.Audio.Media.DURATION} >= 30000"
@@ -171,7 +171,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             projection,
             selection,
             null,
-            null
+            null,
         )?.use { cursor ->
             val albumIdCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
             val albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
@@ -209,7 +209,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
 
             val albumArtUri = ContentUris.withAppendedId(
                 Uri.parse("content://media/external/audio/albumart"),
-                id
+                id,
             ).toString()
 
             AlbumModel(
@@ -217,7 +217,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                 title = title,
                 artists = finalArtists,
                 coverUrl = albumArtUri,
-                songCount = artistSets.size
+                songCount = artistSets.size,
             )
         }.sortedBy { it.title }
     }
@@ -232,7 +232,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             projection,
             selection,
             null,
-            null
+            null,
         )?.use { cursor ->
             val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
             while (cursor.moveToNext()) {
@@ -246,7 +246,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             FolderModel(
                 name = File(path).name,
                 path = path,
-                songCount = count
+                songCount = count,
             )
         }.filter { folder ->
             !excludedFolders.any { excluded -> folder.path.startsWith(excluded) }
@@ -276,7 +276,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
         val playlistList = mutableListOf<PlaylistModel>()
         val projection = arrayOf(
             MediaStore.Audio.Playlists._ID,
-            MediaStore.Audio.Playlists.NAME
+            MediaStore.Audio.Playlists.NAME,
         )
 
         context.contentResolver.query(
@@ -284,7 +284,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             projection,
             null,
             null,
-            "${MediaStore.Audio.Playlists.NAME} ASC"
+            "${MediaStore.Audio.Playlists.NAME} ASC",
         )?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists._ID)
             val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.NAME)
@@ -296,8 +296,8 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                         id = id.toString(),
                         name = cursor.getString(nameColumn),
                         coverUrl = null, // Playlists usually don't have a direct cover in MediaStore
-                        songCount = 0 // Needs separate query or updated in UI
-                    )
+                        songCount = 0, // Needs separate query or updated in UI
+                    ),
                 )
             }
         }
@@ -308,14 +308,14 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
     override suspend fun getSongsByPlaylist(playlistId: String): List<MusicModel> = withContext(Dispatchers.IO) {
         val musicList = mutableListOf<MusicModel>()
         val uri = MediaStore.Audio.Playlists.Members.getContentUri("external", playlistId.toLong())
-        
+
         val projection = arrayOf(
             MediaStore.Audio.Playlists.Members.AUDIO_ID,
             MediaStore.Audio.Playlists.Members.TITLE,
             MediaStore.Audio.Playlists.Members.ARTIST,
             MediaStore.Audio.Playlists.Members.ALBUM,
             MediaStore.Audio.Playlists.Members.DURATION,
-            MediaStore.Audio.Playlists.Members.ALBUM_ID
+            MediaStore.Audio.Playlists.Members.ALBUM_ID,
         )
 
         context.contentResolver.query(
@@ -323,7 +323,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             projection,
             null,
             null,
-            MediaStore.Audio.Playlists.Members.PLAY_ORDER + " ASC"
+            MediaStore.Audio.Playlists.Members.PLAY_ORDER + " ASC",
         )?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.AUDIO_ID)
             val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.TITLE)
@@ -347,8 +347,8 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                         coverUrl = albumArtUri,
                         mediaUri = contentUri.toString(),
                         duration = cursor.getLong(durationColumn),
-                        sourceId = sourceId
-                    )
+                        sourceId = sourceId,
+                    ),
                 )
             }
         }
@@ -360,7 +360,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
         // 验证 ID 是否为纯数字，防止 SQL 注入（MediaStore ID 为 Long 类型）
         val safeIds = ids.filter { it.all { char -> char.isDigit() } }
         if (safeIds.isEmpty()) return emptyList()
-        
+
         val selection = "${MediaStore.Audio.Media._ID} IN (${safeIds.joinToString(",")})"
         val musicList = getMusicListWithSelection(selection, emptyArray())
         // Preserve order
@@ -377,7 +377,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             MediaStore.Audio.Media.ALBUM,
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.ALBUM_ID,
-            MediaStore.Audio.Media.DATA
+            MediaStore.Audio.Media.DATA,
         )
 
         context.contentResolver.query(
@@ -385,7 +385,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             projection,
             selection,
             selectionArgs,
-            "${MediaStore.Audio.Media.TITLE} ASC"
+            "${MediaStore.Audio.Media.TITLE} ASC",
         )?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
@@ -414,8 +414,8 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                         coverUrl = albumArtUri,
                         mediaUri = contentUri.toString(),
                         duration = cursor.getLong(durationColumn),
-                        sourceId = sourceId
-                    )
+                        sourceId = sourceId,
+                    ),
                 )
             }
         }
@@ -426,14 +426,14 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
         // 对于本地音乐，musicId 即 MediaStore ID，播放链接即 ContentUri
         return ContentUris.withAppendedId(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-            musicId.toLong()
+            musicId.toLong(),
         ).toString()
     }
 
     override suspend fun getLyrics(musicId: String): String? = withContext(Dispatchers.IO) {
         val contentUri = ContentUris.withAppendedId(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-            musicId.toLong()
+            musicId.toLong(),
         )
 
         // 1. 尝试使用 MediaMetadataRetriever (支持部分 MP3 USLT)
@@ -445,7 +445,9 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
         } catch (e: Exception) {
             // Ignore
         } finally {
-            try { retriever.release() } catch (e: Exception) {}
+            try {
+                retriever.release()
+            } catch (e: Exception) {}
         }
 
         if (!lyrics.isNullOrBlank()) return@withContext lyrics
@@ -474,12 +476,12 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             if (blockHeader == -1) break
             val isLastBlock = (blockHeader and 0x80) != 0
             val blockType = blockHeader and 0x7F
-            
+
             val lengthBytes = ByteArray(3)
             if (input.read(lengthBytes) != 3) break
             val length = (lengthBytes[0].toInt() and 0xFF shl 16) or
-                         (lengthBytes[1].toInt() and 0xFF shl 8) or
-                         (lengthBytes[2].toInt() and 0xFF)
+                (lengthBytes[1].toInt() and 0xFF shl 8) or
+                (lengthBytes[2].toInt() and 0xFF)
 
             if (blockType == 4) { // VORBIS_COMMENT
                 val commentData = ByteArray(length)
@@ -495,13 +497,13 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
 
     private fun parseVorbisComment(data: ByteArray): String? {
         val buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
-        
+
         // Vendor string
         if (buffer.remaining() < 4) return null
         val vendorLength = buffer.int
         if (vendorLength < 0 || vendorLength > buffer.remaining()) return null
         buffer.position(buffer.position() + vendorLength)
-        
+
         // User comment list
         if (buffer.remaining() < 4) return null
         val userCommentListLength = buffer.int
@@ -512,7 +514,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             val commentBytes = ByteArray(commentLength)
             buffer.get(commentBytes)
             val comment = String(commentBytes)
-            
+
             val parts = comment.split("=", limit = 2)
             if (parts.size == 2) {
                 val key = parts[0].uppercase()

@@ -5,16 +5,14 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
-import org.parallel_sekai.kanade.data.model.MusicModel
-import org.parallel_sekai.kanade.data.source.local.LocalMusicSource
-import org.parallel_sekai.kanade.R
 
 @OptIn(FlowPreview::class)
 class SearchViewModel(
     private val playbackRepository: PlaybackRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SearchState())
@@ -27,18 +25,18 @@ class SearchViewModel(
         // Observe available sources from repository
         combine(
             flowOf(SourceInfo("local_storage", "Local")), // Fallback if script sources not yet loaded
-            playbackRepository.scriptSources
+            playbackRepository.scriptSources,
         ) { local, scripts ->
             listOf(local) + scripts.map { SourceInfo(it.sourceId, it.manifest.name) }
         }.onEach { sources ->
-            _state.update { 
+            _state.update {
                 val newSourceIds = sources.map { s -> s.id }.toSet()
                 // Auto-select newly added sources (e.g. after import)
                 val updatedSelected = it.selectedSourceIds + (newSourceIds - it.availableSources.map { s -> s.id }.toSet())
-                
+
                 it.copy(
                     availableSources = sources,
-                    selectedSourceIds = if (it.availableSources.isEmpty()) newSourceIds else updatedSelected
+                    selectedSourceIds = if (it.availableSources.isEmpty()) newSourceIds else updatedSelected,
                 )
             }
         }.launchIn(viewModelScope)
@@ -105,38 +103,37 @@ class SearchViewModel(
                     }
                 }
             }
-                        is SearchIntent.RemoveHistoryItem -> {
-                            viewModelScope.launch {
-                                settingsRepository.removeSearchHistory(intent.query)
-                            }
-                        }
-                        is SearchIntent.ToggleSource -> {
-                            val currentSelected = _state.value.selectedSourceIds.toMutableSet()
-                            if (currentSelected.contains(intent.sourceId)) {
-                                currentSelected.remove(intent.sourceId)
-                            } else {
-                                currentSelected.add(intent.sourceId)
-                            }
-                            _state.update { it.copy(selectedSourceIds = currentSelected) }
-                            // Re-trigger search if we are currently searching
-                            if (_state.value.searchQuery.isNotBlank()) {
-                                viewModelScope.launch {
-                                    performSearch(_state.value.searchQuery)
-                                }
-                            }
-                        }
-                    }
+            is SearchIntent.RemoveHistoryItem -> {
+                viewModelScope.launch {
+                    settingsRepository.removeSearchHistory(intent.query)
                 }
-            
-                private suspend fun performSearch(query: String) {
-                    _state.update { it.copy(isLoading = true, isSearching = true) }
-                    try {
-                        val results = playbackRepository.fetchMusicList(query, _state.value.selectedSourceIds.toList())
-                        _state.update { it.copy(searchResults = results, isLoading = false) }
-                    } catch (e: Exception) {
-                        _state.update { it.copy(isLoading = false) }
-                        _effect.emit(SearchEffect.ShowError(R.string.error_unknown))
+            }
+            is SearchIntent.ToggleSource -> {
+                val currentSelected = _state.value.selectedSourceIds.toMutableSet()
+                if (currentSelected.contains(intent.sourceId)) {
+                    currentSelected.remove(intent.sourceId)
+                } else {
+                    currentSelected.add(intent.sourceId)
+                }
+                _state.update { it.copy(selectedSourceIds = currentSelected) }
+                // Re-trigger search if we are currently searching
+                if (_state.value.searchQuery.isNotBlank()) {
+                    viewModelScope.launch {
+                        performSearch(_state.value.searchQuery)
                     }
                 }
             }
-            
+        }
+    }
+
+    private suspend fun performSearch(query: String) {
+        _state.update { it.copy(isLoading = true, isSearching = true) }
+        try {
+            val results = playbackRepository.fetchMusicList(query, _state.value.selectedSourceIds.toList())
+            _state.update { it.copy(searchResults = results, isLoading = false) }
+        } catch (e: Exception) {
+            _state.update { it.copy(isLoading = false) }
+            _effect.emit(SearchEffect.ShowError(R.string.error_unknown))
+        }
+    }
+}

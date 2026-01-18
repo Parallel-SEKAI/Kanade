@@ -2,7 +2,6 @@ package org.parallel_sekai.kanade.ui.screens.settings
 
 import android.app.Application // 导入 Application
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -16,24 +15,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import org.parallel_sekai.kanade.R
-import org.parallel_sekai.kanade.data.repository.ArtistParsingSettings
-import org.parallel_sekai.kanade.data.repository.SettingsRepository // 导入 SettingsRepository
-import org.parallel_sekai.kanade.ui.theme.KanadeTheme
-import org.parallel_sekai.kanade.ui.theme.Dimens
 import org.parallel_sekai.kanade.ui.preview.FakeSettingsViewModel
+import org.parallel_sekai.kanade.ui.theme.Dimens
+import org.parallel_sekai.kanade.ui.theme.KanadeTheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ArtistParsingSettingsScreen(
     viewModel: SettingsViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     val settings by viewModel.artistParsingSettings.collectAsState()
 
@@ -45,21 +37,21 @@ fun ArtistParsingSettingsScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
         ) {
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
                     .padding(horizontal = Dimens.PaddingMedium),
-                contentPadding = PaddingValues(top = Dimens.PaddingSmall)
+                contentPadding = PaddingValues(top = Dimens.PaddingSmall),
             ) {
                 item {
                     SettingsSectionHeader(title = stringResource(R.string.header_artist_separators))
@@ -67,7 +59,7 @@ fun ArtistParsingSettingsScreen(
                         text = stringResource(R.string.desc_artist_separators),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+                        modifier = Modifier.padding(bottom = Dimens.PaddingSmall),
                     )
                 }
                 itemsIndexed(settings.separators, key = { _, separator -> separator }) { index, separator ->
@@ -78,12 +70,12 @@ fun ArtistParsingSettingsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = Dimens.PaddingExtraSmall),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
                             Icons.Default.DragHandle,
                             contentDescription = stringResource(R.string.desc_reorder),
-                            modifier = Modifier.padding(end = Dimens.PaddingSmall)
+                            modifier = Modifier.padding(end = Dimens.PaddingSmall),
                         )
                         OutlinedTextField(
                             value = text,
@@ -96,7 +88,7 @@ fun ArtistParsingSettingsScreen(
                             label = { Text(stringResource(R.string.label_separator)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
-                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None)
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
                         )
                         IconButton(onClick = {
                             viewModel.updateArtistSeparators(settings.separators.filterIndexed { i, _ -> i != index })
@@ -108,7 +100,7 @@ fun ArtistParsingSettingsScreen(
                 item {
                     Button(
                         onClick = { viewModel.updateArtistSeparators(settings.separators + "") },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingSmall)
+                        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingSmall),
                     ) {
                         Text(stringResource(R.string.action_add_separator))
                     }
@@ -121,7 +113,7 @@ fun ArtistParsingSettingsScreen(
                         text = stringResource(R.string.desc_artist_whitelist),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+                        modifier = Modifier.padding(bottom = Dimens.PaddingSmall),
                     )
                 }
                 itemsIndexed(settings.whitelist, key = { _, item -> item }) { index, item ->
@@ -132,7 +124,7 @@ fun ArtistParsingSettingsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = Dimens.PaddingExtraSmall),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         OutlinedTextField(
                             value = text,
@@ -145,7 +137,7 @@ fun ArtistParsingSettingsScreen(
                             label = { Text(stringResource(R.string.label_whitelisted_artist)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
-                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                         )
                         IconButton(onClick = {
                             viewModel.updateArtistWhitelist(settings.whitelist.filterIndexed { i, _ -> i != index })
@@ -157,7 +149,7 @@ fun ArtistParsingSettingsScreen(
                 item {
                     Button(
                         onClick = { viewModel.updateArtistWhitelist(settings.whitelist + "") },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingSmall)
+                        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingSmall),
                     ) {
                         Text(stringResource(R.string.action_add_whitelist))
                     }
@@ -170,7 +162,7 @@ fun ArtistParsingSettingsScreen(
                         text = stringResource(R.string.desc_display_join_string),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+                        modifier = Modifier.padding(bottom = Dimens.PaddingSmall),
                     )
                 }
                 item {
@@ -186,7 +178,7 @@ fun ArtistParsingSettingsScreen(
                         label = { Text(stringResource(R.string.label_join_string)) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingExtraSmall),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None)
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
                     )
                 }
                 item {
@@ -205,7 +197,7 @@ fun PreviewArtistParsingSettingsScreen() {
         val applicationContext = androidx.compose.ui.platform.LocalContext.current.applicationContext as Application // 移到 remember 外部
         ArtistParsingSettingsScreen(
             viewModel = remember { FakeSettingsViewModel(applicationContext) },
-            onNavigateBack = {}
+            onNavigateBack = {},
         )
     }
 }

@@ -8,12 +8,12 @@ data class SplitResult(
     val line2: String,
     val words1: List<WordInfo>?,
     val words2: List<WordInfo>?,
-    val splitIndex: Int
+    val splitIndex: Int,
 )
 
 object LyricSplitter {
     private const val REMOVABLE_PUNCTUATION = "，, 　;；、"
-    private const val STICKY_PUNCTUATION = "。？！…!?." 
+    private const val STICKY_PUNCTUATION = "。？！…!?."
     private const val FORBIDDEN_START_PUNCTUATION = "）)》」”'"
     private const val FORBIDDEN_END_PUNCTUATION = "（(《「“'"
 
@@ -30,14 +30,14 @@ object LyricSplitter {
 
         // 识别原子边界
         val atoms = identifyAtoms(content, words)
-        
+
         // 遍历原子之间的空隙作为切分点
         for (i in 1 until atoms.size) {
             val charIndex = atoms[i].startIndex
             if (charIndex !in rangeStart..rangeEnd) continue
 
             var score = 0
-            
+
             // 1. 距离中心位置分 (0-100)
             val distanceFactor = 1.0f - (abs(charIndex - center).toFloat() / center)
             score += (distanceFactor * 100).toInt()
@@ -55,7 +55,7 @@ object LyricSplitter {
 
             // 3. 时间停顿分 (仅限逐字模式)
             if (words != null) {
-                val prevAtom = atoms[i-1]
+                val prevAtom = atoms[i - 1]
                 val currentAtom = atoms[i]
                 if (prevAtom.wordInfo != null && currentAtom.wordInfo != null) {
                     val gap = currentAtom.wordInfo.startTime - prevAtom.wordInfo.endTime
@@ -107,7 +107,7 @@ object LyricSplitter {
     private data class Atom(
         val startIndex: Int,
         val text: String,
-        val wordInfo: WordInfo? = null
+        val wordInfo: WordInfo? = null,
     )
 
     private fun identifyAtoms(content: String, words: List<WordInfo>?): List<Atom> {

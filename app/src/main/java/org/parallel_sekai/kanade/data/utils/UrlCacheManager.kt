@@ -5,7 +5,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 
 val Context.urlCacheDataStore: DataStore<Preferences> by preferencesDataStore(name = "url_cache")
 
@@ -15,7 +14,7 @@ val Context.urlCacheDataStore: DataStore<Preferences> by preferencesDataStore(na
  * 只有在播放失败时才会通过 clearCache 显式清除
  */
 class UrlCacheManager(private val context: Context) {
-    
+
     suspend fun getCachedUrl(mediaId: String): String? {
         val urlKey = stringPreferencesKey("url_$mediaId")
         val preferences = context.urlCacheDataStore.data.first()

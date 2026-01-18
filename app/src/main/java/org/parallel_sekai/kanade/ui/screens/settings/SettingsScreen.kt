@@ -2,6 +2,8 @@ package org.parallel_sekai.kanade.ui.screens.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -11,12 +13,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.ui.theme.Dimens
-
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +26,7 @@ fun SettingsScreen(
     onNavigateToArtistParsingSettings: () -> Unit,
     onNavigateToCacheSettings: () -> Unit,
     onNavigateToLyricsGetterApi: () -> Unit,
-    onNavigateToSuperLyricApi: () -> Unit
+    onNavigateToSuperLyricApi: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
     val searchAsPlaylist = viewModel.searchResultAsPlaylist.collectAsState()
@@ -41,29 +39,29 @@ fun SettingsScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(scrollState)
+                .verticalScroll(scrollState),
         ) {
             SettingsSectionHeader(title = stringResource(R.string.header_interface))
-            
+
             ListItem(
                 headlineContent = { Text(stringResource(R.string.pref_lyrics_settings)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onNavigateToLyricsSettings)
+                modifier = Modifier.clickable(onClick = onNavigateToLyricsSettings),
             )
 
             ListItem(
                 headlineContent = { Text(stringResource(R.string.pref_artist_parsing)) }, // 新增入口
                 supportingContent = { Text(stringResource(R.string.desc_artist_parsing)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onNavigateToArtistParsingSettings)
+                modifier = Modifier.clickable(onClick = onNavigateToArtistParsingSettings),
             )
 
             Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
@@ -73,14 +71,14 @@ fun SettingsScreen(
                 headlineContent = { Text(stringResource(R.string.pref_lyrics_getter)) },
                 supportingContent = { Text(stringResource(R.string.desc_lyrics_getter)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onNavigateToLyricsGetterApi)
+                modifier = Modifier.clickable(onClick = onNavigateToLyricsGetterApi),
             )
 
             ListItem(
                 headlineContent = { Text(stringResource(R.string.pref_super_lyric)) },
                 supportingContent = { Text(stringResource(R.string.desc_super_lyric)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onNavigateToSuperLyricApi)
+                modifier = Modifier.clickable(onClick = onNavigateToSuperLyricApi),
             )
 
             ListItem(
@@ -89,23 +87,23 @@ fun SettingsScreen(
                 trailingContent = {
                     Switch(
                         checked = searchAsPlaylist.value,
-                        onCheckedChange = { viewModel.updateSearchResultAsPlaylist(it) }
+                        onCheckedChange = { viewModel.updateSearchResultAsPlaylist(it) },
                     )
-                }
+                },
             )
 
             ListItem(
                 headlineContent = { Text(stringResource(R.string.pref_excluded_folders)) },
                 supportingContent = { Text(stringResource(R.string.desc_excluded_folders_pref)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onNavigateToExcludedFolders)
+                modifier = Modifier.clickable(onClick = onNavigateToExcludedFolders),
             )
 
             ListItem(
                 headlineContent = { Text(stringResource(R.string.pref_cache_settings)) },
                 supportingContent = { Text(stringResource(R.string.desc_cache_settings)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onNavigateToCacheSettings)
+                modifier = Modifier.clickable(onClick = onNavigateToCacheSettings),
             )
 
             // 为底部的 MiniPlayer 留出空间
@@ -120,6 +118,6 @@ fun SettingsSectionHeader(title: String) {
         text = title,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall)
+        modifier = Modifier.padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall),
     )
 }

@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.data.model.MusicModel
 import org.parallel_sekai.kanade.ui.screens.library.MusicListDetailScreen
@@ -37,7 +36,7 @@ fun ArtistListScreen(
     state: PlayerState,
     onIntent: (org.parallel_sekai.kanade.ui.screens.player.PlayerIntent) -> Unit,
     onBackClick: () -> Unit,
-    onArtistClick: (String) -> Unit
+    onArtistClick: (String) -> Unit,
 ) {
     androidx.compose.runtime.LaunchedEffect(Unit) {
         onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.RefreshArtists)
@@ -51,13 +50,13 @@ fun ArtistListScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding)
+            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding),
         ) {
             items(state.artistList) { artist ->
                 ListItem(
@@ -67,10 +66,10 @@ fun ArtistListScreen(
                         Icon(
                             Icons.Default.Person,
                             contentDescription = null,
-                            modifier = Modifier.size(Dimens.IconSizeHuge).clip(RoundedCornerShape(Dimens.CornerRadiusExtraLarge)).background(MaterialTheme.colorScheme.surfaceVariant).padding(Dimens.PaddingSmall)
+                            modifier = Modifier.size(Dimens.IconSizeHuge).clip(RoundedCornerShape(Dimens.CornerRadiusExtraLarge)).background(MaterialTheme.colorScheme.surfaceVariant).padding(Dimens.PaddingSmall),
                         )
                     },
-                    modifier = Modifier.clickable { onArtistClick(artist.name) }
+                    modifier = Modifier.clickable { onArtistClick(artist.name) },
                 )
             }
         }
@@ -82,7 +81,7 @@ fun ArtistDetailScreen(
     name: String,
     state: PlayerState,
     onBackClick: () -> Unit,
-    onSongClick: (MusicModel, List<MusicModel>) -> Unit
+    onSongClick: (MusicModel, List<MusicModel>) -> Unit,
 ) {
     MusicListDetailScreen(
         title = name,
@@ -91,6 +90,6 @@ fun ArtistDetailScreen(
         currentSong = state.currentSong,
         artistJoinString = state.artistJoinString,
         onBackClick = onBackClick,
-        onSongClick = onSongClick
+        onSongClick = onSongClick,
     )
 }

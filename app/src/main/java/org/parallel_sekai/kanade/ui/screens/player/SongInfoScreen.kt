@@ -12,7 +12,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -24,7 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.parallel_sekai.kanade.R
-import org.parallel_sekai.kanade.data.model.MusicModel
 import org.parallel_sekai.kanade.ui.theme.Dimens
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -33,13 +31,14 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun SongInfoScreen(
     state: PlayerState,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
 ) {
     val song = state.currentSong ?: return
     val context = LocalContext.current
+
     @Suppress("DEPRECATION")
     val clipboardManager = LocalClipboardManager.current
-    
+
     val metadata = remember(song) {
         val list = mutableListOf<Pair<Int, String>>()
         list.add(R.string.label_title to song.title)
@@ -47,17 +46,17 @@ fun SongInfoScreen(
         list.add(R.string.label_album to song.album)
         list.add(R.string.label_duration to formatDuration(song.duration))
         list.add(R.string.label_source to song.sourceId)
-        
+
         if (song.sourceId == "local_storage") {
             val retriever = MediaMetadataRetriever()
             try {
                 val uri = Uri.parse(song.mediaUri)
                 retriever.setDataSource(context, uri)
-                
+
                 val bitRate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)
                 val mimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
                 val sampleRate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE)
-                
+
                 if (mimeType != null) list.add(R.string.label_mime_type to mimeType)
                 if (bitRate != null) {
                     val kbps = bitRate.toInt() / 1000
@@ -98,7 +97,7 @@ fun SongInfoScreen(
         } else {
             list.add(R.string.label_metadata to song.mediaUri)
         }
-        
+
         list
     }
 
@@ -110,26 +109,26 @@ fun SongInfoScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
         ) {
             items(metadata) { (labelRes, value) ->
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingSmall)
+                        .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingSmall),
                 ) {
                     Text(
                         text = stringResource(labelRes),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
@@ -140,14 +139,14 @@ fun SongInfoScreen(
                                 onLongPress = {
                                     clipboardManager.setText(AnnotatedString(value))
                                     Toast.makeText(context, R.string.msg_copied_to_clipboard, Toast.LENGTH_SHORT).show()
-                                }
+                                },
                             )
-                        }
+                        },
                     )
                 }
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = Dimens.PaddingLarge),
-                    color = MaterialTheme.colorScheme.outlineVariant
+                    color = MaterialTheme.colorScheme.outlineVariant,
                 )
             }
 
@@ -156,13 +155,13 @@ fun SongInfoScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingSmall)
+                        .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingSmall),
                 ) {
                     Text(
                         text = stringResource(R.string.pref_lyrics_settings),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     if (!state.lyrics.isNullOrBlank()) {
@@ -171,14 +170,14 @@ fun SongInfoScreen(
                                 .fillMaxWidth()
                                 .padding(top = 8.dp),
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(8.dp),
                         ) {
                             Text(
                                 text = state.lyrics,
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontFamily = FontFamily.Monospace,
                                     fontSize = 12.sp,
-                                    lineHeight = 16.sp
+                                    lineHeight = 16.sp,
                                 ),
                                 modifier = Modifier
                                     .padding(Dimens.PaddingMedium)
@@ -187,16 +186,16 @@ fun SongInfoScreen(
                                             onLongPress = {
                                                 clipboardManager.setText(AnnotatedString(state.lyrics))
                                                 Toast.makeText(context, R.string.msg_copied_to_clipboard, Toast.LENGTH_SHORT).show()
-                                            }
+                                            },
                                         )
-                                    }
+                                    },
                             )
                         }
                     } else {
                         Text(
                             text = stringResource(R.string.msg_no_lyrics),
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }

@@ -29,9 +29,7 @@ object CacheManager {
         return cache!!
     }
 
-    fun getImageCacheDir(context: Context): File {
-        return File(context.cacheDir, "image_cache")
-    }
+    fun getImageCacheDir(context: Context): File = File(context.cacheDir, "image_cache")
 
     /**
      * 获取当前缓存占用的空间（字节）
@@ -43,7 +41,7 @@ object CacheManager {
                 return cache!!.cacheSpace + calculateFolderSize(getImageCacheDir(context))
             }
         }
-        
+
         val mediaCacheDir = File(context.cacheDir, "media_cache")
         val imageCacheDir = getImageCacheDir(context)
         return calculateFolderSize(mediaCacheDir) + calculateFolderSize(imageCacheDir)
