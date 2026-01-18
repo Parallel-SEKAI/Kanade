@@ -30,7 +30,7 @@ data class PlaybackState(
     val shuffleMode: Boolean = false,
     val lastMediaId: String? = null,
     val lastPosition: Long = 0L,
-    val lastPlaylistIds: List<String> = emptyList()
+    val lastPlaylistJson: String? = null
 )
 
 open class SettingsRepository(private val context: Context) {
@@ -55,7 +55,7 @@ open class SettingsRepository(private val context: Context) {
     private val SHUFFLE_MODE = booleanPreferencesKey("playback_shuffle_mode")
     private val LAST_PLAYED_MEDIA_ID = stringPreferencesKey("last_played_media_id")
     private val LAST_PLAYED_POSITION = longPreferencesKey("last_played_position")
-    private val LAST_PLAYLIST_IDS = stringPreferencesKey("last_playlist_ids")
+    private val LAST_PLAYLIST_JSON = stringPreferencesKey("last_playlist_json")
 
     private val ACTIVE_SCRIPT_ID = stringPreferencesKey("active_script_id")
     private val SCRIPT_CONFIGS = stringPreferencesKey("script_configs") // JSON string of Map<String, Map<String, String>>
@@ -243,7 +243,7 @@ open class SettingsRepository(private val context: Context) {
                 shuffleMode = preferences[SHUFFLE_MODE] ?: false,
                 lastMediaId = preferences[LAST_PLAYED_MEDIA_ID],
                 lastPosition = preferences[LAST_PLAYED_POSITION] ?: 0L,
-                lastPlaylistIds = preferences[LAST_PLAYLIST_IDS]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+                lastPlaylistJson = preferences[LAST_PLAYLIST_JSON]
             )
         }
 
@@ -275,9 +275,13 @@ open class SettingsRepository(private val context: Context) {
         }
     }
 
-    open suspend fun updateLastPlaylistIds(ids: List<String>) {
+    open suspend fun updateLastPlaylistJson(json: String?) {
         context.dataStore.edit { preferences ->
-            preferences[LAST_PLAYLIST_IDS] = ids.joinToString(",")
+            if (json == null) {
+                preferences.remove(LAST_PLAYLIST_JSON)
+            } else {
+                preferences[LAST_PLAYLIST_JSON] = json
+            }
         }
     }
 }

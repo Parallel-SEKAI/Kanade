@@ -1,41 +1,49 @@
 package org.parallel_sekai.kanade.data.model
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
+
+@Serializable
 data class MusicModel(
-    val id: String,
-    val title: String,
-    val artists: List<String>,
-    val album: String,
-    val coverUrl: String,
-    val mediaUri: String, // 真实的播放 URI
-    val duration: Long,
-    val sourceId: String,
-    val lyrics: String? = null
+    @SerialName("id") val id: String,
+    @SerialName("title") val title: String,
+    @SerialName("artists") val artists: List<String>,
+    @SerialName("album") val album: String,
+    @SerialName("coverUrl") val coverUrl: String,
+    @SerialName("mediaUri") val mediaUri: String,
+    @SerialName("duration") val duration: Long,
+    @SerialName("sourceId") val sourceId: String,
+    @SerialName("lyrics") val lyrics: String? = null
 )
 
+@Serializable
 data class ArtistModel(
-    val id: String,
-    val name: String,
-    val albumCount: Int,
-    val songCount: Int
+    @SerialName("id") val id: String,
+    @SerialName("name") val name: String,
+    @SerialName("albumCount") val albumCount: Int,
+    @SerialName("songCount") val songCount: Int
 )
 
+@Serializable
 data class AlbumModel(
-    val id: String,
-    val title: String,
-    val artists: List<String>,
-    val coverUrl: String,
-    val songCount: Int
+    @SerialName("id") val id: String,
+    @SerialName("title") val title: String,
+    @SerialName("artists") val artists: List<String>,
+    @SerialName("coverUrl") val coverUrl: String,
+    @SerialName("songCount") val songCount: Int
 )
 
+@Serializable
 data class FolderModel(
-    val name: String,
-    val path: String,
-    val songCount: Int
+    @SerialName("name") val name: String,
+    @SerialName("path") val path: String,
+    @SerialName("songCount") val songCount: Int
 )
 
+@Serializable
 data class PlaylistModel(
-    val id: String,
-    val name: String,
-    val coverUrl: String?,
-    val songCount: Int
+    @SerialName("id") val id: String,
+    @SerialName("name") val name: String,
+    @SerialName("coverUrl") val coverUrl: String?,
+    @SerialName("songCount") val songCount: Int
 )

@@ -151,5 +151,7 @@
     <string name="label_current_cache_size">Used Space</string>
     <string name="label_cache_limit">Cache Limit</string>
     <string name="fmt_cache_limit_gb">%s GB</string>
+    <string name="action_clear_cache">Clear Cache</string>
+    <string name="msg_confirm_clear_cache">Are you sure you want to clear all media and image caches?</string>
 </resources>
         

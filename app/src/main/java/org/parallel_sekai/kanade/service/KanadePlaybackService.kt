@@ -19,6 +19,7 @@ import org.parallel_sekai.kanade.MainActivity
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.data.source.SourceManager
 import org.parallel_sekai.kanade.data.utils.CacheManager
+import org.parallel_sekai.kanade.data.utils.UrlCacheManager
 
 import androidx.media3.datasource.ResolvingDataSource
 import kotlinx.coroutines.flow.first
@@ -32,9 +33,12 @@ class KanadePlaybackService : MediaSessionService() {
     private var player: ExoPlayer? = null
     private var mediaSession: MediaSession? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private lateinit var urlCacheManager: UrlCacheManager
 
     override fun onCreate() {
         super.onCreate()
+        
+        urlCacheManager = UrlCacheManager(this)
         
         // 1. 初始化 ExoPlayer
         val audioAttributes = AudioAttributes.Builder()
@@ -57,15 +61,31 @@ class KanadePlaybackService : MediaSessionService() {
                     if (uri.scheme == "kanade" && uri.host == "resolve") {
                         val sourceId = uri.getQueryParameter("source_id")
                         val originalId = uri.getQueryParameter("original_id")
+                        val mediaId = "$sourceId:$originalId"
                         
                         if (sourceId != null && originalId != null) {
                             val resolvedUrl = runBlocking {
+                                // 1. 尝试从永久缓存获取
+                                val cached = urlCacheManager.getCachedUrl(mediaId)
+                                if (cached != null) {
+                                    android.util.Log.d("KanadePlaybackService", "Using persistent cached URL for $mediaId")
+                                    return@runBlocking cached
+                                }
+
+                                // 2. 缓存不存在，重新获取
+                                android.util.Log.d("KanadePlaybackService", "Cache miss for $mediaId, resolving...")
                                 val source = sourceManager.getSource(sourceId)
-                                try {
+                                val url = try {
                                     source?.getPlayUrl(originalId) ?: ""
                                 } catch (e: Exception) {
                                     ""
                                 }
+                                
+                                // 3. 保存到永久缓存
+                                if (url.isNotEmpty()) {
+                                    urlCacheManager.saveUrl(mediaId, url)
+                                }
+                                url
                             }
                             
                             if (resolvedUrl.isNotEmpty()) {
@@ -90,6 +110,18 @@ class KanadePlaybackService : MediaSessionService() {
                 addListener(object : androidx.media3.common.Player.Listener {
                     override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                         android.util.Log.e("KanadePlaybackService", "Player Error: ${error.message}", error)
+                        
+                        // 如果播放出错且当前是脚本音源，尝试清除 URL 缓存，以便下次重试时重新解析
+                        val currentItem = currentMediaItem
+                        if (currentItem != null) {
+                            val mediaId = currentItem.mediaId
+                            if (mediaId.startsWith("script_")) {
+                                runBlocking {
+                                    urlCacheManager.clearCache(mediaId)
+                                    android.util.Log.d("KanadePlaybackService", "Cleared URL cache for $mediaId due to error")
+                                }
+                            }
+                        }
                     }
                 })
             }

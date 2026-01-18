@@ -48,10 +48,46 @@ class SourceManager private constructor(
         return _scriptSources.value.find { it.sourceId == sourceId }
     }
 
+    suspend fun getMusicListByMediaIds(mediaIds: List<String>): List<MusicModel> {
+        // mediaId format: "sourceId:originalId"
+        val groupedIds = mediaIds.mapNotNull { mediaId ->
+            val parts = mediaId.split(":", limit = 2)
+            if (parts.size == 2) parts[0] to parts[1] else null
+        }.groupBy({ it.first }, { it.second })
+
+        val allMusic = mutableListOf<MusicModel>()
+        groupedIds.forEach { (sourceId, ids) ->
+            val source = getSource(sourceId)
+            if (source != null) {
+                try {
+                    allMusic.addAll(source.getMusicListByIds(ids))
+                } catch (e: Exception) {
+                    // Ignore errors for specific sources
+                }
+            }
+        }
+        
+        // Return in the original order of mediaIds
+        val musicMap = allMusic.associateBy { "${it.sourceId}:${it.id}" }
+        return mediaIds.mapNotNull { musicMap[it] }
+    }
+
     suspend fun getHomeList(): List<MusicModel> {
         val activeId = _activeScriptId.value ?: return emptyList()
-        val source = _scriptSources.value.find { it.manifest.id == activeId }
-        return source?.getHomeList() ?: emptyList()
+        
+        // 等待目标音源对象出现
+        val source = withTimeoutOrNull(3000) {
+            _scriptSources.filter { sources -> 
+                sources.any { it.manifest.id == activeId }
+            }.first().find { it.manifest.id == activeId }
+        } ?: return emptyList()
+
+        return try {
+            source.getHomeList()
+        } catch (e: Exception) {
+            android.util.Log.e("SourceManager", "Failed to get home list for $activeId", e)
+            emptyList()
+        }
     }
 
     suspend fun getLyrics(sourceId: String, musicId: String): String? {

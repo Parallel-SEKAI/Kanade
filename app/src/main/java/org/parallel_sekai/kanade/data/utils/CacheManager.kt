@@ -29,6 +29,10 @@ object CacheManager {
         return cache!!
     }
 
+    fun getImageCacheDir(context: Context): File {
+        return File(context.cacheDir, "image_cache")
+    }
+
     /**
      * 获取当前缓存占用的空间（字节）
      * 如果 cache 已初始化，直接从 cache 获取；否则手动计算文件夹大小。
@@ -36,19 +40,17 @@ object CacheManager {
     fun getCurrentCacheSize(context: Context): Long {
         synchronized(this) {
             if (cache != null) {
-                return cache!!.cacheSpace
+                return cache!!.cacheSpace + calculateFolderSize(getImageCacheDir(context))
             }
         }
         
-        val cacheDir = File(context.cacheDir, "media_cache")
-        return if (cacheDir.exists() && cacheDir.isDirectory) {
-            calculateFolderSize(cacheDir)
-        } else {
-            0L
-        }
+        val mediaCacheDir = File(context.cacheDir, "media_cache")
+        val imageCacheDir = getImageCacheDir(context)
+        return calculateFolderSize(mediaCacheDir) + calculateFolderSize(imageCacheDir)
     }
 
     private fun calculateFolderSize(file: File): Long {
+        if (!file.exists()) return 0L
         var size: Long = 0
         if (file.isDirectory) {
             val files = file.listFiles()
@@ -72,14 +74,11 @@ object CacheManager {
                 cache?.keys?.forEach { key ->
                     cache?.removeResource(key)
                 }
-                return
             }
         }
-        // 如果 cache 未初始化，直接删除文件夹
-        val cacheDir = File(context.cacheDir, "media_cache")
-        if (cacheDir.exists()) {
-            cacheDir.deleteRecursively()
-        }
+        // 直接删除文件夹
+        File(context.cacheDir, "media_cache").deleteRecursively()
+        getImageCacheDir(context).deleteRecursively()
     }
 
     /**

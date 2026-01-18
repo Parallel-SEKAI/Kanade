@@ -66,6 +66,9 @@ import org.parallel_sekai.kanade.ui.theme.KanadeTheme
 import androidx.compose.ui.res.stringResource
 import org.parallel_sekai.kanade.ui.theme.Dimens
 import coil.ImageLoader
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
+import org.parallel_sekai.kanade.data.utils.CacheManager
 import org.parallel_sekai.kanade.data.utils.LyricGetterManager
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -144,7 +147,20 @@ class MainActivity : ComponentActivity() {
             settingsRepository = settingsRepository,
             scope = ProcessLifecycleOwner.get().lifecycleScope
         )
-        val imageLoader = ImageLoader(applicationContext)
+        val imageLoader = ImageLoader.Builder(applicationContext)
+            .memoryCache {
+                MemoryCache.Builder(applicationContext)
+                    .maxSizePercent(0.25)
+                    .build()
+            }
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(CacheManager.getImageCacheDir(applicationContext))
+                    .maxSizePercent(0.02) // 磁盘空间的 2% 或手动指定大小，例如 100MB
+                    .build()
+            }
+            .respectCacheHeaders(false) // 强制缓存，忽略服务器的不可缓存头
+            .build()
         val lyricGetterManager = LyricGetterManager(applicationContext)
         
         playerViewModel = PlayerViewModel(

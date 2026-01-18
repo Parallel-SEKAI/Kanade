@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -104,7 +105,7 @@ class PlayerViewModel(
                         album = item.mediaMetadata.albumTitle?.toString() ?: "",
                         coverUrl = item.mediaMetadata.artworkUri?.toString() ?: "",
                         mediaUri = item.requestMetadata.mediaUri?.toString() ?: "",
-                        duration = 0,
+                        duration = item.mediaMetadata.extras?.getLong("duration") ?: 0L,
                         sourceId = item.mediaMetadata.extras?.getString("source_id") ?: "unknown"
                     )
                 }
@@ -117,17 +118,20 @@ class PlayerViewModel(
             _state.update { it.copy(isHomeLoading = true) }
             
             val list = playbackRepository.fetchMusicList()
-            val initialSong: MusicModel? = list.firstOrNull() 
-
+            
             _state.update { it.copy(
                 allMusicList = list,
-                currentPlaylist = list,
-                isHomeLoading = false,
-                currentSong = it.currentSong ?: initialSong
+                // 如果当前没有播放列表，则将本地列表设为当前队列（防止初次启动时列表为空）
+                currentPlaylist = if (it.currentPlaylist.isEmpty()) list else it.currentPlaylist,
+                isHomeLoading = false
             ) }
-            
-            initialSong?.let {
-                extractColors(it)
+
+            // 只有当当前没有歌曲时，才使用本地第一首作为预览（但不播放）
+            if (_state.value.currentSong == null) {
+                list.firstOrNull()?.let { initialSong ->
+                    _state.update { it.copy(currentSong = initialSong) }
+                    extractColors(initialSong)
+                }
             }
         }
 
@@ -156,7 +160,7 @@ class PlayerViewModel(
                         album = mediaItem.mediaMetadata.albumTitle?.toString() ?: "",
                         coverUrl = mediaItem.mediaMetadata.artworkUri?.toString() ?: "",
                         mediaUri = mediaItem.requestMetadata.mediaUri?.toString() ?: "",
-                        duration = 0,
+                        duration = mediaItem.mediaMetadata.extras?.getLong("duration") ?: 0L,
                         sourceId = mediaItem.mediaMetadata.extras?.getString("source_id") ?: "unknown"
                     )
 
@@ -290,7 +294,20 @@ class PlayerViewModel(
                     val list = playbackRepository.fetchMusicList()
 
                     if (shouldRefreshHome) {
-                        val homeItems = playbackRepository.fetchHomeList()
+                        var homeItems = emptyList<MusicModel>()
+                        var retryCount = 0
+                        while (homeItems.isEmpty() && retryCount < 2) {
+                            if (retryCount > 0) delay(1000)
+                            homeItems = withContext(Dispatchers.IO) {
+                                try {
+                                    playbackRepository.fetchHomeList()
+                                } catch (e: Exception) {
+                                    emptyList()
+                                }
+                            }
+                            retryCount++
+                        }
+                        
                         _state.update { it.copy(
                             homeMusicList = homeItems,
                             isHomeLoading = false
@@ -330,11 +347,25 @@ class PlayerViewModel(
             }
             is PlayerIntent.RefreshHome -> {
                 val currentScriptId = state.value.activeScriptId
-                if (currentScriptId != null && currentScriptId != lastRefreshedScriptId) {
+                if (currentScriptId != null) {
                     refreshJob?.cancel()
                     refreshJob = viewModelScope.launch {
                         _state.update { it.copy(isHomeLoading = true) }
-                        val homeItems = playbackRepository.fetchHomeList()
+                        
+                        var homeItems = emptyList<MusicModel>()
+                        var retryCount = 0
+                        while (homeItems.isEmpty() && retryCount < 2) {
+                            if (retryCount > 0) delay(1000) // 重试间隔
+                            homeItems = withContext(Dispatchers.IO) {
+                                try {
+                                    playbackRepository.fetchHomeList()
+                                } catch (e: Exception) {
+                                    emptyList()
+                                }
+                            }
+                            retryCount++
+                        }
+
                         _state.update { it.copy(
                             homeMusicList = homeItems,
                             isHomeLoading = false

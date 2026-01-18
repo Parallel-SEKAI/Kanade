@@ -132,7 +132,8 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Implemented "last-minute" script URL resolution using `ResolvingDataSource` to avoid pre-fetching in playlists.
 - [x] Upgraded Netease Music script to use `eapi` protocol with AES/MD5 encryption.
 - [x] Added `CryptoBridge` to KSS for script-side cryptographic operations (MD5, AES).
-- [x] Cleaned up code warnings and deprecated API usages across the project.
+- [x] Fixed duration loss in playback state persistence and improved ViewModel retry robustness.
+- [x] Added @SerialName to music models to prevent obfuscation issues.
 - [ ] Source Selection in Search:
 
 ## 8. Agent Development Instructions (AI Context)

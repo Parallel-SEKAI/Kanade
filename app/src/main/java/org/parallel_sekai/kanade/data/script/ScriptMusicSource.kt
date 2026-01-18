@@ -14,8 +14,12 @@ class ScriptMusicSource(
 
     private val json = Json { ignoreUnknownKeys = true }
 
+    private suspend fun ensureEngine(): ScriptEngine? {
+        return scriptManager.getEngine(manifest.id)
+    }
+
     override suspend fun getMusicList(query: String): List<MusicModel> {
-        val engine = scriptManager.getEngine(manifest.id) ?: return emptyList()
+        val engine = ensureEngine() ?: return emptyList()
         Log.d("ScriptMusicSource", "Searching [$query] on [${manifest.name}]")
         return try {
             val result = engine.callAsync(null, "search", query, 1)
@@ -31,7 +35,7 @@ class ScriptMusicSource(
     }
 
     override suspend fun getHomeList(): List<MusicModel> {
-        val engine = scriptManager.getEngine(manifest.id) ?: return emptyList()
+        val engine = ensureEngine() ?: return emptyList()
         Log.d("ScriptMusicSource", "Fetching home list from [${manifest.name}]")
         return try {
             val result = engine.callAsync(null, "getHomeList")
@@ -47,7 +51,7 @@ class ScriptMusicSource(
     }
 
     override suspend fun getPlayUrl(musicId: String): String {
-        val engine = scriptManager.getEngine(manifest.id) ?: return ""
+        val engine = ensureEngine() ?: return ""
         Log.d("ScriptMusicSource", "Getting play URL for [$musicId] on [${manifest.name}]")
         return try {
             val result = engine.callAsync(null, "getMediaUrl", musicId)
@@ -62,7 +66,7 @@ class ScriptMusicSource(
     }
 
     override suspend fun getLyrics(musicId: String): String? {
-        val engine = scriptManager.getEngine(manifest.id) ?: return null
+        val engine = ensureEngine() ?: return null
         return try {
             // getLyrics is optional in the contract
             val rawLyrics = engine.callAsync(null, "getLyrics", musicId)
@@ -76,6 +80,31 @@ class ScriptMusicSource(
             decoded?.replace("\r\n", "\n")?.replace("\r", "\n")
         } catch (e: Exception) {
             null
+        }
+    }
+
+    override suspend fun getMusicListByIds(ids: List<String>): List<MusicModel> {
+        val engine = ensureEngine() ?: return emptyList()
+        return try {
+            // First try getMusicListByIds, then fallback to single getMusicDetail if it's just one ID
+            val result = engine.callAsync(null, "getMusicListByIds", ids)
+            if (result == "null") return emptyList()
+            val items = json.decodeFromString<List<ScriptMusicItem>>(result)
+            items.map { it.toMusicModel(sourceId) }
+        } catch (e: Exception) {
+            // Fallback for scripts that only support single item detail
+            if (ids.size == 1) {
+                try {
+                    val result = engine.callAsync(null, "getMusicDetail", ids[0])
+                    if (result != "null") {
+                        val item = json.decodeFromString<ScriptMusicItem>(result)
+                        return listOf(item.toMusicModel(sourceId))
+                    }
+                } catch (e2: Exception) {
+                    // Ignore
+                }
+            }
+            emptyList()
         }
     }
 

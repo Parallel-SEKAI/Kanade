@@ -18,6 +18,9 @@ import org.parallel_sekai.kanade.data.source.local.LocalMusicSource
 import org.parallel_sekai.kanade.service.KanadePlaybackService
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 /**
  * 播放控制仓库，桥接 MVI ViewModel 与 Media3 Service
@@ -119,40 +122,26 @@ open class PlaybackRepository(
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         _isPlaying.value = isPlaying
                         if (!isPlaying) {
-                            scope.launch {
-                                settingsRepository.updateLastPlayedPosition(ctrl.currentPosition)
-                            }
+                            savePlaybackState()
                         }
                     }
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                         _currentMediaId.value = mediaItem?.mediaId
                         _currentMediaItem.value = mediaItem
-                        scope.launch {
-                            settingsRepository.updateLastPlayedMediaId(mediaItem?.mediaId)
-                            settingsRepository.updateLastPlayedPosition(ctrl.currentPosition)
-                        }
+                        savePlaybackState()
                     }
                     override fun onRepeatModeChanged(repeatMode: Int) {
                         _repeatMode.value = repeatMode
-                        scope.launch {
-                            settingsRepository.updateRepeatMode(repeatMode)
-                        }
+                        savePlaybackState()
                     }
                     override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
                         _shuffleModeEnabled.value = shuffleModeEnabled
-                        scope.launch {
-                            settingsRepository.updateShuffleMode(shuffleModeEnabled)
-                        }
+                        savePlaybackState()
                     }
 
                     override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
                         updatePlaylist(ctrl)
-                        val ids = (0 until ctrl.mediaItemCount).map {
-                            ctrl.getMediaItemAt(it).mediaId
-                        }
-                        scope.launch {
-                            settingsRepository.updateLastPlaylistIds(ids)
-                        }
+                        savePlaybackState()
                     }
                 })
                 // 初始化状态
@@ -162,9 +151,10 @@ open class PlaybackRepository(
                 _currentMediaItem.value = ctrl.currentMediaItem
                 updatePlaylist(ctrl)
 
-                // 恢复播放状态 (如果当前没有播放内容)
-                if (ctrl.mediaItemCount == 0) {
-                    scope.launch {
+                // 恢复播放状态
+                scope.launch {
+                    android.util.Log.d("PlaybackRepository", "Checking for playback restoration. Current item count: ${ctrl.mediaItemCount}")
+                    if (ctrl.mediaItemCount == 0) {
                         restorePlaybackState(ctrl)
                     }
                 }
@@ -172,6 +162,42 @@ open class PlaybackRepository(
                 android.util.Log.e("PlaybackRepository", "Failed to connect to MediaSession", e)
             }
         }, MoreExecutors.directExecutor())
+    }
+
+    private fun savePlaybackState() {
+        val ctrl = controller ?: return
+        val currentId = ctrl.currentMediaItem?.mediaId
+        val position = ctrl.currentPosition
+        val repeatMode = ctrl.repeatMode
+        val shuffleMode = ctrl.shuffleModeEnabled
+        
+        // Convert MediaItems back to MusicModels for serialization
+        val playlist = (0 until ctrl.mediaItemCount).map { i ->
+            val item = ctrl.getMediaItemAt(i)
+            MusicModel(
+                id = item.mediaMetadata.extras?.getString("original_id") ?: item.mediaId,
+                title = item.mediaMetadata.title?.toString() ?: "",
+                artists = item.mediaMetadata.artist?.toString()?.split(_artistJoinString.value) ?: emptyList(),
+                album = item.mediaMetadata.albumTitle?.toString() ?: "",
+                coverUrl = item.mediaMetadata.artworkUri?.toString() ?: "",
+                mediaUri = item.requestMetadata.mediaUri?.toString() ?: "",
+                duration = item.mediaMetadata.extras?.getLong("duration") ?: 0L,
+                sourceId = item.mediaMetadata.extras?.getString("source_id") ?: "local_storage"
+            )
+        }
+
+        scope.launch {
+            try {
+                val json = Json.encodeToString<List<MusicModel>>(playlist)
+                settingsRepository.updateLastPlayedMediaId(currentId)
+                settingsRepository.updateLastPlayedPosition(position)
+                settingsRepository.updateRepeatMode(repeatMode)
+                settingsRepository.updateShuffleMode(shuffleMode)
+                settingsRepository.updateLastPlaylistJson(json)
+            } catch (e: Exception) {
+                android.util.Log.e("PlaybackRepository", "Failed to save playback state JSON", e)
+            }
+        }
     }
 
     private fun setupSettingsObservers() {
@@ -196,40 +222,64 @@ open class PlaybackRepository(
                 delay(10000) // 每 10 秒保存一次
             }
         }.onEach {
-            controller?.let {
-                if (it.isPlaying) {
-                    settingsRepository.updateLastPlayedPosition(it.currentPosition)
-                }
+            if (isPlaying.value) {
+                savePlaybackState()
             }
         }.launchIn(scope)
     }
 
     private suspend fun restorePlaybackState(controller: MediaController) {
         val state = settingsRepository.playbackStateFlow.first()
-        if (state.lastPlaylistIds.isNotEmpty()) {
-            val musicList = localMusicSource.getMusicListByIds(state.lastPlaylistIds)
-            if (musicList.isNotEmpty()) {
-                val mediaItems = musicList.map { music ->
-                    createMediaItem(music)
+        android.util.Log.d("PlaybackRepository", "Restoring playback state from JSON. Last ID: ${state.lastMediaId}")
+        
+        if (!state.lastPlaylistJson.isNullOrBlank()) {
+            try {
+                val musicList = Json.decodeFromString<List<MusicModel>>(state.lastPlaylistJson)
+                android.util.Log.d("PlaybackRepository", "Decoded ${musicList.size} music items from JSON")
+                
+                if (musicList.isNotEmpty()) {
+                    val mediaItems = musicList.map { music ->
+                        createMediaItem(music)
+                    }
+                    val startIndex = musicList.indexOfFirst { "${it.sourceId}:${it.id}" == state.lastMediaId }.coerceAtLeast(0)
+                    
+                    // 设置列表并跳转到保存的位置
+                    controller.setMediaItems(mediaItems, startIndex, state.lastPosition)
+                    controller.repeatMode = state.repeatMode
+                    controller.shuffleModeEnabled = state.shuffleMode
+                    controller.prepare()
+                    
+                    android.util.Log.d("PlaybackRepository", "Restoration applied via JSON: index=$startIndex, pos=${state.lastPosition}")
+
+                    // 显式且立即更新内部状态
+                    val restoredItem = mediaItems.getOrNull(startIndex)
+                    if (restoredItem != null) {
+                        _currentMediaId.value = restoredItem.mediaId
+                        _currentMediaItem.value = restoredItem
+                    }
+                    
+                    _repeatMode.value = state.repeatMode
+                    _shuffleModeEnabled.value = state.shuffleMode
+                    updatePlaylist(controller, mediaItems)
                 }
-                val startIndex = state.lastPlaylistIds.indexOf(state.lastMediaId).coerceAtLeast(0)
-                controller.setMediaItems(mediaItems, startIndex, state.lastPosition)
-                controller.repeatMode = state.repeatMode
-                controller.shuffleModeEnabled = state.shuffleMode
-                controller.prepare()
-                // 手动更新一次 ID，确保 UI 在恢复后立即响应
-                _currentMediaId.value = controller.currentMediaItem?.mediaId
-                _currentMediaItem.value = controller.currentMediaItem
+            } catch (e: Exception) {
+                android.util.Log.e("PlaybackRepository", "Failed to restore playback state from JSON", e)
             }
+        } else {
+            android.util.Log.d("PlaybackRepository", "No last playlist JSON found to restore")
         }
     }
 
-    private fun updatePlaylist(controller: MediaController) {
-        val items = mutableListOf<MediaItem>()
-        for (i in 0 until controller.mediaItemCount) {
-            items.add(controller.getMediaItemAt(i))
+    private fun updatePlaylist(controller: MediaController, items: List<MediaItem>? = null) {
+        if (items != null) {
+            _currentPlaylist.value = items
+            return
         }
-        _currentPlaylist.value = items
+        val currentItems = mutableListOf<MediaItem>()
+        for (i in 0 until controller.mediaItemCount) {
+            currentItems.add(controller.getMediaItemAt(i))
+        }
+        _currentPlaylist.value = currentItems
     }
 
     fun setRepeatMode(mode: Int) {
@@ -326,6 +376,7 @@ open class PlaybackRepository(
         val extras = android.os.Bundle().apply {
             putString("source_id", music.sourceId)
             putString("original_id", music.id)
+            putLong("duration", music.duration)
         }
         
         val isLocal = music.sourceId == localMusicSource.sourceId

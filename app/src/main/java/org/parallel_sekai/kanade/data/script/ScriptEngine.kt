@@ -212,6 +212,14 @@ class ScriptEngine : Closeable {
                     "{}"
                 }
             }
+            is Iterable<*> -> {
+                val items = arg.joinToString(", ") { toJson(it) }
+                "[$items]"
+            }
+            is Array<*> -> {
+                val items = arg.joinToString(", ") { toJson(it) }
+                "[$items]"
+            }
             else -> try {
                 Json.encodeToString(arg.toString())
             } catch (e: Exception) {

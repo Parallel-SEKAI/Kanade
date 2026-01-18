@@ -51,6 +51,31 @@ fun CacheSettingsScreen(
     }
     val displayGb = normalizedToGb(sliderPosition)
 
+    var showClearConfirm by remember { mutableStateOf(false) }
+
+    if (showClearConfirm) {
+        AlertDialog(
+            onDismissRequest = { showClearConfirm = false },
+            title = { Text(stringResource(R.string.action_clear_cache)) },
+            text = { Text(stringResource(R.string.msg_confirm_clear_cache)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.clearCache(context)
+                        showClearConfirm = false
+                    }
+                ) {
+                    Text(stringResource(R.string.action_clear))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearConfirm = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -73,7 +98,12 @@ fun CacheSettingsScreen(
 
             ListItem(
                 headlineContent = { Text(stringResource(R.string.label_current_cache_size)) },
-                supportingContent = { Text(formatFileSize(currentCacheSize)) }
+                supportingContent = { Text(formatFileSize(currentCacheSize)) },
+                trailingContent = {
+                    TextButton(onClick = { showClearConfirm = true }) {
+                        Text(stringResource(R.string.action_clear))
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
