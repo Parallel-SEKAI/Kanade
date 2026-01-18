@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.ui.theme.Dimens
@@ -202,7 +201,7 @@ fun LyricsSettingsScreen(
 
             Surface(
                 onClick = { showQualityDialog = true },
-                color = Color.Transparent
+                color = Color.Transparent,
             ) {
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.pref_share_quality)) },

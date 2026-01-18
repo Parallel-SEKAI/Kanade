@@ -35,7 +35,7 @@ object LyricImageUtils {
         gradientColors: List<Color>,
         quality: Float = 1.0f,
         alignment: Int = 0, // 0 = Left, 1 = Center, 2 = Right
-        artistJoinString: String = ", "
+        artistJoinString: String = ", ",
     ): Bitmap? = withContext(Dispatchers.IO) {
         val width = (1080 * quality).toInt()
         val padding = 80f * quality
@@ -61,30 +61,30 @@ object LyricImageUtils {
             textSize = fontSizeTitle
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
-        
+
         val paintArtist = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.White.toArgb()
             textSize = fontSizeArtist
             typeface = Typeface.DEFAULT
             alpha = (255 * 0.7).toInt()
         }
-        
+
         val paintAlbum = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.White.toArgb()
             textSize = fontSizeArtist * 0.8f
             typeface = Typeface.DEFAULT
             alpha = (255 * 0.5).toInt()
         }
-        
+
         val coverSize = 220f * quality
         val textMaxWidth = width - padding * 3 - coverSize
         val titleLayout = createStaticLayout(song.title, paintTitle, textMaxWidth.toInt(), Layout.Alignment.ALIGN_NORMAL)
-        
+
         val artistNames = song.artists.joinToString(artistJoinString)
         val artistLayout = createStaticLayout(artistNames, paintArtist, textMaxWidth.toInt(), Layout.Alignment.ALIGN_NORMAL)
-        
+
         val albumLayout = createStaticLayout(song.album, paintAlbum, textMaxWidth.toInt(), Layout.Alignment.ALIGN_NORMAL)
-        
+
         val totalTextH = titleLayout.height + 20f * quality + artistLayout.height + 15f * quality + albumLayout.height
         val metadataHeight = maxOf(coverSize, totalTextH)
 
@@ -105,7 +105,9 @@ object LyricImageUtils {
             val main = createStaticLayout(line.content, paintLyric, lyricWidth, textAlignment)
             val trans = if (!line.translation.isNullOrBlank()) {
                 createStaticLayout(line.translation, paintTranslation, lyricWidth, textAlignment)
-            } else null
+            } else {
+                null
+            }
             main to trans
         }
 
@@ -120,7 +122,7 @@ object LyricImageUtils {
 
         val footerHeight = 150f * quality
         var totalHeight = padding + metadataHeight + 60f * quality + lyricsTotalHeight + footerHeight + padding
-        
+
         // Safety Limit: Prevent OOM by capping height (e.g. 10000px)
         val maxHeight = 10000f
         if (totalHeight > maxHeight) {
@@ -134,9 +136,13 @@ object LyricImageUtils {
         val paintBg = Paint(Paint.ANTI_ALIAS_FLAG)
         if (gradientColors.size >= 2) {
             val gradient = LinearGradient(
-                0f, 0f, 0f, totalHeight,
-                gradientColors[0].toArgb(), gradientColors[1].toArgb(),
-                Shader.TileMode.CLAMP
+                0f,
+                0f,
+                0f,
+                totalHeight,
+                gradientColors[0].toArgb(),
+                gradientColors[1].toArgb(),
+                Shader.TileMode.CLAMP,
             )
             paintBg.shader = gradient
         } else {
@@ -153,13 +159,13 @@ object LyricImageUtils {
         canvas.translate(padding, currentY)
         titleLayout.draw(canvas)
         canvas.restore()
-        
+
         currentY += titleLayout.height + 20f * quality
         canvas.save()
         canvas.translate(padding, currentY)
         artistLayout.draw(canvas)
         canvas.restore()
-        
+
         currentY += artistLayout.height + 15f * quality
         canvas.save()
         canvas.translate(padding, currentY)
@@ -196,7 +202,7 @@ object LyricImageUtils {
             main.draw(canvas)
             canvas.restore()
             currentY += main.height
-            
+
             if (trans != null) {
                 if (currentY + 10f * quality + trans.height > totalHeight - footerHeight) return@forEach
                 currentY += 10f * quality
@@ -212,7 +218,7 @@ object LyricImageUtils {
         // 7. Draw Footer Divider and Branding
         val footerDividerY = minOf(currentY - lineSpacing / 2, totalHeight - footerHeight + 50f)
         canvas.drawLine(padding, footerDividerY, width - padding, footerDividerY, paintDivider)
-        
+
         val paintBranding = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             textSize = fontSizeBranding
             color = Color.White.toArgb()
@@ -224,17 +230,15 @@ object LyricImageUtils {
         bitmap
     }
 
-    private fun createStaticLayout(text: String, paint: TextPaint, width: Int, alignment: Layout.Alignment): StaticLayout {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            StaticLayout.Builder.obtain(text, 0, text.length, paint, width)
-                .setAlignment(alignment)
-                .setLineSpacing(0f, 1f)
-                .setIncludePad(false)
-                .build()
-        } else {
-            @Suppress("DEPRECATION")
-            StaticLayout(text, paint, width, alignment, 1f, 0f, false)
-        }
+    private fun createStaticLayout(text: String, paint: TextPaint, width: Int, alignment: Layout.Alignment): StaticLayout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        StaticLayout.Builder.obtain(text, 0, text.length, paint, width)
+            .setAlignment(alignment)
+            .setLineSpacing(0f, 1f)
+            .setIncludePad(false)
+            .build()
+    } else {
+        @Suppress("DEPRECATION")
+        StaticLayout(text, paint, width, alignment, 1f, 0f, false)
     }
 
     private suspend fun fetchBitmap(context: Context, url: String): Bitmap? {

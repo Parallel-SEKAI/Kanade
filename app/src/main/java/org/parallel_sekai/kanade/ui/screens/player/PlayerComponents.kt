@@ -349,7 +349,7 @@ fun LyricShareBottomSheet(
                     LyricShareItem(
                         line = line,
                         isSelected = state.selectedLyricIndices.contains(index),
-                        onClick = { onIntent(PlayerIntent.ToggleLyricSelection(index)) }
+                        onClick = { onIntent(PlayerIntent.ToggleLyricSelection(index)) },
                     )
                 }
             }

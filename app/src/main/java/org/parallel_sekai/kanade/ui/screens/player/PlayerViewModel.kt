@@ -549,7 +549,7 @@ class PlayerViewModel(
             colors,
             quality,
             alignment,
-            artistJoinString
+            artistJoinString,
         )
     }
 
