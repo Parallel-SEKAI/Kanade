@@ -53,6 +53,7 @@ import org.parallel_sekai.kanade.ui.screens.settings.LyricsSettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.LyricsGetterApiScreen
 import org.parallel_sekai.kanade.ui.screens.settings.SuperLyricApiScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ExcludedFoldersScreen
+import org.parallel_sekai.kanade.ui.screens.settings.CacheSettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ArtistParsingSettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ScriptConfigScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ScriptManagementScreen
@@ -78,6 +79,7 @@ sealed class Screen(val route: String, val labelResId: Int, val icon: ImageVecto
     object LyricsGetterApi : Screen("lyrics_getter_api", R.string.pref_lyrics_getter, null)
     object SuperLyricApi : Screen("super_lyric_api", R.string.pref_super_lyric, null)
     object ExcludedFolders : Screen("excluded_folders", R.string.title_excluded_folders, null)
+    object CacheSettings : Screen("cache_settings", R.string.title_cache_settings, null)
     object ArtistParsingSettings : Screen("artist_parsing_settings", R.string.title_artist_parsing, null)
     object Scripts : Screen("scripts", R.string.title_scripts, null)
     object ScriptConfig : Screen("script_config/{id}", R.string.title_settings, null) {
@@ -368,6 +370,7 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToLyricsSettings = { navController.navigate(Screen.LyricsSettings.route) },
                                     onNavigateToExcludedFolders = { navController.navigate(Screen.ExcludedFolders.route) },
                                     onNavigateToArtistParsingSettings = { navController.navigate(Screen.ArtistParsingSettings.route) },
+                                    onNavigateToCacheSettings = { navController.navigate(Screen.CacheSettings.route) },
                                     onNavigateToLyricsGetterApi = { navController.navigate(Screen.LyricsGetterApi.route) },
                                     onNavigateToSuperLyricApi = { navController.navigate(Screen.SuperLyricApi.route) }
                                 )
@@ -394,6 +397,12 @@ class MainActivity : ComponentActivity() {
                                 ExcludedFoldersScreen(
                                     viewModel = settingsViewModel,
                                     allFolders = state.folderList,
+                                    onNavigateBack = { navController.popBackStack() }
+                                )
+                            }
+                            composable(Screen.CacheSettings.route) {
+                                CacheSettingsScreen(
+                                    viewModel = settingsViewModel,
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }

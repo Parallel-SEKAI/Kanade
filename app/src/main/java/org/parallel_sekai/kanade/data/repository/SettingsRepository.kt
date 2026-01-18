@@ -44,6 +44,7 @@ open class SettingsRepository(private val context: Context) {
     private val SEARCH_HISTORY = stringSetPreferencesKey("search_history")
     private val SEARCH_RESULT_AS_PLAYLIST = booleanPreferencesKey("search_result_as_playlist")
     private val EXCLUDED_FOLDERS = stringSetPreferencesKey("excluded_folders")
+    private val MAX_CACHE_SIZE = longPreferencesKey("max_cache_size")
 
     private val ARTIST_SEPARATORS = stringSetPreferencesKey("artist_separators")
     private val ARTIST_WHITELIST = stringSetPreferencesKey("artist_whitelist")
@@ -104,6 +105,11 @@ open class SettingsRepository(private val context: Context) {
             preferences[EXCLUDED_FOLDERS] ?: emptySet()
         }
 
+    open val maxCacheSizeFlow: Flow<Long> = context.dataStore.data
+        .map { preferences ->
+            preferences[MAX_CACHE_SIZE] ?: (500 * 1024 * 1024L) // Default 500MB
+        }
+
     open val artistParsingSettingsFlow: Flow<ArtistParsingSettings> = context.dataStore.data
         .map { preferences ->
             ArtistParsingSettings(
@@ -142,6 +148,12 @@ open class SettingsRepository(private val context: Context) {
         context.dataStore.edit { preferences ->
             val current = preferences[EXCLUDED_FOLDERS] ?: emptySet()
             preferences[EXCLUDED_FOLDERS] = current - path
+        }
+    }
+
+    open suspend fun updateMaxCacheSize(size: Long) {
+        context.dataStore.edit { preferences ->
+            preferences[MAX_CACHE_SIZE] = size
         }
     }
 

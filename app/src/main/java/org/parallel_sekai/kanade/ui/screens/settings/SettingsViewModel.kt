@@ -2,13 +2,17 @@ package org.parallel_sekai.kanade.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.parallel_sekai.kanade.data.repository.ArtistParsingSettings
 import org.parallel_sekai.kanade.data.repository.LyricsSettings
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
+import org.parallel_sekai.kanade.data.utils.CacheManager
 import org.parallel_sekai.kanade.data.utils.LyricGetterManager
 
 open class SettingsViewModel(
@@ -41,12 +45,46 @@ open class SettingsViewModel(
             initialValue = emptySet()
         )
 
+    val maxCacheSize: StateFlow<Long> = repository.maxCacheSizeFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 500 * 1024 * 1024L
+        )
+
+    private val _currentCacheSize = MutableStateFlow(0L)
+    val currentCacheSize: StateFlow<Long> = _currentCacheSize.asStateFlow()
+
     val artistParsingSettings: StateFlow<ArtistParsingSettings> = repository.artistParsingSettingsFlow
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = ArtistParsingSettings()
         )
+
+    init {
+        // ViewModel 不直接持有 Context，通常建议通过构造函数注入或使用 AndroidViewModel
+        // 但此项目目前在 MainActivity 中手动构建 ViewModel，我们可以暂由外部调用刷新
+    }
+
+    fun refreshCacheSize(context: android.content.Context) {
+        viewModelScope.launch {
+            _currentCacheSize.value = CacheManager.getCurrentCacheSize(context)
+        }
+    }
+
+    fun clearCache(context: android.content.Context) {
+        viewModelScope.launch {
+            CacheManager.clearCache(context)
+            _currentCacheSize.value = 0L
+        }
+    }
+
+    fun updateMaxCacheSize(size: Long) {
+        viewModelScope.launch {
+            repository.updateMaxCacheSize(size)
+        }
+    }
 
     fun addExcludedFolder(path: String) {
         viewModelScope.launch {

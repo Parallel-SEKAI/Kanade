@@ -21,6 +21,7 @@ import org.parallel_sekai.kanade.data.source.SourceManager
 import org.parallel_sekai.kanade.data.utils.CacheManager
 
 import androidx.media3.datasource.ResolvingDataSource
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -43,9 +44,12 @@ class KanadePlaybackService : MediaSessionService() {
 
         val settingsRepository = SettingsRepository(this)
         val sourceManager = SourceManager.getInstance(this, settingsRepository)
+        val maxCacheSize = runBlocking {
+            settingsRepository.maxCacheSizeFlow.first()
+        }
 
         val resolvingDataSourceFactory = ResolvingDataSource.Factory(
-            CacheManager.getCacheDataSourceFactory(this),
+            CacheManager.getCacheDataSourceFactory(this, maxCacheSize),
             object : ResolvingDataSource.Resolver {
                 override fun resolveDataSpec(dataSpec: androidx.media3.datasource.DataSpec): androidx.media3.datasource.DataSpec {
                     val uri = dataSpec.uri

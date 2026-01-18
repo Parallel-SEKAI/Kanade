@@ -16,22 +16,76 @@ import java.io.File
  */
 object CacheManager {
     private var cache: SimpleCache? = null
-    private val CACHE_SIZE = 500 * 1024 * 1024L // 500MB
+    private var currentMaxCacheSize = 500 * 1024 * 1024L // Default 500MB
 
     @Synchronized
-    fun getCache(context: Context): SimpleCache {
+    fun getCache(context: Context, maxSize: Long = currentMaxCacheSize): SimpleCache {
         if (cache == null) {
+            currentMaxCacheSize = maxSize
             val cacheDir = File(context.cacheDir, "media_cache")
             val databaseProvider = StandaloneDatabaseProvider(context)
-            cache = SimpleCache(cacheDir, LeastRecentlyUsedCacheEvictor(CACHE_SIZE), databaseProvider)
+            cache = SimpleCache(cacheDir, LeastRecentlyUsedCacheEvictor(maxSize), databaseProvider)
         }
         return cache!!
     }
 
     /**
+     * 获取当前缓存占用的空间（字节）
+     * 如果 cache 已初始化，直接从 cache 获取；否则手动计算文件夹大小。
+     */
+    fun getCurrentCacheSize(context: Context): Long {
+        synchronized(this) {
+            if (cache != null) {
+                return cache!!.cacheSpace
+            }
+        }
+        
+        val cacheDir = File(context.cacheDir, "media_cache")
+        return if (cacheDir.exists() && cacheDir.isDirectory) {
+            calculateFolderSize(cacheDir)
+        } else {
+            0L
+        }
+    }
+
+    private fun calculateFolderSize(file: File): Long {
+        var size: Long = 0
+        if (file.isDirectory) {
+            val files = file.listFiles()
+            if (files != null) {
+                for (f in files) {
+                    size += calculateFolderSize(f)
+                }
+            }
+        } else {
+            size = file.length()
+        }
+        return size
+    }
+
+    /**
+     * 清理所有缓存
+     */
+    fun clearCache(context: Context) {
+        synchronized(this) {
+            if (cache != null) {
+                cache?.keys?.forEach { key ->
+                    cache?.removeResource(key)
+                }
+                return
+            }
+        }
+        // 如果 cache 未初始化，直接删除文件夹
+        val cacheDir = File(context.cacheDir, "media_cache")
+        if (cacheDir.exists()) {
+            cacheDir.deleteRecursively()
+        }
+    }
+
+    /**
      * 创建支持缓存的 DataSource.Factory
      */
-    fun getCacheDataSourceFactory(context: Context): DataSource.Factory {
+    fun getCacheDataSourceFactory(context: Context, maxSize: Long = 500 * 1024 * 1024L): DataSource.Factory {
         val okHttpClient = OkHttpClient.Builder().build()
         val httpDataSourceFactory = OkHttpDataSource.Factory(okHttpClient)
             .setUserAgent("Kanade/1.0 (Android)")
@@ -39,7 +93,7 @@ object CacheManager {
         val defaultDataSourceFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
 
         return CacheDataSource.Factory()
-            .setCache(getCache(context))
+            .setCache(getCache(context, maxSize))
             .setUpstreamDataSourceFactory(defaultDataSourceFactory)
             .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
     }

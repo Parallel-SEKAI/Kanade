@@ -26,6 +26,7 @@ fun SettingsScreen(
     onNavigateToLyricsSettings: () -> Unit,
     onNavigateToExcludedFolders: () -> Unit,
     onNavigateToArtistParsingSettings: () -> Unit,
+    onNavigateToCacheSettings: () -> Unit,
     onNavigateToLyricsGetterApi: () -> Unit,
     onNavigateToSuperLyricApi: () -> Unit
 ) {
@@ -98,6 +99,13 @@ fun SettingsScreen(
                 supportingContent = { Text(stringResource(R.string.desc_excluded_folders_pref)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
                 modifier = Modifier.clickable(onClick = onNavigateToExcludedFolders)
+            )
+
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.pref_cache_settings)) },
+                supportingContent = { Text(stringResource(R.string.desc_cache_settings)) },
+                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+                modifier = Modifier.clickable(onClick = onNavigateToCacheSettings)
             )
 
             // 为底部的 MiniPlayer 留出空间

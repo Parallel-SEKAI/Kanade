@@ -143,5 +143,13 @@
     <string name="label_source">Source</string>
     <string name="label_metadata">Raw Metadata</string>
     <string name="msg_copied_to_clipboard">Copied to clipboard!</string>
+    <!-- Settings: Cache -->
+    <string name="title_cache_settings">Cache Settings</string>
+    <string name="pref_cache_settings">Cache Settings</string>
+    <string name="desc_cache_settings">Manage disk cache for online music</string>
+    <string name="header_cache_usage">Cache Usage</string>
+    <string name="label_current_cache_size">Used Space</string>
+    <string name="label_cache_limit">Cache Limit</string>
+    <string name="fmt_cache_limit_gb">%s GB</string>
 </resources>
         
