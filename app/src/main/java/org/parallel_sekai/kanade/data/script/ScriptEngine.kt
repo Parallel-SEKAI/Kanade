@@ -61,6 +61,18 @@ class ScriptEngine : Closeable {
                                 return __kanade_http_bridge.post(url, body, options ? JSON.stringify(options) : null);
                             }
                         };
+
+                        global.crypto = {
+                            md5: function(text) {
+                                return __kanade_crypto_bridge.md5(text);
+                            },
+                            aesEncrypt: function(text, key, mode, padding) {
+                                return __kanade_crypto_bridge.aesEncrypt(text, key, mode, padding);
+                            },
+                            aesDecrypt: function(hex, key, mode, padding) {
+                                return __kanade_crypto_bridge.aesDecrypt(hex, key, mode, padding);
+                            }
+                        };
                         
                         // Wrapper for console bridge
                         global.console = {

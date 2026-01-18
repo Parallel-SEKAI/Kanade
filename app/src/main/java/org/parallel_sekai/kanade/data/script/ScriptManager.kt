@@ -96,6 +96,7 @@ class ScriptManager(
                     
                     engine.registerInterface("__kanade_http_bridge", HttpBridge::class.java, bridge)
                     engine.registerInterface("__kanade_log_bridge", LogBridge::class.java, bridge)
+                    engine.registerInterface("__kanade_crypto_bridge", CryptoBridge::class.java, bridge)
 
                     val scriptFile = scriptFiles[scriptId]
                     if (scriptFile != null && scriptFile.exists()) {

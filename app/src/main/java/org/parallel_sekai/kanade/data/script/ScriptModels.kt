@@ -33,6 +33,7 @@ data class ScriptManifest(
 data class ScriptConfigItem(
     val key: String,
     val label: String,
-    val type: String, // "string", "number", "boolean"
-    val default: String // Store as string, parse later
+    val type: String, // "string", "number", "boolean", "select"
+    val default: String, // Store as string, parse later
+    val options: List<String>? = null
 )

@@ -77,6 +77,38 @@ fun ScriptConfigScreen(
                                     onCheckedChange = { onIntent(PlayerIntent.UpdateScriptConfig(scriptId, item.key, it.toString())) }
                                 )
                             }
+                            "select" -> {
+                                var expanded by remember { mutableStateOf(false) }
+                                val options = item.options ?: emptyList()
+                                
+                                ExposedDropdownMenuBox(
+                                    expanded = expanded,
+                                    onExpandedChange = { expanded = !expanded },
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = value,
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
+                                    )
+                                    ExposedDropdownMenu(
+                                        expanded = expanded,
+                                        onDismissRequest = { expanded = false }
+                                    ) {
+                                        options.forEach { option ->
+                                            DropdownMenuItem(
+                                                text = { Text(option) },
+                                                onClick = {
+                                                    onIntent(PlayerIntent.UpdateScriptConfig(scriptId, item.key, option))
+                                                    expanded = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 )

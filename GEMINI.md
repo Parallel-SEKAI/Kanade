@@ -122,12 +122,15 @@ app/src/main/java/org/parallel_sekai/kanade/
 - [x] Enhanced playback stability: implemented media item resolution filtering in `KanadePlaybackService` to prevent invalid URIs from causing player crashes.
 - [x] Added global error logging for ExoPlayer in `KanadePlaybackService`.
 - [x] Fixed lyric decoding and display issues for script-based providers (Netease translation support).
+- [x] Added word-by-word (yrc) lyric support for Netease Music script.
 - [x] Improved script engine to support object arguments for better configuration handling.
 - [x] Prevented redundant and automatic script home page refreshes on startup and setting changes to improve UX.
 - [x] Added "Song Info" screen to view detailed metadata and raw file information.
 - [x] Integrated "Song Info" into the full-screen player "More" menu.
 - [x] Optimized data fetching to be on-demand (deferred fetching of artists, albums, folders, and script home items).
 - [x] Implemented "last-minute" script URL resolution using `ResolvingDataSource` to avoid pre-fetching in playlists.
+- [x] Upgraded Netease Music script to use `eapi` protocol with AES/MD5 encryption.
+- [x] Added `CryptoBridge` to KSS for script-side cryptographic operations (MD5, AES).
 - [ ] Source Selection in Search:
 
 ## 8. Agent Development Instructions (AI Context)
