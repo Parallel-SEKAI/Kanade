@@ -26,6 +26,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
 
     override suspend fun getMusicList(query: String): List<MusicModel> = withContext(Dispatchers.IO) {
         val musicList = mutableListOf<MusicModel>()
+        val artistCache = mutableMapOf<String, List<String>>()
 
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
@@ -36,7 +37,6 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             MediaStore.Audio.Media.ALBUM_ID,
             MediaStore.Audio.Media.DATA,
         )
-
         // 只扫描时长大于 30 秒的音频，过滤掉系统提示音
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND ${MediaStore.Audio.Media.DURATION} >= 30000"
         val sortOrder = "${MediaStore.Audio.Media.TITLE} ASC"
@@ -63,6 +63,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
 
                 val id = cursor.getLong(idColumn)
                 val albumId = cursor.getLong(albumIdColumn)
+                val artistString = cursor.getString(artistColumn)
 
                 // 构建音频的 Uri
                 val contentUri = ContentUris.withAppendedId(
@@ -75,12 +76,11 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                     Uri.parse("content://media/external/audio/albumart"),
                     albumId,
                 ).toString()
-
                 musicList.add(
                     MusicModel(
                         id = id.toString(),
                         title = cursor.getString(titleColumn),
-                        artists = MusicUtils.parseArtists(cursor.getString(artistColumn)),
+                        artists = artistCache.getOrPut(artistString ?: "") { MusicUtils.parseArtists(artistString) },
                         album = cursor.getString(albumColumn),
                         coverUrl = albumArtUri,
                         mediaUri = contentUri.toString(), // 填充 content:// URI
@@ -104,6 +104,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
 
     override suspend fun getArtistList(): List<ArtistModel> = withContext(Dispatchers.IO) {
         val artistStats = mutableMapOf<String, Pair<Int, MutableSet<String>>>() // Name -> (SongCount, AlbumSet)
+        val artistCache = mutableMapOf<String, List<String>>() // RawString -> ParsedList
 
         val projection = arrayOf(
             MediaStore.Audio.Media.ARTIST,
@@ -128,10 +129,12 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                 // 排除文件夹过滤
                 if (excludedFolders.any { path.startsWith(it) }) continue
 
-                val artistString = cursor.getString(artistColumn)
+                val artistString = cursor.getString(artistColumn) ?: ""
                 val album = cursor.getString(albumColumn) ?: "Unknown Album"
 
-                val parsedArtists = MusicUtils.parseArtists(artistString)
+                val parsedArtists = artistCache.getOrPut(artistString) {
+                    MusicUtils.parseArtists(artistString)
+                }
 
                 parsedArtists.forEach { artistName ->
                     val stats = artistStats.getOrPut(artistName) { 0 to mutableSetOf() }
@@ -156,6 +159,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
     override suspend fun getAlbumList(): List<AlbumModel> = withContext(Dispatchers.IO) {
         // ID -> (Title, List of ArtistSets)
         val albumMap = mutableMapOf<Long, Pair<String, MutableList<Set<String>>>>()
+        val artistCache = mutableMapOf<String, Set<String>>()
 
         val projection = arrayOf(
             MediaStore.Audio.Media.ALBUM_ID,
@@ -186,7 +190,9 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                 val rawArtist = cursor.getString(artistCol)
                 val albumTitle = cursor.getString(albumCol) ?: "Unknown Album"
 
-                val artists = MusicUtils.parseArtists(rawArtist).toSet()
+                val artists = artistCache.getOrPut(rawArtist ?: "") {
+                    MusicUtils.parseArtists(rawArtist).toSet()
+                }
 
                 val entry = albumMap.getOrPut(albumId) { albumTitle to mutableListOf() }
                 entry.second.add(artists)
@@ -307,6 +313,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
     @Suppress("DEPRECATION")
     override suspend fun getSongsByPlaylist(playlistId: String): List<MusicModel> = withContext(Dispatchers.IO) {
         val musicList = mutableListOf<MusicModel>()
+        val artistCache = mutableMapOf<String, List<String>>()
         val uri = MediaStore.Audio.Playlists.Members.getContentUri("external", playlistId.toLong())
 
         val projection = arrayOf(
@@ -335,6 +342,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
                 val albumId = cursor.getLong(albumIdColumn)
+                val artistString = cursor.getString(artistColumn)
                 val contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
                 val albumArtUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), albumId).toString()
 
@@ -342,7 +350,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                     MusicModel(
                         id = id.toString(),
                         title = cursor.getString(titleColumn),
-                        artists = MusicUtils.parseArtists(cursor.getString(artistColumn)),
+                        artists = artistCache.getOrPut(artistString ?: "") { MusicUtils.parseArtists(artistString) },
                         album = cursor.getString(albumColumn),
                         coverUrl = albumArtUri,
                         mediaUri = contentUri.toString(),
@@ -370,6 +378,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
 
     private suspend fun getMusicListWithSelection(selection: String, selectionArgs: Array<String>): List<MusicModel> = withContext(Dispatchers.IO) {
         val musicList = mutableListOf<MusicModel>()
+        val artistCache = mutableMapOf<String, List<String>>()
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
@@ -401,6 +410,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                 val contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
                 val albumArtUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), albumId).toString()
                 val path = cursor.getString(dataColumn) // Added path
+                val artistString = cursor.getString(artistColumn)
 
                 // 排除文件夹过滤
                 if (excludedFolders.any { path.startsWith(it) }) continue
@@ -409,7 +419,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                     MusicModel(
                         id = id.toString(),
                         title = cursor.getString(titleColumn),
-                        artists = MusicUtils.parseArtists(cursor.getString(artistColumn)),
+                        artists = artistCache.getOrPut(artistString ?: "") { MusicUtils.parseArtists(artistString) },
                         album = cursor.getString(albumColumn),
                         coverUrl = albumArtUri,
                         mediaUri = contentUri.toString(),

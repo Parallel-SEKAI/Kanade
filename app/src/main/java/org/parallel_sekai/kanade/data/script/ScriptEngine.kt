@@ -3,8 +3,7 @@ package org.parallel_sekai.kanade.data.script
 import android.util.Log
 import app.cash.quickjs.QuickJs
 import kotlinx.coroutines.*
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
 import java.io.Closeable
 import java.util.UUID
 import java.util.concurrent.Executors
@@ -200,36 +199,29 @@ class ScriptEngine : Closeable {
         }
     }
 
-    private fun toJson(arg: Any?): String = when (arg) {
-        null -> "null"
-        is String -> Json.encodeToString(arg)
-        is Number, is Boolean -> arg.toString()
-        is Map<*, *> -> {
-            try {
-                // Convert Map to JSON object string
-                val entries = arg.entries.joinToString(", ") { entry ->
-                    val k = entry.key.toString()
-                    val v = entry.value
-                    "\"$k\": ${toJson(v)}"
-                }
-                "{$entries}"
-            } catch (e: Exception) {
-                "{}"
+    private fun toJson(arg: Any?): String = try {
+        toJsonElement(arg).toString()
+    } catch (e: Exception) {
+        "null"
+    }
+
+    private fun toJsonElement(arg: Any?): JsonElement = when (arg) {
+        null -> JsonNull
+        is String -> JsonPrimitive(arg)
+        is Number -> JsonPrimitive(arg)
+        is Boolean -> JsonPrimitive(arg)
+        is Map<*, *> -> buildJsonObject {
+            arg.forEach { (k, v) ->
+                put(k.toString(), toJsonElement(v))
             }
         }
-        is Iterable<*> -> {
-            val items = arg.joinToString(", ") { toJson(it) }
-            "[$items]"
+        is Iterable<*> -> buildJsonArray {
+            arg.forEach { add(toJsonElement(it)) }
         }
-        is Array<*> -> {
-            val items = arg.joinToString(", ") { toJson(it) }
-            "[$items]"
+        is Array<*> -> buildJsonArray {
+            arg.forEach { add(toJsonElement(it)) }
         }
-        else -> try {
-            Json.encodeToString(arg.toString())
-        } catch (e: Exception) {
-            "null"
-        }
+        else -> JsonPrimitive(arg.toString())
     }
 
     override fun close() {
