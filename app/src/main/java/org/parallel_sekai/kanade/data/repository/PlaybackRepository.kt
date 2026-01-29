@@ -17,6 +17,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.parallel_sekai.kanade.data.model.*
 import org.parallel_sekai.kanade.data.source.IMusicSource
+import org.parallel_sekai.kanade.data.source.MusicListResult
 import org.parallel_sekai.kanade.data.source.SourceManager
 import org.parallel_sekai.kanade.data.source.local.LocalMusicSource
 import org.parallel_sekai.kanade.service.KanadePlaybackService
@@ -293,7 +294,7 @@ open class PlaybackRepository(
         localMusicSource.excludedFolders = folders
     }
 
-    suspend fun fetchMusicList(query: String = "", sourceIds: List<String>? = null): List<MusicModel> = coroutineScope {
+    suspend fun fetchMusicList(query: String = "", sourceIds: List<String>? = null): MusicListResult = coroutineScope {
         if (query.isEmpty()) {
             localMusicSource.getMusicList("")
         } else {
@@ -303,15 +304,19 @@ open class PlaybackRepository(
                 allSources.filter { it.sourceId in sourceIds }
             }
 
-            sourcesToSearch.map { source ->
+            val allResults = sourcesToSearch.map { source ->
                 async {
                     try {
                         source.getMusicList(query)
                     } catch (e: Exception) {
-                        emptyList()
+                        MusicListResult(emptyList())
                     }
                 }
-            }.awaitAll().flatten()
+            }.awaitAll()
+            
+            val allItems = allResults.flatMap { it.items }
+            // 对于搜索结果，我们目前不合并总数，因为多源总数合并逻辑复杂
+            MusicListResult(allItems)
         }
     }
 
@@ -329,7 +334,10 @@ open class PlaybackRepository(
 
     suspend fun fetchPlaylistList(): List<PlaylistModel> = localMusicSource.getPlaylistList()
 
-    suspend fun fetchHomeList(): List<MusicModel> = sourceManager.getHomeList()
+    /**
+     * 获取外部脚本提供的首页内容
+     */
+    suspend fun fetchHomeList(page: Int = 1): MusicListResult = sourceManager.getHomeList(page)
 
     suspend fun fetchSongsByPlaylist(playlistId: String): List<MusicModel> = localMusicSource.getSongsByPlaylist(playlistId)
 
@@ -349,6 +357,15 @@ open class PlaybackRepository(
             ctrl.setMediaItems(mediaItems, startIndex, 0L)
             ctrl.prepare()
             ctrl.play()
+        }
+    }
+
+    fun addPlaylistItems(list: List<MusicModel>) {
+        controller?.let { ctrl ->
+            val mediaItems = list.map { music ->
+                createMediaItem(music)
+            }
+            ctrl.addMediaItems(mediaItems)
         }
     }
 

@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
@@ -33,7 +34,7 @@ import org.parallel_sekai.kanade.ui.theme.Dimens
 fun LibraryScreen(
     state: PlayerState,
     onIntent: (org.parallel_sekai.kanade.ui.screens.player.PlayerIntent) -> Unit,
-    onSongClick: (MusicModel, List<MusicModel>) -> Unit,
+    onSongClick: (MusicModel, List<MusicModel>?) -> Unit,
     onScriptClick: (String?) -> Unit,
     onNavigateToArtists: () -> Unit,
     onNavigateToAlbums: () -> Unit,
@@ -142,13 +143,35 @@ fun LibraryScreen(
                 }
             }
         } else {
-            items(displayList) { song ->
+            itemsIndexed(displayList) { index, song ->
+                // 预加载逻辑：距离末尾还有 20 个项目时触发加载
+                if (isScriptActive && state.canLoadMoreHome && !state.isHomeLoadingMore && index >= displayList.size - 20) {
+                    onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.LoadMoreHome)
+                }
+
                 SongListItem(
                     song = song,
                     isSelected = state.currentSong?.id == song.id,
-                    onClick = { onSongClick(song, displayList) },
+                    onClick = { 
+                        // 如果是脚本首页，不传入 displayList，让 ViewModel 触发完整列表获取逻辑
+                        onSongClick(song, if (isScriptActive) null else displayList) 
+                    },
                     artistJoinString = state.artistJoinString,
                 )
+            }
+
+            // 底部加载状态指示器
+            if (isScriptActive && state.canLoadMoreHome && displayList.isNotEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingMedium),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (state.isHomeLoadingMore) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        }
+                    }
+                }
             }
         }
     }
@@ -428,7 +451,7 @@ fun MusicListDetailScreen(
     showSongCover: Boolean = true,
     showSongArtist: Boolean = true,
     onBackClick: () -> Unit,
-    onSongClick: (MusicModel, List<MusicModel>) -> Unit,
+    onSongClick: (MusicModel, List<MusicModel>?) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -523,7 +546,7 @@ fun AlbumDetailScreen(
     title: String,
     state: PlayerState,
     onBackClick: () -> Unit,
-    onSongClick: (MusicModel, List<MusicModel>) -> Unit,
+    onSongClick: (MusicModel, List<MusicModel>?) -> Unit,
 ) {
     val coverUrl = state.detailMusicList.firstOrNull()?.coverUrl
 
@@ -564,7 +587,7 @@ fun FolderDetailScreen(
     path: String,
     state: PlayerState,
     onBackClick: () -> Unit,
-    onSongClick: (MusicModel, List<MusicModel>) -> Unit,
+    onSongClick: (MusicModel, List<MusicModel>?) -> Unit,
 ) {
     MusicListDetailScreen(
         title = path.split("/").last(),
@@ -583,7 +606,7 @@ fun PlaylistDetailScreen(
     title: String,
     state: PlayerState,
     onBackClick: () -> Unit,
-    onSongClick: (MusicModel, List<MusicModel>) -> Unit,
+    onSongClick: (MusicModel, List<MusicModel>?) -> Unit,
 ) {
     MusicListDetailScreen(
         title = title,

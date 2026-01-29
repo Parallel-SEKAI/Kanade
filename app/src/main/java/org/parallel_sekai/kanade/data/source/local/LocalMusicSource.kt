@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.parallel_sekai.kanade.data.model.*
 import org.parallel_sekai.kanade.data.source.IMusicSource
+import org.parallel_sekai.kanade.data.source.MusicListResult
 import org.parallel_sekai.kanade.data.source.MusicUtils
 import java.io.File
 import java.io.InputStream
@@ -24,7 +25,7 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
     override val sourceName: String = "Local Music"
     var excludedFolders: Set<String> = emptySet()
 
-    override suspend fun getMusicList(query: String): List<MusicModel> = withContext(Dispatchers.IO) {
+    override suspend fun getMusicList(query: String): MusicListResult = withContext(Dispatchers.IO) {
         val musicList = mutableListOf<MusicModel>()
         val artistCache = mutableMapOf<String, List<String>>()
 
@@ -94,12 +95,13 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
 
         // 如果有搜索词，进行简单的内存过滤
         if (query.isNotEmpty()) {
-            return@withContext musicList.filter {
+            val filtered = musicList.filter {
                 it.title.contains(query, ignoreCase = true) || it.artists.any { artist -> artist.contains(query, ignoreCase = true) }
             }
+            return@withContext MusicListResult(filtered)
         }
 
-        return@withContext musicList
+        return@withContext MusicListResult(musicList)
     }
 
     override suspend fun getArtistList(): List<ArtistModel> = withContext(Dispatchers.IO) {

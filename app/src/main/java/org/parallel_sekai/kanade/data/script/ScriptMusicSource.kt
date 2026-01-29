@@ -4,6 +4,9 @@ import android.util.Log
 import kotlinx.serialization.json.Json
 import org.parallel_sekai.kanade.data.model.*
 import org.parallel_sekai.kanade.data.source.IMusicSource
+import org.parallel_sekai.kanade.data.source.MusicListResult
+
+import kotlinx.serialization.json.*
 
 class ScriptMusicSource(
     val manifest: ScriptManifest,
@@ -16,35 +19,51 @@ class ScriptMusicSource(
 
     private suspend fun ensureEngine(): ScriptEngine? = scriptManager.getEngine(manifest.id)
 
-    override suspend fun getMusicList(query: String): List<MusicModel> {
-        val engine = ensureEngine() ?: return emptyList()
+    override suspend fun getMusicList(query: String): MusicListResult {
+        val engine = ensureEngine() ?: return MusicListResult(emptyList())
         Log.d("ScriptMusicSource", "Searching [$query] on [${manifest.name}]")
         return try {
             val result = engine.callAsync(null, "search", query, 1)
             Log.d("ScriptMusicSource", "Raw result from [${manifest.name}]: $result")
-            if (result == "null") return emptyList()
-            val items = json.decodeFromString<List<ScriptMusicItem>>(result)
-            Log.d("ScriptMusicSource", "Parsed ${items.size} items from [${manifest.name}]")
-            items.map { it.toMusicModel(sourceId) }
+            if (result == "null") return MusicListResult(emptyList())
+            
+            val jsonElement = json.parseToJsonElement(result)
+            if (jsonElement is JsonObject) {
+                val response = json.decodeFromJsonElement<ScriptMusicListResponse>(jsonElement)
+                MusicListResult(
+                    items = response.items.map { it.toMusicModel(sourceId) },
+                    totalCount = response.total
+                )
+            } else {
+                val items = json.decodeFromJsonElement<List<ScriptMusicItem>>(jsonElement)
+                MusicListResult(items.map { it.toMusicModel(sourceId) })
+            }
         } catch (e: Exception) {
             Log.e("ScriptMusicSource", "Search failed on [${manifest.name}]", e)
-            emptyList()
+            MusicListResult(emptyList())
         }
     }
 
-    override suspend fun getHomeList(): List<MusicModel> {
-        val engine = ensureEngine() ?: return emptyList()
-        Log.d("ScriptMusicSource", "Fetching home list from [${manifest.name}]")
+    override suspend fun getHomeList(page: Int): MusicListResult {
+        val engine = ensureEngine() ?: return MusicListResult(emptyList())
+        Log.d("ScriptMusicSource", "Fetching home list (page $page) from [${manifest.name}]")
         return try {
-            val result = engine.callAsync(null, "getHomeList")
-            if (result == "null") return emptyList()
-            val items = json.decodeFromString<List<ScriptMusicItem>>(result)
-            Log.d("ScriptMusicSource", "Parsed ${items.size} home items from [${manifest.name}]")
-            items.map { it.toMusicModel(sourceId) }
+            val result = engine.callAsync(null, "getHomeList", page)
+            if (result == "null") return MusicListResult(emptyList())
+            
+            val jsonElement = json.parseToJsonElement(result)
+            if (jsonElement is JsonObject) {
+                val response = json.decodeFromJsonElement<ScriptMusicListResponse>(jsonElement)
+                MusicListResult(
+                    items = response.items.map { it.toMusicModel(sourceId) },
+                    totalCount = response.total
+                )
+            } else {
+                val items = json.decodeFromJsonElement<List<ScriptMusicItem>>(jsonElement)
+                MusicListResult(items.map { it.toMusicModel(sourceId) })
+            }
         } catch (e: Exception) {
-            // Optional function, don't log error if not found?
-            // Actually, callAsync logs "is not a function" as reject.
-            emptyList()
+            MusicListResult(emptyList())
         }
     }
 

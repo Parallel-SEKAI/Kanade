@@ -81,7 +81,7 @@ fun ArtistDetailScreen(
     name: String,
     state: PlayerState,
     onBackClick: () -> Unit,
-    onSongClick: (MusicModel, List<MusicModel>) -> Unit,
+    onSongClick: (MusicModel, List<MusicModel>?) -> Unit,
 ) {
     MusicListDetailScreen(
         title = name,

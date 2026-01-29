@@ -33,6 +33,7 @@ import org.parallel_sekai.kanade.data.parser.*
 import org.parallel_sekai.kanade.data.repository.ArtistParsingSettings
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
+import org.parallel_sekai.kanade.data.source.MusicListResult
 import org.parallel_sekai.kanade.data.source.MusicUtils
 import org.parallel_sekai.kanade.data.utils.LyricGetterManager
 import org.parallel_sekai.kanade.data.utils.LyricImageUtils
@@ -60,6 +61,7 @@ class PlayerViewModel(
     private var lastLyricUpdateTimestamp = 0L
     private var lastRefreshedScriptId: String? = null
     private var refreshJob: Job? = null
+    private var playlistFetchingJob: Job? = null
 
     // 新增：用于存储和传递艺术家解析设置
     private val _artistParsingSettings = MutableStateFlow(ArtistParsingSettings())
@@ -119,7 +121,8 @@ class PlayerViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isHomeLoading = true) }
 
-            val list = playbackRepository.fetchMusicList()
+            val result = playbackRepository.fetchMusicList()
+            val list = result.items
 
             _state.update {
                 it.copy(
@@ -298,21 +301,28 @@ class PlayerViewModel(
                     val shouldRefreshHome = intent.forceScriptRefresh && (currentScriptId != null)
 
                     if (shouldRefreshHome) {
-                        _state.update { it.copy(isHomeLoading = true) }
+                        _state.update {
+                            it.copy(
+                                isHomeLoading = true,
+                                homePage = 1,
+                                canLoadMoreHome = true,
+                            )
+                        }
                     }
 
-                    val list = playbackRepository.fetchMusicList()
+                    val result = playbackRepository.fetchMusicList()
+                    val list = result.items
 
                     if (shouldRefreshHome) {
-                        var homeItems = emptyList<MusicModel>()
+                        var homeResult = MusicListResult(emptyList())
                         var retryCount = 0
-                        while (homeItems.isEmpty() && retryCount < 2) {
+                        while (homeResult.items.isEmpty() && retryCount < 2) {
                             if (retryCount > 0) delay(1000)
-                            homeItems = withContext(Dispatchers.IO) {
+                            homeResult = withContext(Dispatchers.IO) {
                                 try {
-                                    playbackRepository.fetchHomeList()
+                                    playbackRepository.fetchHomeList(1)
                                 } catch (e: Exception) {
-                                    emptyList()
+                                    MusicListResult(emptyList())
                                 }
                             }
                             retryCount++
@@ -320,8 +330,10 @@ class PlayerViewModel(
 
                         _state.update {
                             it.copy(
-                                homeMusicList = homeItems,
+                                homeMusicList = homeResult.items,
+                                homeTotalCount = homeResult.totalCount,
                                 isHomeLoading = false,
+                                canLoadMoreHome = homeResult.items.isNotEmpty(), // Assume we can load more if we got something
                             )
                         }
                         lastRefreshedScriptId = currentScriptId
@@ -364,17 +376,24 @@ class PlayerViewModel(
                 if (currentScriptId != null) {
                     refreshJob?.cancel()
                     refreshJob = viewModelScope.launch {
-                        _state.update { it.copy(isHomeLoading = true) }
+                        _state.update {
+                            it.copy(
+                                isHomeLoading = true,
+                                homePage = 1,
+                                canLoadMoreHome = true,
+                                homeTotalCount = null,
+                            )
+                        }
 
-                        var homeItems = emptyList<MusicModel>()
+                        var homeResult = MusicListResult(emptyList())
                         var retryCount = 0
-                        while (homeItems.isEmpty() && retryCount < 2) {
+                        while (homeResult.items.isEmpty() && retryCount < 2) {
                             if (retryCount > 0) delay(1000) // 重试间隔
-                            homeItems = withContext(Dispatchers.IO) {
+                            homeResult = withContext(Dispatchers.IO) {
                                 try {
-                                    playbackRepository.fetchHomeList()
+                                    playbackRepository.fetchHomeList(1)
                                 } catch (e: Exception) {
-                                    emptyList()
+                                    MusicListResult(emptyList())
                                 }
                             }
                             retryCount++
@@ -382,11 +401,39 @@ class PlayerViewModel(
 
                         _state.update {
                             it.copy(
-                                homeMusicList = homeItems,
+                                homeMusicList = homeResult.items,
+                                homeTotalCount = homeResult.totalCount,
                                 isHomeLoading = false,
+                                canLoadMoreHome = homeResult.items.isNotEmpty(),
                             )
                         }
                         lastRefreshedScriptId = currentScriptId
+                    }
+                }
+            }
+            is PlayerIntent.LoadMoreHome -> {
+                val currentScriptId = state.value.activeScriptId
+                if (currentScriptId != null && state.value.canLoadMoreHome && !state.value.isHomeLoadingMore && !state.value.isHomeLoading) {
+                    viewModelScope.launch {
+                        _state.update { it.copy(isHomeLoadingMore = true) }
+                        val nextPage = state.value.homePage + 1
+                        val result = withContext(Dispatchers.IO) {
+                            try {
+                                playbackRepository.fetchHomeList(nextPage)
+                            } catch (e: Exception) {
+                                MusicListResult(emptyList())
+                            }
+                        }
+
+                        _state.update {
+                            it.copy(
+                                homeMusicList = it.homeMusicList + result.items,
+                                homeTotalCount = result.totalCount ?: it.homeTotalCount, // 优先保留已有的总数，除非新返回了总数
+                                homePage = nextPage,
+                                isHomeLoadingMore = false,
+                                canLoadMoreHome = result.items.isNotEmpty(),
+                            )
+                        }
                     }
                 }
             }
@@ -421,11 +468,82 @@ class PlayerViewModel(
                 }
 
                 val isScriptActive = state.value.activeScriptId != null
-                val listToPlay = intent.customList
-                    ?: (if (isScriptActive) state.value.homeMusicList else state.value.allMusicList)
+                
+                playlistFetchingJob?.cancel()
+                playlistFetchingJob = viewModelScope.launch {
+                    var listToPlay = intent.customList
+                        ?: (if (isScriptActive) state.value.homeMusicList else state.value.allMusicList)
 
-                val index = listToPlay.indexOf(intent.song).coerceAtLeast(0)
-                playbackRepository.setPlaylist(listToPlay, index)
+                    val index = listToPlay.indexOf(intent.song).coerceAtLeast(0)
+
+                    // 如果是脚本首页点击，且点击位置接近当前列表末尾，先尝试预加载一页以保证连续播放体验
+                    if (isScriptActive && intent.customList == null && state.value.canLoadMoreHome && index >= listToPlay.size - 5) {
+                        val nextPage = state.value.homePage + 1
+                        val result = withContext(Dispatchers.IO) {
+                            try {
+                                playbackRepository.fetchHomeList(nextPage)
+                            } catch (e: Exception) {
+                                MusicListResult(emptyList())
+                            }
+                        }
+                        if (result.items.isNotEmpty()) {
+                            listToPlay = listToPlay + result.items
+                            _state.update {
+                                it.copy(
+                                    homeMusicList = listToPlay,
+                                    homeTotalCount = result.totalCount ?: it.homeTotalCount,
+                                    homePage = nextPage,
+                                    canLoadMoreHome = true
+                                )
+                            }
+                        }
+                    }
+
+                    playbackRepository.setPlaylist(listToPlay, index)
+
+                    // 继续在后台获取所有剩余内容并追加
+                    if (isScriptActive && intent.customList == null && state.value.canLoadMoreHome) {
+                        var hasMore = true
+                        var currentPage = state.value.homePage
+                        while (hasMore) {
+                            val nextPage = currentPage + 1
+                            val result = withContext(Dispatchers.IO) {
+                                try {
+                                    playbackRepository.fetchHomeList(nextPage)
+                                } catch (e: Exception) {
+                                    MusicListResult(emptyList())
+                                }
+                            }
+
+                            if (result.items.isNotEmpty()) {
+                                playbackRepository.addPlaylistItems(result.items)
+                                _state.update {
+                                    it.copy(
+                                        homeMusicList = it.homeMusicList + result.items,
+                                        homeTotalCount = result.totalCount ?: it.homeTotalCount,
+                                        homePage = nextPage,
+                                        canLoadMoreHome = true,
+                                    )
+                                }
+                                currentPage = nextPage
+                                delay(500) // 稍微延迟，避免对脚本接口造成过大压力
+                            } else {
+                                hasMore = false
+                                _state.update { it.copy(canLoadMoreHome = false) }
+                            }
+                            
+                            // 优化停止条件：如果有总数，按照总数停止；否则按照 500 首上限
+                            val total = state.value.homeTotalCount
+                            if (total != null) {
+                                if (state.value.homeMusicList.size >= total) {
+                                    hasMore = false
+                                }
+                            } else if (state.value.homeMusicList.size > 500) {
+                                hasMore = false
+                            }
+                        }
+                    }
+                }
             }
             is PlayerIntent.Next -> {
                 playbackRepository.next()

@@ -22,7 +22,7 @@ A KSS script is a single `.js` file consisting of two parts:
  *   "description": "Fetches music from my private API",
  *   "configs": [
  *     { "key": "api_key", "label": "API Key", "type": "string", "default": "" },
- *     { "key": "high_quality", "label": "HQ Audio", "type": "boolean", "default": "false" }
+ *     { "key": "quality", "label": "Audio Quality", "type": "select", "default": "128k", "options": ["128k", "320k", "flac"] }
  *   ]
  * }
  */
@@ -39,13 +39,14 @@ A KSS script is a single `.js` file consisting of two parts:
 | `version` | `string` | Semantic versioning (e.g., `1.2.3`). |
 | `author` | `string` | Your name or handle. |
 | `description` | `string?` | Optional short description. |
-| `configs` | `array?` | List of user-configurable variables (see below). |
+| `configs` | `array?` | List of user-configurable variables. |
 
 ### Configuration Items (`configs`)
 - `key`: The internal key used in code.
 - `label`: Display name in the Settings UI.
-- `type`: One of `"string"`, `"number"`, or `"boolean"`.
+- `type`: One of `"string"`, `"number"`, `"boolean"`, or `"select"`.
 - `default`: Default value (as a string).
+- `options`: (For `select` type) List of possible string values.
 
 ---
 
@@ -53,10 +54,10 @@ A KSS script is a single `.js` file consisting of two parts:
 
 You must implement the following functions. They can be standard functions or `async` functions.
 
-### `init(configJson)`
+### `init(config)`
 Called once when the engine starts or when settings change.
-- `configJson`: A JSON string containing current user settings.
-- **Tip**: Always `JSON.parse(configJson)` at the start.
+- `config`: A JavaScript object containing current user settings.
+- **Note**: Values are provided based on the `type` defined in the manifest.
 
 ### `getHomeList()`
 Called to populate the "Discover" section on the Library screen.
@@ -77,6 +78,10 @@ Called when a track is about to be played.
 Called to fetch lyrics for a specific track.
 - **Returns**: A raw string (`LRC` or `TTML` format).
 
+### `getMusicListByIds(ids)` (Optional)
+Batch fetch music details for a list of IDs.
+- **Returns**: `MusicItem[]`
+
 ---
 
 ## 4. Data Models
@@ -86,7 +91,7 @@ Called to fetch lyrics for a specific track.
 {
     id: "track_123",      // String
     title: "Song Title",  // String
-    artist: "Artist Name",// String (comma separated for multiple)
+    artist: "Artist A, B",// String (comma separated for multiple)
     album: "Album Name",  // String (optional)
     cover: "https://...", // String (URL, optional)
     duration: 180         // Number (Seconds, optional)
@@ -111,31 +116,28 @@ Called to fetch lyrics for a specific track.
 
 The following global objects are provided by the Kanade host:
 
-### `console.log(message)`
-Prints a message to the Android Logcat (Tag: `KanadeScript`).
+### `console`
+- `console.log/info/debug/warn/error(...args)`: Standard logging.
 
-### `http.get(url, options)`
-Performs a synchronous network request.
-- **Returns**: Response body as a string.
+### `http`
+- `http.get(url, options)`: Performs a network request.
+- `http.post(url, body, options)`: Performs an HTTP POST request.
 
-### `http.post(url, body, options)`
-Performs an HTTP POST request.
-- **Returns**: Response body as a string.
+**Options**:
+- `headers`: `{ "Key": "Value" }`
+- `responseType`: `"text"` or `"hex"` (for binary data).
+- `contentType`: (POST only) e.g., `"application/json"`.
 
----
-
-## 6. Deployment & Testing
-
-1.  Open **Settings** -> **Script Management** in Kanade.
-2.  Click the **"+" (Import Script)** button.
-3.  Select your `.js` file.
-4.  Toggle the **Switch** to activate your script.
-5.  If your script has configurations, click the **Gear** icon to edit them.
-6.  Check the **Library** or **Search** screen to see your data.
+### `crypto`
+- `crypto.md5(text)`: Returns MD5 hex string.
+- `crypto.aesEncrypt(text, key, mode, padding)`: AES encryption.
+- `crypto.aesDecrypt(hex, key, mode, padding)`: AES decryption.
+  - *Modes*: `"CBC"`, `"ECB"`, etc.
+  - *Padding*: `"PKCS5Padding"`, `"NoPadding"`, etc.
 
 ---
 
-## 7. Full Boilerplate
+## 6. Full Boilerplate
 
 ```javascript
 /**
@@ -143,7 +145,7 @@ Performs an HTTP POST request.
  * {
  *   "id": "boilerplate",
  *   "name": "Boilerplate Provider",
- *   "version": "1.0.0",
+ *   "version": "1.1.0",
  *   "author": "Kanade",
  *   "configs": [
  *     { "key": "user", "label": "Username", "type": "string", "default": "Guest" }
@@ -154,7 +156,7 @@ Performs an HTTP POST request.
 let settings = {};
 
 function init(config) {
-    settings = JSON.parse(config);
+    settings = config;
 }
 
 function getHomeList() {
@@ -163,8 +165,8 @@ function getHomeList() {
     ];
 }
 
-function search(query, page) {
-    // const results = http.get("https://api.example.com/search?q=" + query);
+async function search(query, page) {
+    // const results = await http.get("https://api.example.com/search?q=" + query);
     // return JSON.parse(results).items;
     return [];
 }

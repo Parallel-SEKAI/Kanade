@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.parallel_sekai.kanade.data.model.MusicModel
+import org.parallel_sekai.kanade.data.model.*
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.data.script.ScriptManager
 import org.parallel_sekai.kanade.data.script.ScriptMusicSource
@@ -70,22 +70,13 @@ class SourceManager private constructor(
         return mediaIds.mapNotNull { musicMap[it] }
     }
 
-    suspend fun getHomeList(): List<MusicModel> {
-        val activeId = _activeScriptId.value ?: return emptyList()
-
-        // 等待目标音源对象出现
-        val source = withTimeoutOrNull(3000) {
-            _scriptSources.filter { sources ->
-                sources.any { it.manifest.id == activeId }
-            }.first().find { it.manifest.id == activeId }
-        } ?: return emptyList()
-
-        return try {
-            source.getHomeList()
-        } catch (e: Exception) {
-            android.util.Log.e("SourceManager", "Failed to get home list for $activeId", e)
-            emptyList()
-        }
+    /**
+     * 获取外部音源首页列表（仅限已启用的脚本）
+     */
+    suspend fun getHomeList(page: Int = 1): MusicListResult {
+        val activeId = settingsRepository.activeScriptIdFlow.first() ?: return MusicListResult(emptyList())
+        val source = scriptSources.value.find { it.sourceId == "script_$activeId" } ?: return MusicListResult(emptyList())
+        return source.getHomeList(page)
     }
 
     suspend fun getLyrics(sourceId: String, musicId: String): String? {

@@ -46,7 +46,11 @@ data class PlayerState(
     val scriptManifests: List<ScriptManifest> = emptyList(),
     val activeScriptId: String? = null,
     val homeMusicList: List<MusicModel> = emptyList(),
+    val homeTotalCount: Int? = null,
     val isHomeLoading: Boolean = false,
+    val homePage: Int = 1,
+    val canLoadMoreHome: Boolean = true,
+    val isHomeLoadingMore: Boolean = false,
     val gradientColors: List<Color> = listOf(PlayerGradientStart, PlayerGradientEnd),
     val showLyricShare: Boolean = false,
     val selectedLyricIndices: Set<Int> = emptySet(),
@@ -64,6 +68,7 @@ sealed interface PlayerIntent {
     object RefreshFolders : PlayerIntent
     object RefreshPlaylists : PlayerIntent
     object RefreshHome : PlayerIntent
+    object LoadMoreHome : PlayerIntent
     object ToggleRepeat : PlayerIntent
     object ToggleShuffle : PlayerIntent
     data class FetchDetailList(val type: DetailType, val id: String) : PlayerIntent

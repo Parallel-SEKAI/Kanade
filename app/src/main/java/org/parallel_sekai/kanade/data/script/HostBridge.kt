@@ -7,6 +7,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
+import org.parallel_sekai.kanade.data.source.MusicUtils
+
 interface HttpBridge {
     fun get(url: String, options: String?): String
     fun post(url: String, body: String, options: String?): String
@@ -35,11 +37,12 @@ class HostBridge(private val client: OkHttpClient) :
     CryptoBridge {
 
     private val json = Json { ignoreUnknownKeys = true }
+    private val DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
     override fun md5(text: String): String = try {
         val md = java.security.MessageDigest.getInstance("MD5")
         val bytes = md.digest(text.toByteArray())
-        bytes.joinToString("") { "%02x".format(it) }
+        MusicUtils.bytesToHex(bytes)
     } catch (e: Exception) {
         Log.e("HostBridge", "MD5 failed", e)
         ""
@@ -52,7 +55,7 @@ class HostBridge(private val client: OkHttpClient) :
             val skey = javax.crypto.spec.SecretKeySpec(key.toByteArray(), "AES")
             cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, skey)
             val encrypted = cipher.doFinal(text.toByteArray())
-            encrypted.joinToString("") { "%02x".format(it) }
+            MusicUtils.bytesToHex(encrypted)
         } catch (e: Exception) {
             Log.e("HostBridge", "AES Encrypt failed: $transformation", e)
             ""
@@ -76,15 +79,17 @@ class HostBridge(private val client: OkHttpClient) :
     }
 
     override fun get(url: String, options: String?): String {
-        Log.d("HostBridge", "GET: $url, options: $options")
+        val startTime = System.currentTimeMillis()
         return try {
             val builder = Request.Builder().url(url)
+            builder.addHeader("User-Agent", DEFAULT_UA) // Set default UA
+            
             var responseType = "text"
 
             options?.let { parseOptions(it) }?.let { opt ->
                 opt["headers"]?.jsonObject?.forEach { (k, v) ->
                     val value = v.jsonPrimitive.content
-                    builder.addHeader(k, value)
+                    builder.header(k, value) // Use header() to override default UA if provided
                 }
                 opt["responseType"]?.jsonPrimitive?.content?.let {
                     responseType = it
@@ -93,34 +98,40 @@ class HostBridge(private val client: OkHttpClient) :
 
             val request = builder.build()
             client.newCall(request).execute().use { response ->
+                val duration = System.currentTimeMillis() - startTime
                 if (!response.isSuccessful) {
-                    Log.e("HostBridge", "GET failed with code ${response.code}: $url")
+                    Log.e("HostBridge", "GET failed (${response.code}) in ${duration}ms: $url")
+                } else {
+                    Log.d("HostBridge", "GET success (${response.code}) in ${duration}ms: $url")
                 }
 
                 if (responseType == "hex") {
-                    response.body?.bytes()?.joinToString("") { "%02x".format(it) } ?: ""
+                    response.body?.bytes()?.let { MusicUtils.bytesToHex(it) } ?: ""
                 } else {
-                    val body = response.body?.string()?.trim() ?: ""
+                    val body = response.body?.string() ?: ""
                     sanitizeResponse(body)
                 }
             }
         } catch (e: Exception) {
-            Log.e("HostBridge", "HTTP GET failed: $url", e)
+            val duration = System.currentTimeMillis() - startTime
+            Log.e("HostBridge", "HTTP GET error after ${duration}ms: $url", e)
             ""
         }
     }
 
     override fun post(url: String, body: String, options: String?): String {
-        Log.d("HostBridge", "POST: $url, body length: ${body.length}, options: $options")
+        val startTime = System.currentTimeMillis()
         return try {
             val builder = Request.Builder().url(url)
+            builder.addHeader("User-Agent", DEFAULT_UA)
+            
             var contentType = "text/plain"
             var responseType = "text"
 
             options?.let { parseOptions(it) }?.let { opt ->
                 opt["headers"]?.jsonObject?.forEach { (k, v) ->
                     val value = v.jsonPrimitive.content
-                    builder.addHeader(k, value)
+                    builder.header(k, value)
                     if (k.equals("Content-Type", ignoreCase = true)) {
                         contentType = value
                     }
@@ -136,19 +147,23 @@ class HostBridge(private val client: OkHttpClient) :
             val requestBody = body.toRequestBody(contentType.toMediaTypeOrNull())
             val request = builder.post(requestBody).build()
             client.newCall(request).execute().use { response ->
+                val duration = System.currentTimeMillis() - startTime
                 if (!response.isSuccessful) {
-                    Log.e("HostBridge", "POST failed with code ${response.code}: $url")
+                    Log.e("HostBridge", "POST failed (${response.code}) in ${duration}ms: $url")
+                } else {
+                    Log.d("HostBridge", "POST success (${response.code}) in ${duration}ms: $url")
                 }
 
                 if (responseType == "hex") {
-                    response.body?.bytes()?.joinToString("") { "%02x".format(it) } ?: ""
+                    response.body?.bytes()?.let { MusicUtils.bytesToHex(it) } ?: ""
                 } else {
-                    val responseBody = response.body?.string()?.trim() ?: ""
+                    val responseBody = response.body?.string() ?: ""
                     sanitizeResponse(responseBody)
                 }
             }
         } catch (e: Exception) {
-            Log.e("HostBridge", "HTTP POST failed: $url", e)
+            val duration = System.currentTimeMillis() - startTime
+            Log.e("HostBridge", "HTTP POST error after ${duration}ms: $url", e)
             ""
         }
     }

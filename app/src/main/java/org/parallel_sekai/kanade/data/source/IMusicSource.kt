@@ -12,12 +12,12 @@ interface IMusicSource {
     /**
      * 获取搜索结果或歌单内容
      */
-    suspend fun getMusicList(query: String): List<MusicModel>
+    suspend fun getMusicList(query: String): MusicListResult
 
     /**
      * 获取首页推荐列表
      */
-    suspend fun getHomeList(): List<MusicModel> = emptyList()
+    suspend fun getHomeList(page: Int = 1): MusicListResult = MusicListResult(emptyList())
 
     /**
      * 获取真实的播放链接（对于流媒体脚本尤其重要）
@@ -87,7 +87,7 @@ class ScriptSourceManager {
         return object : IMusicSource {
             override val sourceId = "dynamic_script_id"
             override val sourceName = "Remote Source via Script"
-            override suspend fun getMusicList(query: String) = emptyList<MusicModel>()
+            override suspend fun getMusicList(query: String) = MusicListResult(emptyList())
             override suspend fun getPlayUrl(musicId: String) = "https://..."
             override suspend fun getLyrics(musicId: String): String? = null
         }

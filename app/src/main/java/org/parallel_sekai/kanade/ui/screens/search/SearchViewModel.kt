@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
+import org.parallel_sekai.kanade.data.source.MusicListResult
 
 @OptIn(FlowPreview::class)
 class SearchViewModel(
@@ -129,8 +130,8 @@ class SearchViewModel(
     private suspend fun performSearch(query: String) {
         _state.update { it.copy(isLoading = true, isSearching = true) }
         try {
-            val results = playbackRepository.fetchMusicList(query, _state.value.selectedSourceIds.toList())
-            _state.update { it.copy(searchResults = results, isLoading = false) }
+            val result = playbackRepository.fetchMusicList(query, _state.value.selectedSourceIds.toList())
+            _state.update { it.copy(searchResults = result.items, isLoading = false) }
         } catch (e: Exception) {
             _state.update { it.copy(isLoading = false) }
             _effect.emit(SearchEffect.ShowError(R.string.error_unknown))

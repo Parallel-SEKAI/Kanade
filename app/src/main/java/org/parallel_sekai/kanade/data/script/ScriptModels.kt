@@ -13,6 +13,12 @@ data class ScriptMusicItem(
 )
 
 @Serializable
+data class ScriptMusicListResponse(
+    val items: List<ScriptMusicItem>,
+    val total: Int? = null,
+)
+
+@Serializable
 data class ScriptStreamInfo(
     val url: String,
     val headers: Map<String, String>? = null,

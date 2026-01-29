@@ -26,7 +26,12 @@ class ScriptManager(
     }
 
     private val json = Json { ignoreUnknownKeys = true }
-    private val client = OkHttpClient()
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+        .connectionPool(okhttp3.ConnectionPool(10, 5, java.util.concurrent.TimeUnit.MINUTES))
+        .build()
     private val engineTasks = mutableMapOf<String, Deferred<ScriptEngine?>>()
     private val manifests = mutableMapOf<String, ScriptManifest>()
     private val scriptFiles = mutableMapOf<String, File>()

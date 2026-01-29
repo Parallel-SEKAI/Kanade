@@ -4,6 +4,17 @@ import org.parallel_sekai.kanade.data.repository.ArtistParsingSettings
 
 object MusicUtils {
 
+    fun bytesToHex(bytes: ByteArray): String {
+        val hexChars = CharArray(bytes.size * 2)
+        val hexArray = "0123456789abcdef".toCharArray()
+        for (i in bytes.indices) {
+            val v = bytes[i].toInt() and 0xFF
+            hexChars[i * 2] = hexArray[v ushr 4]
+            hexChars[i * 2 + 1] = hexArray[v and 0x0F]
+        }
+        return String(hexChars)
+    }
+
     fun parseArtists(
         artistString: String?,
         settings: ArtistParsingSettings = ArtistParsingSettings(), // 提供默认值

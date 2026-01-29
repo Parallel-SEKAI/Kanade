@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.parallel_sekai.kanade.MainActivity
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
@@ -31,6 +32,9 @@ class KanadePlaybackService : MediaSessionService() {
     private var mediaSession: MediaSession? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private lateinit var urlCacheManager: UrlCacheManager
+
+    private var lastFailedMediaId: String? = null
+    private var retryCount = 0
 
     override fun onCreate() {
         super.onCreate()
@@ -105,6 +109,17 @@ class KanadePlaybackService : MediaSessionService() {
             )
             .build().apply {
                 addListener(object : androidx.media3.common.Player.Listener {
+                    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                        // 切换歌曲时重置重试计数
+                        if (reason == androidx.media3.common.Player.MEDIA_ITEM_TRANSITION_REASON_AUTO ||
+                            reason == androidx.media3.common.Player.MEDIA_ITEM_TRANSITION_REASON_SEEK ||
+                            reason == androidx.media3.common.Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
+                        ) {
+                            lastFailedMediaId = null
+                            retryCount = 0
+                        }
+                    }
+
                     override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                         android.util.Log.e("KanadePlaybackService", "Player Error: ${error.message}", error)
 
@@ -113,12 +128,37 @@ class KanadePlaybackService : MediaSessionService() {
                         if (currentItem != null) {
                             val mediaId = currentItem.mediaId
                             if (mediaId.startsWith("script_")) {
-                                runBlocking {
+                                serviceScope.launch {
                                     urlCacheManager.clearCache(mediaId)
                                     android.util.Log.d("KanadePlaybackService", "Cleared URL cache for $mediaId due to error")
+
+                                    // 如果是 403 错误，尝试自动重试一次
+                                    val cause = error.cause
+                                    if (cause is androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException && cause.responseCode == 403) {
+                                        if (lastFailedMediaId != mediaId || retryCount < 1) {
+                                            lastFailedMediaId = mediaId
+                                            retryCount++
+                                            android.util.Log.w("KanadePlaybackService", "Detected 403 error for $mediaId, retrying... (attempt $retryCount)")
+                                            prepare()
+                                            play()
+                                        } else {
+                                            // 已重试过仍然失败，重置计数
+                                            lastFailedMediaId = null
+                                            retryCount = 0
+                                        }
+                                    } else {
+                                        // 非 403 错误，重置计数
+                                        lastFailedMediaId = null
+                                        retryCount = 0
+                                    }
                                 }
+                                return
                             }
                         }
+                        
+                        // 非脚本音源或无法重试的情况，确保重置
+                        lastFailedMediaId = null
+                        retryCount = 0
                     }
                 })
             }
