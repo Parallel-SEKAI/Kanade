@@ -16,8 +16,8 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
 
-  - repo: https://github.com/pinterest/ktlint
-    rev: 1.5.0
+  - repo: https://github.com/nbyl/pre-commit-ktlint
+    rev: v0.12.0
     hooks:
       - id: ktlint
         args: ["--android"]
