@@ -30,15 +30,16 @@ fun ScriptConfigScreen(
     val configs = manifest.configs ?: return
 
     val currentConfigsJson by settingsRepository.scriptConfigsFlow.collectAsState(initial = null)
-    val currentValues = remember(currentConfigsJson) {
-        currentConfigsJson?.let {
-            try {
-                Json.decodeFromString<Map<String, Map<String, String>>>(it)[scriptId]
-            } catch (e: Exception) {
-                null
-            }
-        } ?: emptyMap()
-    }
+    val currentValues =
+        remember(currentConfigsJson) {
+            currentConfigsJson?.let {
+                try {
+                    Json.decodeFromString<Map<String, Map<String, String>>>(it)[scriptId]
+                } catch (e: Exception) {
+                    null
+                }
+            } ?: emptyMap()
+        }
 
     Scaffold(
         topBar = {
@@ -46,7 +47,10 @@ fun ScriptConfigScreen(
                 title = { Text(manifest.name) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.desc_back),
+                        )
                     }
                 },
             )
@@ -66,7 +70,11 @@ fun ScriptConfigScreen(
                             "string", "number" -> {
                                 OutlinedTextField(
                                     value = value,
-                                    onValueChange = { onIntent(PlayerIntent.UpdateScriptConfig(scriptId, item.key, it)) },
+                                    onValueChange = {
+                                        onIntent(
+                                            PlayerIntent.UpdateScriptConfig(scriptId, item.key, it),
+                                        )
+                                    },
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                     singleLine = true,
                                 )
@@ -74,7 +82,11 @@ fun ScriptConfigScreen(
                             "boolean" -> {
                                 Switch(
                                     checked = value.lowercase() == "true",
-                                    onCheckedChange = { onIntent(PlayerIntent.UpdateScriptConfig(scriptId, item.key, it.toString())) },
+                                    onCheckedChange = {
+                                        onIntent(
+                                            PlayerIntent.UpdateScriptConfig(scriptId, item.key, it.toString()),
+                                        )
+                                    },
                                 )
                             }
                             "select" -> {
@@ -90,8 +102,17 @@ fun ScriptConfigScreen(
                                         value = value,
                                         onValueChange = {},
                                         readOnly = true,
-                                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(),
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(
+                                                expanded = expanded,
+                                            )
+                                        },
+                                        modifier =
+                                            Modifier
+                                                .menuAnchor(
+                                                    ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                                                    true,
+                                                ).fillMaxWidth(),
                                     )
                                     ExposedDropdownMenu(
                                         expanded = expanded,
@@ -101,7 +122,9 @@ fun ScriptConfigScreen(
                                             DropdownMenuItem(
                                                 text = { Text(option) },
                                                 onClick = {
-                                                    onIntent(PlayerIntent.UpdateScriptConfig(scriptId, item.key, option))
+                                                    onIntent(
+                                                        PlayerIntent.UpdateScriptConfig(scriptId, item.key, option),
+                                                    )
                                                     expanded = false
                                                 },
                                             )

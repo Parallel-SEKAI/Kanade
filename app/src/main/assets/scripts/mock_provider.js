@@ -32,12 +32,21 @@ function init(config) {
     }
 }
 
-function getHomeList() {
+function getHomeList(page = 1) {
     if (currentConfig.show_recommendations === "false") return [];
     
+    const pageSize = 20;
+    const start = (page - 1) * pageSize;
+    
+    // Simulate end of list
+    if (page > 3) return [];
+
     return [
-        { id: "h1", title: "Welcome, " + (currentConfig.user_name || "User"), artist: "System", album: "Home", duration: 0 },
-        { id: "h2", title: "Trending Mock 1", artist: "Popular Artist", album: "Charts", duration: 200 }
+        { id: `mock_home_${start + 1}`, title: `Recommended Song ${start + 1} (Page ${page})`, artist: "Mock Artist", album: "Mock Album", duration: 210 },
+        { id: `mock_home_${start + 2}`, title: `Recommended Song ${start + 2} (Page ${page})`, artist: "Mock Artist", album: "Mock Album", duration: 210 },
+        { id: `mock_home_${start + 3}`, title: `Recommended Song ${start + 3} (Page ${page})`, artist: "Mock Artist", album: "Mock Album", duration: 210 },
+        { id: `mock_home_${start + 4}`, title: `Recommended Song ${start + 4} (Page ${page})`, artist: "Mock Artist", album: "Mock Album", duration: 210 },
+        { id: `mock_home_${start + 5}`, title: `Recommended Song ${start + 5} (Page ${page})`, artist: "Mock Artist", album: "Mock Album", duration: 210 }
     ];
 }
 

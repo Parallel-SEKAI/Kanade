@@ -1,3 +1,5 @@
+@file:Suppress("KtlintStandardMaxLineLength")
+
 package org.parallel_sekai.kanade.ui.screens.player
 
 import androidx.activity.compose.PredictiveBackHandler
@@ -426,11 +428,13 @@ private fun MiniPlayerContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (showContent) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val imageModel = coil.request.ImageRequest.Builder(context)
+                    .data(state.currentSong?.coverUrl)
+                    .crossfade(true)
+                    .build()
                 AsyncImage(
-                    model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
-                        .data(state.currentSong?.coverUrl)
-                        .crossfade(true)
-                        .build(),
+                    model = imageModel,
                     contentDescription = null,
                     modifier = Modifier
                         .padding(Dimens.PaddingSmall)
@@ -719,7 +723,13 @@ private fun FullScreenContent(
                                 .padding(vertical = Dimens.CornerRadiusLarge), // 12.dp
                             contentAlignment = Alignment.Center,
                         ) {
-                            Box(modifier = Modifier.size(Dimens.IconSizeExtraLarge, Dimens.PaddingExtraSmall).clip(RoundedCornerShape(Dimens.CornerRadiusSmall)).background(Color.White.copy(alpha = 0.3f)).align(Alignment.TopCenter)) // 36.dp, 4.dp, 2.dp
+                            Box(
+                            modifier = Modifier
+                                .size(Dimens.IconSizeExtraLarge, Dimens.PaddingExtraSmall)
+                                .clip(RoundedCornerShape(Dimens.CornerRadiusSmall))
+                                .background(Color.White.copy(alpha = 0.3f))
+                                .align(Alignment.TopCenter),
+                        ) // 36.dp, 4.dp, 2.dp
                         }
                     }
                 }

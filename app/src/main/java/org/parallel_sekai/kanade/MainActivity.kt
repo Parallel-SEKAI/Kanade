@@ -69,49 +69,78 @@ import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
 import org.parallel_sekai.kanade.ui.screens.settings.SuperLyricApiScreen
 import org.parallel_sekai.kanade.ui.theme.KanadeTheme
 
-sealed class Screen(val route: String, val labelResId: Int, val icon: ImageVector?) {
+sealed class Screen(
+    val route: String,
+    val labelResId: Int,
+    val icon: ImageVector?,
+) {
     object Library : Screen("library", R.string.title_library, Icons.Filled.Home)
+
     object Search : Screen("search", R.string.label_search, Icons.Filled.Search)
+
     object More : Screen("more", R.string.title_more, Icons.Filled.Info)
+
     object Settings : Screen("settings", R.string.title_settings, null)
+
     object LyricsSettings : Screen("lyrics_settings", R.string.title_lyrics_settings, null)
+
     object LyricsGetterApi : Screen("lyrics_getter_api", R.string.pref_lyrics_getter, null)
+
     object SuperLyricApi : Screen("super_lyric_api", R.string.pref_super_lyric, null)
+
     object ExcludedFolders : Screen("excluded_folders", R.string.title_excluded_folders, null)
+
     object CacheSettings : Screen("cache_settings", R.string.title_cache_settings, null)
+
     object ArtistParsingSettings : Screen("artist_parsing_settings", R.string.title_artist_parsing, null)
+
     object Scripts : Screen("scripts", R.string.title_scripts, null)
+
     object ScriptConfig : Screen("script_config/{id}", R.string.title_settings, null) {
         fun createRoute(id: String) = "script_config/$id"
     }
 
     // Library sub-screens
     object Artists : Screen("artists", R.string.label_artists, null)
+
     object Albums : Screen("albums", R.string.label_albums, null)
+
     object Playlists : Screen("playlists", R.string.label_playlists, null)
+
     object Folders : Screen("folders", R.string.label_folders, null)
 
     // Detail screens
     object ArtistDetail : Screen("artist_detail/{name}", R.string.title_artists, null) {
         fun createRoute(name: String) = "artist_detail/$name"
     }
+
     object AlbumDetail : Screen("album_detail/{id}/{title}", R.string.label_albums, null) {
-        fun createRoute(id: String, title: String) = "album_detail/$id/$title"
+        fun createRoute(
+            id: String,
+            title: String,
+        ) = "album_detail/$id/$title"
     }
+
     object FolderDetail : Screen("folder_detail/{path}", R.string.label_folders, null) {
         fun createRoute(path: String) = "folder_detail/${java.net.URLEncoder.encode(path, "UTF-8")}"
     }
+
     object PlaylistDetail : Screen("playlist_detail/{id}/{title}", R.string.label_playlists, null) {
-        fun createRoute(id: String, title: String) = "playlist_detail/$id/$title"
+        fun createRoute(
+            id: String,
+            title: String,
+        ) = "playlist_detail/$id/$title"
     }
+
     object SongInfo : Screen("song_info", R.string.title_song_info, null)
 }
 
-val items = listOf(
-    Screen.Library,
-    Screen.Search,
-    Screen.More,
-)
+val items =
+    listOf(
+        Screen.Library,
+        Screen.Search,
+        Screen.More,
+    )
 
 class MainActivity : ComponentActivity() {
     companion object {
@@ -138,34 +167,38 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val settingsRepository = SettingsRepository(applicationContext)
-        val playbackRepository = PlaybackRepository(
-            context = applicationContext,
-            settingsRepository = settingsRepository,
-            scope = ProcessLifecycleOwner.get().lifecycleScope,
-        )
-        val imageLoader = ImageLoader.Builder(applicationContext)
-            .memoryCache {
-                MemoryCache.Builder(applicationContext)
-                    .maxSizePercent(0.25)
-                    .build()
-            }
-            .diskCache {
-                DiskCache.Builder()
-                    .directory(CacheManager.getImageCacheDir(applicationContext))
-                    .maxSizePercent(0.02) // 磁盘空间的 2% 或手动指定大小，例如 100MB
-                    .build()
-            }
-            .respectCacheHeaders(false) // 强制缓存，忽略服务器的不可缓存头
-            .build()
+        val playbackRepository =
+            PlaybackRepository(
+                context = applicationContext,
+                settingsRepository = settingsRepository,
+                scope = ProcessLifecycleOwner.get().lifecycleScope,
+            )
+        val imageLoader =
+            ImageLoader
+                .Builder(applicationContext)
+                .memoryCache {
+                    MemoryCache
+                        .Builder(applicationContext)
+                        .maxSizePercent(0.25)
+                        .build()
+                }.diskCache {
+                    DiskCache
+                        .Builder()
+                        .directory(CacheManager.getImageCacheDir(applicationContext))
+                        .maxSizePercent(0.02) // 磁盘空间的 2% 或手动指定大小，例如 100MB
+                        .build()
+                }.respectCacheHeaders(false) // 强制缓存，忽略服务器的不可缓存头
+                .build()
         val lyricGetterManager = LyricGetterManager(applicationContext)
 
-        playerViewModel = PlayerViewModel(
-            playbackRepository = playbackRepository,
-            settingsRepository = settingsRepository,
-            applicationContext = applicationContext,
-            imageLoader = imageLoader,
-            lyricGetterManager = lyricGetterManager,
-        )
+        playerViewModel =
+            PlayerViewModel(
+                playbackRepository = playbackRepository,
+                settingsRepository = settingsRepository,
+                applicationContext = applicationContext,
+                imageLoader = imageLoader,
+                lyricGetterManager = lyricGetterManager,
+            )
         val settingsViewModel = SettingsViewModel(settingsRepository, lyricGetterManager)
         val searchViewModel = SearchViewModel(playbackRepository, settingsRepository)
 
@@ -196,26 +229,36 @@ class MainActivity : ComponentActivity() {
                 var bottomPadding by remember { mutableStateOf<Dp>(0.dp) }
 
                 // 权限处理
-                val permissions = mutableListOf<String>().apply {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        add(Manifest.permission.READ_MEDIA_AUDIO)
-                        add(Manifest.permission.POST_NOTIFICATIONS)
-                    } else {
-                        add(Manifest.permission.READ_EXTERNAL_STORAGE)
+                val permissions =
+                    mutableListOf<String>().apply {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            add(Manifest.permission.READ_MEDIA_AUDIO)
+                            add(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            add(Manifest.permission.READ_EXTERNAL_STORAGE)
+                        }
                     }
-                }
 
                 val multiplePermissionsState = rememberMultiplePermissionsState(permissions)
 
-                val audioPermissionGranted = multiplePermissionsState.permissions.any {
-                    (it.permission == Manifest.permission.READ_MEDIA_AUDIO || it.permission == Manifest.permission.READ_EXTERNAL_STORAGE) && it.status.isGranted
-                }
+                val audioPermissionGranted =
+                    multiplePermissionsState.permissions.any {
+                        (
+                            it.permission == Manifest.permission.READ_MEDIA_AUDIO ||
+                                it.permission == Manifest.permission.READ_EXTERNAL_STORAGE
+                        ) &&
+                            it.status.isGranted
+                    }
 
-                val notificationPermissionDenied = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    multiplePermissionsState.permissions.any { it.permission == Manifest.permission.POST_NOTIFICATIONS && !it.status.isGranted }
-                } else {
-                    false
-                }
+                val notificationPermissionDenied =
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        multiplePermissionsState.permissions.any {
+                            it.permission == Manifest.permission.POST_NOTIFICATIONS &&
+                                !it.status.isGranted
+                        }
+                    } else {
+                        false
+                    }
 
                 LaunchedEffect(Unit) {
                     multiplePermissionsState.launchMultiplePermissionRequest()
@@ -229,7 +272,10 @@ class MainActivity : ComponentActivity() {
                 }
 
                 LaunchedEffect(audioPermissionGranted) {
-                    if (audioPermissionGranted && playerViewModel.state.value.allMusicList.isEmpty()) {
+                    if (audioPermissionGranted &&
+                        playerViewModel.state.value.allMusicList
+                            .isEmpty()
+                    ) {
                         playerViewModel.handleIntent(PlayerIntent.RefreshList(forceScriptRefresh = false))
                     }
                 }
@@ -266,17 +312,25 @@ class MainActivity : ComponentActivity() {
                         NavHost(
                             navController,
                             startDestination = Screen.Library.route,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(bottom = bottomPadding),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(bottom = bottomPadding),
                         ) {
                             composable(Screen.Library.route) {
                                 if (audioPermissionGranted) {
                                     LibraryScreen(
                                         state = state,
                                         onIntent = { playerViewModel.handleIntent(it) },
-                                        onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) },
-                                        onScriptClick = { id -> playerViewModel.handleIntent(PlayerIntent.ToggleActiveScript(id)) },
+                                        onSongClick = {
+                                            song,
+                                            list,
+                                            ->
+                                            playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
+                                        },
+                                        onScriptClick = { id ->
+                                            playerViewModel.handleIntent(PlayerIntent.ToggleActiveScript(id))
+                                        },
                                         onNavigateToArtists = { navController.navigate(Screen.Artists.route) },
                                         onNavigateToAlbums = { navController.navigate(Screen.Albums.route) },
                                         onNavigateToPlaylists = { navController.navigate(Screen.Playlists.route) },
@@ -297,7 +351,9 @@ class MainActivity : ComponentActivity() {
                                     onIntent = { playerViewModel.handleIntent(it) },
                                     onBackClick = { navController.popBackStack() },
                                     onArtistClick = { name ->
-                                        playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.ARTIST, name))
+                                        playerViewModel.handleIntent(
+                                            PlayerIntent.FetchDetailList(DetailType.ARTIST, name),
+                                        )
                                         navController.navigate(Screen.ArtistDetail.createRoute(name))
                                     },
                                 )
@@ -319,7 +375,9 @@ class MainActivity : ComponentActivity() {
                                     onIntent = { playerViewModel.handleIntent(it) },
                                     onBackClick = { navController.popBackStack() },
                                     onPlaylistClick = { id, title ->
-                                        playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.PLAYLIST, id))
+                                        playerViewModel.handleIntent(
+                                            PlayerIntent.FetchDetailList(DetailType.PLAYLIST, id),
+                                        )
                                         navController.navigate(Screen.PlaylistDetail.createRoute(id, title))
                                     },
                                 )
@@ -330,7 +388,9 @@ class MainActivity : ComponentActivity() {
                                     onIntent = { playerViewModel.handleIntent(it) },
                                     onBackClick = { navController.popBackStack() },
                                     onFolderClick = { path ->
-                                        playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.FOLDER, path))
+                                        playerViewModel.handleIntent(
+                                            PlayerIntent.FetchDetailList(DetailType.FOLDER, path),
+                                        )
                                         navController.navigate(Screen.FolderDetail.createRoute(path))
                                     },
                                 )
@@ -341,7 +401,12 @@ class MainActivity : ComponentActivity() {
                                     name = name,
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
-                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) },
+                                    onSongClick = {
+                                        song,
+                                        list,
+                                        ->
+                                        playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
+                                    },
                                 )
                             }
                             composable(Screen.AlbumDetail.route) { backStackEntry ->
@@ -352,7 +417,12 @@ class MainActivity : ComponentActivity() {
                                     title = title,
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
-                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) },
+                                    onSongClick = {
+                                        song,
+                                        list,
+                                        ->
+                                        playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
+                                    },
                                 )
                             }
                             composable(Screen.PlaylistDetail.route) { backStackEntry ->
@@ -363,16 +433,30 @@ class MainActivity : ComponentActivity() {
                                     title = title,
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
-                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) },
+                                    onSongClick = {
+                                        song,
+                                        list,
+                                        ->
+                                        playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
+                                    },
                                 )
                             }
                             composable(Screen.FolderDetail.route) { backStackEntry ->
-                                val path = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("path") ?: "", "UTF-8")
+                                val path =
+                                    java.net.URLDecoder.decode(
+                                        backStackEntry.arguments?.getString("path") ?: "",
+                                        "UTF-8",
+                                    )
                                 FolderDetailScreen(
                                     path = path,
                                     state = state,
                                     onBackClick = { navController.popBackStack() },
-                                    onSongClick = { song, list -> playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list)) },
+                                    onSongClick = {
+                                        song,
+                                        list,
+                                        ->
+                                        playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
+                                    },
                                 )
                             }
                             composable(Screen.Search.route) {
@@ -391,11 +475,27 @@ class MainActivity : ComponentActivity() {
                                 SettingsScreen(
                                     viewModel = settingsViewModel,
                                     onNavigateBack = { navController.popBackStack() },
-                                    onNavigateToLyricsSettings = { navController.navigate(Screen.LyricsSettings.route) },
-                                    onNavigateToExcludedFolders = { navController.navigate(Screen.ExcludedFolders.route) },
-                                    onNavigateToArtistParsingSettings = { navController.navigate(Screen.ArtistParsingSettings.route) },
+                                    onNavigateToLyricsSettings = {
+                                        navController.navigate(
+                                            Screen.LyricsSettings.route,
+                                        )
+                                    },
+                                    onNavigateToExcludedFolders = {
+                                        navController.navigate(
+                                            Screen.ExcludedFolders.route,
+                                        )
+                                    },
+                                    onNavigateToArtistParsingSettings = {
+                                        navController.navigate(
+                                            Screen.ArtistParsingSettings.route,
+                                        )
+                                    },
                                     onNavigateToCacheSettings = { navController.navigate(Screen.CacheSettings.route) },
-                                    onNavigateToLyricsGetterApi = { navController.navigate(Screen.LyricsGetterApi.route) },
+                                    onNavigateToLyricsGetterApi = {
+                                        navController.navigate(
+                                            Screen.LyricsGetterApi.route,
+                                        )
+                                    },
                                     onNavigateToSuperLyricApi = { navController.navigate(Screen.SuperLyricApi.route) },
                                 )
                             }
@@ -440,7 +540,9 @@ class MainActivity : ComponentActivity() {
                                 ScriptManagementScreen(
                                     state = state,
                                     onIntent = { playerViewModel.handleIntent(it) },
-                                    onNavigateToScriptConfig = { id -> navController.navigate(Screen.ScriptConfig.createRoute(id)) },
+                                    onNavigateToScriptConfig = { id ->
+                                        navController.navigate(Screen.ScriptConfig.createRoute(id))
+                                    },
                                     onNavigateBack = { navController.popBackStack() },
                                 )
                             }

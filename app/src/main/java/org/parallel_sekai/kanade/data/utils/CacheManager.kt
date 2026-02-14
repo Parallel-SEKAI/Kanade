@@ -14,12 +14,16 @@ import java.io.File
 /**
  * 全局缓存管理器，用于 Media3 播放器的音频缓存
  */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 object CacheManager {
     private var cache: SimpleCache? = null
     private var currentMaxCacheSize = 500 * 1024 * 1024L // Default 500MB
 
     @Synchronized
-    fun getCache(context: Context, maxSize: Long = currentMaxCacheSize): SimpleCache {
+    fun getCache(
+        context: Context,
+        maxSize: Long = currentMaxCacheSize,
+    ): SimpleCache {
         if (cache == null) {
             currentMaxCacheSize = maxSize
             val cacheDir = File(context.cacheDir, "media_cache")
@@ -82,14 +86,20 @@ object CacheManager {
     /**
      * 创建支持缓存的 DataSource.Factory
      */
-    fun getCacheDataSourceFactory(context: Context, maxSize: Long = 500 * 1024 * 1024L): DataSource.Factory {
+    fun getCacheDataSourceFactory(
+        context: Context,
+        maxSize: Long = 500 * 1024 * 1024L,
+    ): DataSource.Factory {
         val okHttpClient = OkHttpClient.Builder().build()
-        val httpDataSourceFactory = OkHttpDataSource.Factory(okHttpClient)
-            .setUserAgent("Kanade/1.0 (Android)")
+        val httpDataSourceFactory =
+            OkHttpDataSource
+                .Factory(okHttpClient)
+                .setUserAgent("Kanade/1.0 (Android)")
 
         val defaultDataSourceFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
 
-        return CacheDataSource.Factory()
+        return CacheDataSource
+            .Factory()
             .setCache(getCache(context, maxSize))
             .setUpstreamDataSourceFactory(defaultDataSourceFactory)
             .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)

@@ -23,9 +23,10 @@ class SourceManager private constructor(
 
     private val _activeScriptId = MutableStateFlow<String?>(null)
 
-    val activeScriptSource: Flow<ScriptMusicSource?> = combine(_activeScriptId, _scriptSources) { id, sources ->
-        sources.find { it.manifest.id == id }
-    }
+    val activeScriptSource: Flow<ScriptMusicSource?> =
+        combine(_activeScriptId, _scriptSources) { id, sources ->
+            sources.find { it.manifest.id == id }
+        }
 
     init {
         settingsRepository.activeScriptIdFlow
@@ -48,10 +49,12 @@ class SourceManager private constructor(
 
     suspend fun getMusicListByMediaIds(mediaIds: List<String>): List<MusicModel> {
         // mediaId format: "sourceId:originalId"
-        val groupedIds = mediaIds.mapNotNull { mediaId ->
-            val parts = mediaId.split(":", limit = 2)
-            if (parts.size == 2) parts[0] to parts[1] else null
-        }.groupBy({ it.first }, { it.second })
+        val groupedIds =
+            mediaIds
+                .mapNotNull { mediaId ->
+                    val parts = mediaId.split(":", limit = 2)
+                    if (parts.size == 2) parts[0] to parts[1] else null
+                }.groupBy({ it.first }, { it.second })
 
         val allMusic = mutableListOf<MusicModel>()
         groupedIds.forEach { (sourceId, ids) ->
@@ -75,11 +78,15 @@ class SourceManager private constructor(
      */
     suspend fun getHomeList(page: Int = 1): MusicListResult {
         val activeId = settingsRepository.activeScriptIdFlow.first() ?: return MusicListResult(emptyList())
-        val source = scriptSources.value.find { it.sourceId == "script_$activeId" } ?: return MusicListResult(emptyList())
+        val source =
+            scriptSources.value.find { it.sourceId == "script_$activeId" } ?: return MusicListResult(emptyList())
         return source.getHomeList(page)
     }
 
-    suspend fun getLyrics(sourceId: String, musicId: String): String? {
+    suspend fun getLyrics(
+        sourceId: String,
+        musicId: String,
+    ): String? {
         val source = getSource(sourceId)
         return source?.getLyrics(musicId)
     }
@@ -97,12 +104,28 @@ class SourceManager private constructor(
         return result
     }
 
+    suspend fun deleteScript(scriptId: String): Boolean {
+        val success = scriptManager.deleteScript(scriptId)
+        if (success) {
+            refreshScripts()
+            // 如果删除的是当前激活的脚本，需要清除激活状态
+            if (_activeScriptId.value == scriptId) {
+                setActiveScriptId(null)
+            }
+        }
+        return success
+    }
+
     companion object {
         @Volatile
         private var instance: SourceManager? = null
 
-        fun getInstance(context: Context, settingsRepository: SettingsRepository): SourceManager = instance ?: synchronized(this) {
-            instance ?: SourceManager(context.applicationContext, settingsRepository).also { instance = it }
-        }
+        fun getInstance(
+            context: Context,
+            settingsRepository: SettingsRepository,
+        ): SourceManager =
+            instance ?: synchronized(this) {
+                instance ?: SourceManager(context.applicationContext, settingsRepository).also { instance = it }
+            }
     }
 }

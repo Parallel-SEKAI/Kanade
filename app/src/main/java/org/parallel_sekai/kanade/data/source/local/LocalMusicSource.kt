@@ -1,3 +1,5 @@
+@file:Suppress("KtlintStandardMaxLineLength")
+
 package org.parallel_sekai.kanade.data.source.local
 
 import android.content.ContentUris
@@ -73,15 +75,15 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                 )
 
                 // 恢复：使用专辑封面的 Uri
-                val albumArtUri = ContentUris.withAppendedId(
-                    Uri.parse("content://media/external/audio/albumart"),
-                    albumId,
-                ).toString()
+                val albumArtBase = Uri.parse("content://media/external/audio/albumart")
+                val albumArtUri = ContentUris.withAppendedId(albumArtBase, albumId).toString()
                 musicList.add(
                     MusicModel(
                         id = id.toString(),
                         title = cursor.getString(titleColumn),
-                        artists = artistCache.getOrPut(artistString ?: "") { MusicUtils.parseArtists(artistString) },
+                        artists = artistCache.getOrPut(artistString ?: "") {
+                            MusicUtils.parseArtists(artistString)
+                        },
                         album = cursor.getString(albumColumn),
                         coverUrl = albumArtUri,
                         mediaUri = contentUri.toString(), // 填充 content:// URI
@@ -96,7 +98,8 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
         // 如果有搜索词，进行简单的内存过滤
         if (query.isNotEmpty()) {
             val filtered = musicList.filter {
-                it.title.contains(query, ignoreCase = true) || it.artists.any { artist -> artist.contains(query, ignoreCase = true) }
+                it.title.contains(query, ignoreCase = true) ||
+                    it.artists.any { artist -> artist.contains(query, ignoreCase = true) }
             }
             return@withContext MusicListResult(filtered)
         }
@@ -410,7 +413,10 @@ class LocalMusicSource(private val context: Context) : IMusicSource {
                 val id = cursor.getLong(idColumn)
                 val albumId = cursor.getLong(albumIdColumn)
                 val contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-                val albumArtUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), albumId).toString()
+                val albumArtUri = ContentUris.withAppendedId(
+                    Uri.parse("content://media/external/audio/albumart"),
+                    albumId,
+                ).toString()
                 val path = cursor.getString(dataColumn) // Added path
                 val artistString = cursor.getString(artistColumn)
 

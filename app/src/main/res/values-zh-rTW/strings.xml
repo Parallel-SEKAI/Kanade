@@ -165,4 +165,9 @@
     <string name="quality_standard">標準 (1080p)</string>
     <string name="quality_high">高清 (2K)</string>
     <string name="quality_ultra">超清 (4K)</string>
+    <string name="msg_script_deleted">腳本已刪除</string>
+    <string name="title_delete_script">刪除腳本</string>
+    <string name="msg_confirm_delete_script">確定要刪除腳本 "%1$s" 嗎？</string>
+    <string name="btn_delete">刪除</string>
+    <string name="btn_cancel">取消</string>
 </resources>

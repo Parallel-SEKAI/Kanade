@@ -1,3 +1,5 @@
+@file:Suppress("KtlintStandardMaxLineLength")
+
 package org.parallel_sekai.kanade.service
 
 import android.app.PendingIntent
@@ -22,10 +24,13 @@ import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.data.source.SourceManager
 import org.parallel_sekai.kanade.data.utils.CacheManager
 import org.parallel_sekai.kanade.data.utils.UrlCacheManager
+import androidx.annotation.OptIn
+import androidx.media3.common.util.UnstableApi
 
 /**
  * 后台播放服务，基于 Media3 实现
  */
+@OptIn(UnstableApi::class)
 class KanadePlaybackService : MediaSessionService() {
 
     private var player: ExoPlayer? = null
@@ -56,7 +61,9 @@ class KanadePlaybackService : MediaSessionService() {
         val resolvingDataSourceFactory = ResolvingDataSource.Factory(
             CacheManager.getCacheDataSourceFactory(this, maxCacheSize),
             object : ResolvingDataSource.Resolver {
-                override fun resolveDataSpec(dataSpec: androidx.media3.datasource.DataSpec): androidx.media3.datasource.DataSpec {
+                override fun resolveDataSpec(
+                    dataSpec: androidx.media3.datasource.DataSpec,
+                ): androidx.media3.datasource.DataSpec {
                     val uri = dataSpec.uri
 
                     if (uri.scheme == "kanade" && uri.host == "resolve") {
@@ -134,7 +141,9 @@ class KanadePlaybackService : MediaSessionService() {
 
                                     // 如果是 403 错误，尝试自动重试一次
                                     val cause = error.cause
-                                    if (cause is androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException && cause.responseCode == 403) {
+                                    val is403 = cause is androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException &&
+                                        cause.responseCode == 403
+                                    if (is403) {
                                         if (lastFailedMediaId != mediaId || retryCount < 1) {
                                             lastFailedMediaId = mediaId
                                             retryCount++

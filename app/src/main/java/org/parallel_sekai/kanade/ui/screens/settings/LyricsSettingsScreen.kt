@@ -28,16 +28,18 @@ fun LyricsSettingsScreen(
 ) {
     val settings by viewModel.lyricsSettings.collectAsState()
     val scrollState = rememberScrollState()
-    val previewTextAlign = when (settings.alignment) {
-        0 -> TextAlign.Start
-        1 -> TextAlign.Center
-        else -> TextAlign.End
-    }
-    val previewAlignment = when (settings.alignment) {
-        0 -> Alignment.Start
-        1 -> Alignment.CenterHorizontally
-        else -> Alignment.End
-    }
+    val previewTextAlign =
+        when (settings.alignment) {
+            0 -> TextAlign.Start
+            1 -> TextAlign.Center
+            else -> TextAlign.End
+        }
+    val previewAlignment =
+        when (settings.alignment) {
+            0 -> Alignment.Start
+            1 -> Alignment.CenterHorizontally
+            else -> Alignment.End
+        }
 
     Scaffold(
         topBar = {
@@ -45,17 +47,21 @@ fun LyricsSettingsScreen(
                 title = { Text(stringResource(R.string.title_lyrics_settings), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.desc_back),
+                        )
                     }
                 },
             )
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(scrollState),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(scrollState),
         ) {
             // Preview Section
             Text(
@@ -66,10 +72,11 @@ fun LyricsSettingsScreen(
             )
 
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimens.PaddingMedium)
-                    .clip(RoundedCornerShape(Dimens.CornerRadiusLarge)),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Dimens.PaddingMedium)
+                        .clip(RoundedCornerShape(Dimens.CornerRadiusLarge)),
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             ) {
                 Column(
@@ -131,7 +138,10 @@ fun LyricsSettingsScreen(
             )
 
             Column(modifier = Modifier.padding(Dimens.PaddingMedium)) {
-                Text(text = stringResource(R.string.label_font_size, settings.fontSize.toInt()), style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    text = stringResource(R.string.label_font_size, settings.fontSize.toInt()),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
                 Slider(
                     value = settings.fontSize,
                     onValueChange = { viewModel.updateFontSize(it) },
@@ -143,16 +153,20 @@ fun LyricsSettingsScreen(
             SettingsSectionHeader(title = stringResource(R.string.header_style))
 
             Column(modifier = Modifier.padding(Dimens.PaddingMedium)) {
-                val weightLabel = when (settings.fontWeight) {
-                    in 100..299 -> stringResource(R.string.weight_thin)
-                    in 300..399 -> stringResource(R.string.weight_light)
-                    in 400..499 -> stringResource(R.string.weight_normal)
-                    in 500..599 -> stringResource(R.string.weight_medium)
-                    in 600..699 -> stringResource(R.string.weight_semi_bold)
-                    in 700..799 -> stringResource(R.string.weight_bold)
-                    else -> stringResource(R.string.weight_extra_bold)
-                }
-                Text(text = stringResource(R.string.label_font_weight, weightLabel, settings.fontWeight), style = MaterialTheme.typography.bodyLarge)
+                val weightLabel =
+                    when (settings.fontWeight) {
+                        in 100..299 -> stringResource(R.string.weight_thin)
+                        in 300..399 -> stringResource(R.string.weight_light)
+                        in 400..499 -> stringResource(R.string.weight_normal)
+                        in 500..599 -> stringResource(R.string.weight_medium)
+                        in 600..699 -> stringResource(R.string.weight_semi_bold)
+                        in 700..799 -> stringResource(R.string.weight_bold)
+                        else -> stringResource(R.string.weight_extra_bold)
+                    }
+                Text(
+                    text = stringResource(R.string.label_font_weight, weightLabel, settings.fontWeight),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
                 Slider(
                     value = settings.fontWeight.toFloat(),
                     onValueChange = { viewModel.updateFontWeight(it.toInt()) },
@@ -162,9 +176,18 @@ fun LyricsSettingsScreen(
             }
 
             Column(modifier = Modifier.padding(Dimens.PaddingMedium)) {
-                Text(text = stringResource(R.string.label_alignment), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(bottom = Dimens.PaddingSmall))
+                Text(
+                    text = stringResource(R.string.label_alignment),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = Dimens.PaddingSmall),
+                )
 
-                val alignments = listOf(stringResource(R.string.align_left), stringResource(R.string.align_center), stringResource(R.string.align_right))
+                val alignments =
+                    listOf(
+                        stringResource(R.string.align_left),
+                        stringResource(R.string.align_center),
+                        stringResource(R.string.align_right),
+                    )
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     alignments.forEachIndexed { index, label ->
                         SegmentedButton(
@@ -192,12 +215,13 @@ fun LyricsSettingsScreen(
             // )
 
             var showQualityDialog by remember { mutableStateOf(false) }
-            val currentQualityLabel = when (settings.shareQuality) {
-                1.0f -> stringResource(R.string.quality_standard)
-                1.5f -> stringResource(R.string.quality_high)
-                2.0f -> stringResource(R.string.quality_ultra)
-                else -> stringResource(R.string.quality_standard)
-            }
+            val currentQualityLabel =
+                when (settings.shareQuality) {
+                    1.0f -> stringResource(R.string.quality_standard)
+                    1.5f -> stringResource(R.string.quality_high)
+                    2.0f -> stringResource(R.string.quality_ultra)
+                    else -> stringResource(R.string.quality_standard)
+                }
 
             Surface(
                 onClick = { showQualityDialog = true },
@@ -262,10 +286,11 @@ private fun QualityOption(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = Dimens.PaddingSmall),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable { onClick() }
+                .padding(vertical = Dimens.PaddingSmall),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(selected = selected, onClick = onClick)

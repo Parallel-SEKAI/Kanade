@@ -81,17 +81,21 @@ fun CacheSettingsScreen(
                 title = { Text(stringResource(R.string.title_cache_settings), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.desc_back),
+                        )
                     }
                 },
             )
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(scrollState),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(scrollState),
         ) {
             SettingsSectionHeader(title = stringResource(R.string.header_cache_usage))
 
@@ -109,9 +113,10 @@ fun CacheSettingsScreen(
 
             // 缓存上限部分，应用水平内边距以对齐 ListItem 的内容
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimens.PaddingMedium),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Dimens.PaddingMedium),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -123,14 +128,15 @@ fun CacheSettingsScreen(
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Text(
-                        text = stringResource(
-                            R.string.fmt_cache_limit_gb,
-                            if (displayGb < 10f && displayGb % 1f != 0f) {
-                                String.format(Locale.US, "%.1f", displayGb)
-                            } else {
-                                displayGb.toInt().toString()
-                            },
-                        ),
+                        text =
+                            stringResource(
+                                R.string.fmt_cache_limit_gb,
+                                if (displayGb < 10f && displayGb % 1f != 0f) {
+                                    String.format(Locale.US, "%.1f", displayGb)
+                                } else {
+                                    displayGb.toInt().toString()
+                                },
+                            ),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,

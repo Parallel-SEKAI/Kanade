@@ -36,7 +36,10 @@ fun ExcludedFoldersScreen(
                 title = { Text(stringResource(R.string.title_excluded_folders), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.desc_back),
+                        )
                     }
                 },
             )
@@ -51,9 +54,10 @@ fun ExcludedFoldersScreen(
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             if (excludedFolders.isEmpty()) {
                 Box(
@@ -86,7 +90,10 @@ fun ExcludedFoldersScreen(
                             leadingContent = { Icon(Icons.Default.Folder, contentDescription = null) },
                             trailingContent = {
                                 IconButton(onClick = { viewModel.removeExcludedFolder(path) }) {
-                                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.desc_remove))
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = stringResource(R.string.desc_remove),
+                                    )
                                 }
                             },
                         )

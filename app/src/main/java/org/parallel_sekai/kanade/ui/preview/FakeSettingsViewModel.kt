@@ -5,8 +5,9 @@ import org.parallel_sekai.kanade.data.utils.LyricGetterManager
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
 
 // This is a fake implementation for preview purposes only
-class FakeSettingsViewModel(context: Context) :
-    SettingsViewModel(
+class FakeSettingsViewModel(
+    context: Context,
+) : SettingsViewModel(
         FakeSettingsRepository(context),
         LyricGetterManager(context),
     ) {

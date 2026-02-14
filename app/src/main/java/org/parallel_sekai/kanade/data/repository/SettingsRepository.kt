@@ -34,7 +34,9 @@ data class PlaybackState(
     val lastPlaylistJson: String? = null,
 )
 
-open class SettingsRepository(private val context: Context) {
+open class SettingsRepository(
+    private val context: Context,
+) {
     private val SHOW_TRANSLATION = booleanPreferencesKey("show_translation")
     private val FONT_SIZE = floatPreferencesKey("font_size")
     private val FONT_WEIGHT = intPreferencesKey("font_weight")
@@ -60,13 +62,17 @@ open class SettingsRepository(private val context: Context) {
     private val LAST_PLAYLIST_JSON = stringPreferencesKey("last_playlist_json")
 
     private val ACTIVE_SCRIPT_ID = stringPreferencesKey("active_script_id")
-    private val SCRIPT_CONFIGS = stringPreferencesKey("script_configs") // JSON string of Map<String, Map<String, String>>
 
-    open val activeScriptIdFlow: Flow<String?> = context.dataStore.data
-        .map { preferences -> preferences[ACTIVE_SCRIPT_ID] }
+    // JSON string of Map<String, Map<String, String>>
+    private val SCRIPT_CONFIGS = stringPreferencesKey("script_configs")
 
-    open val scriptConfigsFlow: Flow<String?> = context.dataStore.data
-        .map { preferences -> preferences[SCRIPT_CONFIGS] }
+    open val activeScriptIdFlow: Flow<String?> =
+        context.dataStore.data
+            .map { preferences -> preferences[ACTIVE_SCRIPT_ID] }
+
+    open val scriptConfigsFlow: Flow<String?> =
+        context.dataStore.data
+            .map { preferences -> preferences[SCRIPT_CONFIGS] }
 
     open suspend fun updateActiveScriptId(id: String?) {
         context.dataStore.edit { preferences ->
@@ -84,43 +90,57 @@ open class SettingsRepository(private val context: Context) {
         }
     }
 
-    open val lyricsSettingsFlow: Flow<LyricsSettings> = context.dataStore.data
-        .map { preferences ->
-            LyricsSettings(
-                showTranslation = preferences[SHOW_TRANSLATION] ?: true,
-                fontSize = preferences[FONT_SIZE] ?: 18f,
-                fontWeight = preferences[FONT_WEIGHT] ?: 400,
-                blurEnabled = preferences[BLUR_ENABLED] ?: true,
-                alignment = preferences[ALIGNMENT] ?: 0,
-                balanceLines = preferences[BALANCE_LINES] ?: false,
-                isSharingEnabled = preferences[LYRIC_SHARING_ENABLED] ?: true,
-                shareQuality = preferences[LYRIC_SHARE_QUALITY] ?: 1.0f,
-            )
-        }
+    open val lyricsSettingsFlow: Flow<LyricsSettings> =
+        context.dataStore.data
+            .map { preferences ->
+                LyricsSettings(
+                    showTranslation = preferences[SHOW_TRANSLATION] ?: true,
+                    fontSize = preferences[FONT_SIZE] ?: 18f,
+                    fontWeight = preferences[FONT_WEIGHT] ?: 400,
+                    blurEnabled = preferences[BLUR_ENABLED] ?: true,
+                    alignment = preferences[ALIGNMENT] ?: 0,
+                    balanceLines = preferences[BALANCE_LINES] ?: false,
+                    isSharingEnabled = preferences[LYRIC_SHARING_ENABLED] ?: true,
+                    shareQuality = preferences[LYRIC_SHARE_QUALITY] ?: 1.0f,
+                )
+            }
 
-    open val searchResultAsPlaylistFlow: Flow<Boolean> = context.dataStore.data
-        .map { preferences ->
-            preferences[SEARCH_RESULT_AS_PLAYLIST] ?: true
-        }
+    open val searchResultAsPlaylistFlow: Flow<Boolean> =
+        context.dataStore.data
+            .map { preferences ->
+                preferences[SEARCH_RESULT_AS_PLAYLIST] ?: true
+            }
 
-    open val excludedFoldersFlow: Flow<Set<String>> = context.dataStore.data
-        .map { preferences ->
-            preferences[EXCLUDED_FOLDERS] ?: emptySet()
-        }
+    open val excludedFoldersFlow: Flow<Set<String>> =
+        context.dataStore.data
+            .map { preferences ->
+                preferences[EXCLUDED_FOLDERS] ?: emptySet()
+            }
 
-    open val maxCacheSizeFlow: Flow<Long> = context.dataStore.data
-        .map { preferences ->
-            preferences[MAX_CACHE_SIZE] ?: (500 * 1024 * 1024L) // Default 500MB
-        }
+    open val maxCacheSizeFlow: Flow<Long> =
+        context.dataStore.data
+            .map { preferences ->
+                preferences[MAX_CACHE_SIZE] ?: (500 * 1024 * 1024L) // Default 500MB
+            }
 
-    open val artistParsingSettingsFlow: Flow<ArtistParsingSettings> = context.dataStore.data
-        .map { preferences ->
-            ArtistParsingSettings(
-                separators = preferences[ARTIST_SEPARATORS]?.toList() ?: listOf("/", ";", "|", " & ", " feat. ", " ft. ", ","),
-                whitelist = preferences[ARTIST_WHITELIST]?.toList() ?: listOf("Leo/need"),
-                joinString = preferences[ARTIST_JOIN_STRING] ?: ", ",
-            )
-        }
+    open val artistParsingSettingsFlow: Flow<ArtistParsingSettings> =
+        context.dataStore.data
+            .map { preferences ->
+                ArtistParsingSettings(
+                    separators =
+                        preferences[ARTIST_SEPARATORS]?.toList() ?: listOf(
+                            "/",
+                            ";",
+                            "|",
+                            " & ",
+                            " feat. ",
+                            " ft. ",
+                            ",",
+                        ),
+                    whitelist = preferences[ARTIST_WHITELIST]?.toList() ?: listOf("Leo/need"),
+                    joinString = preferences[ARTIST_JOIN_STRING] ?: ", ",
+                )
+            }
 
     open suspend fun updateArtistSeparators(separators: List<String>) {
         context.dataStore.edit { preferences ->
@@ -166,19 +186,21 @@ open class SettingsRepository(private val context: Context) {
         }
     }
 
-    open val searchHistoryFlow: Flow<List<String>> = context.dataStore.data
-        .map { preferences ->
-            preferences[SEARCH_HISTORY]?.toList() ?: emptyList()
-        }
+    open val searchHistoryFlow: Flow<List<String>> =
+        context.dataStore.data
+            .map { preferences ->
+                preferences[SEARCH_HISTORY]?.toList() ?: emptyList()
+            }
 
     open suspend fun addSearchHistory(query: String) {
         if (query.isBlank()) return
         context.dataStore.edit { preferences ->
             val current = preferences[SEARCH_HISTORY] ?: emptySet()
-            val updated = current.toMutableSet().apply {
-                remove(query) // Move to top by removing and adding
-                add(query)
-            }
+            val updated =
+                current.toMutableSet().apply {
+                    remove(query) // Move to top by removing and adding
+                    add(query)
+                }
             // Limit to 20 items
             preferences[SEARCH_HISTORY] = updated.toList().takeLast(20).toSet()
         }
@@ -245,16 +267,17 @@ open class SettingsRepository(private val context: Context) {
         }
     }
 
-    open val playbackStateFlow: Flow<PlaybackState> = context.dataStore.data
-        .map { preferences ->
-            PlaybackState(
-                repeatMode = preferences[REPEAT_MODE] ?: 0,
-                shuffleMode = preferences[SHUFFLE_MODE] ?: false,
-                lastMediaId = preferences[LAST_PLAYED_MEDIA_ID],
-                lastPosition = preferences[LAST_PLAYED_POSITION] ?: 0L,
-                lastPlaylistJson = preferences[LAST_PLAYLIST_JSON],
-            )
-        }
+    open val playbackStateFlow: Flow<PlaybackState> =
+        context.dataStore.data
+            .map { preferences ->
+                PlaybackState(
+                    repeatMode = preferences[REPEAT_MODE] ?: 0,
+                    shuffleMode = preferences[SHUFFLE_MODE] ?: false,
+                    lastMediaId = preferences[LAST_PLAYED_MEDIA_ID],
+                    lastPosition = preferences[LAST_PLAYED_POSITION] ?: 0L,
+                    lastPlaylistJson = preferences[LAST_PLAYLIST_JSON],
+                )
+            }
 
     open suspend fun updateRepeatMode(mode: Int) {
         context.dataStore.edit { preferences ->

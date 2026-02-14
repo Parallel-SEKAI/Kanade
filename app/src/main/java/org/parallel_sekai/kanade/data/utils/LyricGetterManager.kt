@@ -13,7 +13,9 @@ import org.parallel_sekai.kanade.data.model.MusicModel
  * Manager for interacting with external lyric APIs (Lyric-Getter-API and SuperLyricApi).
  * This allows other apps to receive lyric updates from Kanade.
  */
-class LyricGetterManager(context: Context) {
+class LyricGetterManager(
+    context: Context,
+) {
     private val lyricGetterApi = API()
     private val packageName = context.packageName
 
@@ -22,17 +24,19 @@ class LyricGetterManager(context: Context) {
      */
     val isActivated: Boolean get() = isLyricGetterActivated || isSuperLyricActivated
 
-    val isLyricGetterActivated: Boolean get() = try {
-        lyricGetterApi.hasEnable
-    } catch (e: Exception) {
-        false
-    }
+    val isLyricGetterActivated: Boolean get() =
+        try {
+            lyricGetterApi.hasEnable
+        } catch (e: Exception) {
+            false
+        }
 
-    val isSuperLyricActivated: Boolean get() = try {
-        SuperLyricTool.isEnabled
-    } catch (e: Exception) {
-        false
-    }
+    val isSuperLyricActivated: Boolean get() =
+        try {
+            SuperLyricTool.isEnabled
+        } catch (e: Exception) {
+            false
+        }
 
     /**
      * Send current lyric to all supported APIs.
@@ -56,9 +60,10 @@ class LyricGetterManager(context: Context) {
 
         // 1. Lyric-Getter-API
         try {
-            val extra = ExtraData().apply {
-                packageName = this@LyricGetterManager.packageName
-            }
+            val extra =
+                ExtraData().apply {
+                    packageName = this@LyricGetterManager.packageName
+                }
             lyricGetterApi.sendLyric(lyric, extra)
         } catch (e: Exception) {
             Log.e("LyricGetterManager", "Failed to send to Lyric-Getter-API", e)
@@ -67,18 +72,21 @@ class LyricGetterManager(context: Context) {
         // 2. SuperLyricApi
         try {
             val safeDelay = delay.coerceIn(0, Int.MAX_VALUE.toLong()).toInt()
-            val data = SuperLyricData()
-                .setLyric(lyric)
-                .setPackageName(packageName)
-                .setDelay(safeDelay)
+            val data =
+                SuperLyricData()
+                    .setLyric(lyric)
+                    .setPackageName(packageName)
+                    .setDelay(safeDelay)
 
             translation?.let { data.setTranslation(it) }
 
             if (words.isNotEmpty()) {
-                val enhancedData = words.map {
-                    val duration = (it.endTime - it.startTime).coerceIn(0, Int.MAX_VALUE.toLong()).toInt()
-                    SuperLyricData.EnhancedLRCData(it.text, duration)
-                }.toTypedArray()
+                val enhancedData =
+                    words
+                        .map {
+                            val duration = (it.endTime - it.startTime).coerceIn(0, Int.MAX_VALUE.toLong()).toInt()
+                            SuperLyricData.EnhancedLRCData(it.text, duration)
+                        }.toTypedArray()
                 data.setEnhancedLRCData(enhancedData)
             }
 

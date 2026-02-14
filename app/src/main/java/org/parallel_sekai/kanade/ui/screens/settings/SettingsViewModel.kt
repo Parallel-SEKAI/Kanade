@@ -18,48 +18,52 @@ open class SettingsViewModel(
     private val repository: SettingsRepository,
     private val lyricGetterManager: LyricGetterManager,
 ) : ViewModel() {
-
     val isLyricsGetterActivated: Boolean get() = lyricGetterManager.isLyricGetterActivated
     val isSuperLyricActivated: Boolean get() = lyricGetterManager.isSuperLyricActivated
     val isAnyLyricApiActivated: Boolean get() = lyricGetterManager.isActivated
 
-    val lyricsSettings: StateFlow<LyricsSettings> = repository.lyricsSettingsFlow
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = LyricsSettings(),
-        )
+    val lyricsSettings: StateFlow<LyricsSettings> =
+        repository.lyricsSettingsFlow
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = LyricsSettings(),
+            )
 
-    val searchResultAsPlaylist: StateFlow<Boolean> = repository.searchResultAsPlaylistFlow
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = true,
-        )
+    val searchResultAsPlaylist: StateFlow<Boolean> =
+        repository.searchResultAsPlaylistFlow
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = true,
+            )
 
-    val excludedFolders: StateFlow<Set<String>> = repository.excludedFoldersFlow
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptySet(),
-        )
+    val excludedFolders: StateFlow<Set<String>> =
+        repository.excludedFoldersFlow
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptySet(),
+            )
 
-    val maxCacheSize: StateFlow<Long> = repository.maxCacheSizeFlow
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = 500 * 1024 * 1024L,
-        )
+    val maxCacheSize: StateFlow<Long> =
+        repository.maxCacheSizeFlow
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = 500 * 1024 * 1024L,
+            )
 
     private val _currentCacheSize = MutableStateFlow(0L)
     val currentCacheSize: StateFlow<Long> = _currentCacheSize.asStateFlow()
 
-    val artistParsingSettings: StateFlow<ArtistParsingSettings> = repository.artistParsingSettingsFlow
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = ArtistParsingSettings(),
-        )
+    val artistParsingSettings: StateFlow<ArtistParsingSettings> =
+        repository.artistParsingSettingsFlow
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = ArtistParsingSettings(),
+            )
 
     init {
         // ViewModel 不直接持有 Context，通常建议通过构造函数注入或使用 AndroidViewModel

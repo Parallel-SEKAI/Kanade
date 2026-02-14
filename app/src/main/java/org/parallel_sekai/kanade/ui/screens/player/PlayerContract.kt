@@ -58,34 +58,90 @@ data class PlayerState(
 
 sealed interface PlayerIntent {
     object PlayPause : PlayerIntent
+
     object Next : PlayerIntent
+
     object Previous : PlayerIntent
+
     object Expand : PlayerIntent
+
     object Collapse : PlayerIntent
-    data class RefreshList(val forceScriptRefresh: Boolean = true) : PlayerIntent
+
+    data class RefreshList(
+        val forceScriptRefresh: Boolean = true,
+    ) : PlayerIntent
+
     object RefreshArtists : PlayerIntent
+
     object RefreshAlbums : PlayerIntent
+
     object RefreshFolders : PlayerIntent
+
     object RefreshPlaylists : PlayerIntent
+
     object RefreshHome : PlayerIntent
+
     object LoadMoreHome : PlayerIntent
+
     object ToggleRepeat : PlayerIntent
+
     object ToggleShuffle : PlayerIntent
-    data class FetchDetailList(val type: DetailType, val id: String) : PlayerIntent
-    data class SelectSong(val song: MusicModel, val customList: List<MusicModel>? = null) : PlayerIntent // 选择歌曲
-    data class SeekTo(val position: Long) : PlayerIntent
+
+    data class FetchDetailList(
+        val type: DetailType,
+        val id: String,
+    ) : PlayerIntent
+
+    data class SelectSong(
+        val song: MusicModel,
+        val customList: List<MusicModel>? = null,
+    ) : PlayerIntent // 选择歌曲
+
+    data class SeekTo(
+        val position: Long,
+    ) : PlayerIntent
+
     object ReloadScripts : PlayerIntent
-    data class ImportScript(val uri: Uri) : PlayerIntent
-    data class ToggleActiveScript(val scriptId: String?) : PlayerIntent
-    data class UpdateScriptConfig(val scriptId: String, val key: String, val value: String) : PlayerIntent
-    data class OpenLyricShare(val index: Int) : PlayerIntent
+
+    data class ImportScript(
+        val uri: Uri,
+    ) : PlayerIntent
+
+    data class ToggleActiveScript(
+        val scriptId: String?,
+    ) : PlayerIntent
+
+    data class UpdateScriptConfig(
+        val scriptId: String,
+        val key: String,
+        val value: String,
+    ) : PlayerIntent
+
+    data class OpenLyricShare(
+        val index: Int,
+    ) : PlayerIntent
+
     object CloseLyricShare : PlayerIntent
-    data class ToggleLyricSelection(val index: Int) : PlayerIntent
+
+    data class ToggleLyricSelection(
+        val index: Int,
+    ) : PlayerIntent
+
     object SaveLyricImage : PlayerIntent
+
     object ShareLyricImage : PlayerIntent
+
+    data class DeleteScript(
+        val scriptId: String,
+    ) : PlayerIntent
 }
 
 sealed interface PlayerEffect {
-    data class ShowError(val message: String) : PlayerEffect
-    data class ShowMessage(val message: String) : PlayerEffect
+    data class ShowError(
+        val message: String,
+    ) : PlayerEffect
+
+    data class ShowMessage(
+        val message: String,
+    ) : PlayerEffect
 }

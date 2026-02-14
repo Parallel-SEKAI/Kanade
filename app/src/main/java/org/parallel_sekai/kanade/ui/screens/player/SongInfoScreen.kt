@@ -1,3 +1,5 @@
+@file:Suppress("KtlintStandardMaxLineLength")
+
 package org.parallel_sekai.kanade.ui.screens.player
 
 import android.media.MediaMetadataRetriever
@@ -69,7 +71,10 @@ fun SongInfoScreen(
 
                 // Get file path and size if it's a content URI or file URI
                 if (uri.scheme == "content") {
-                    val projection = arrayOf(android.provider.MediaStore.Audio.Media.DATA, android.provider.MediaStore.Audio.Media.SIZE)
+                    val projection = arrayOf(
+                        android.provider.MediaStore.Audio.Media.DATA,
+                        android.provider.MediaStore.Audio.Media.SIZE,
+                    )
                     context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
                         if (cursor.moveToFirst()) {
                             val path = cursor.getString(0)
@@ -185,7 +190,9 @@ fun SongInfoScreen(
                                         detectTapGestures(
                                             onLongPress = {
                                                 clipboardManager.setText(AnnotatedString(state.lyrics))
-                                                Toast.makeText(context, R.string.msg_copied_to_clipboard, Toast.LENGTH_SHORT).show()
+                                                @Suppress("LocalContextGetResourceValueCall")
+                                                val msg = context.getString(R.string.msg_copied_to_clipboard)
+                                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                                             },
                                         )
                                     },

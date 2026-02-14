@@ -43,8 +43,10 @@ fun SearchScreen(
             when (effect) {
                 is SearchEffect.ShowError -> {
                     scope.launch {
+                        @Suppress("LocalContextGetResourceValueCall")
+                        val message = context.getString(effect.messageResId, *effect.formatArgs.toTypedArray())
                         snackbarHostState.showSnackbar(
-                            message = context.getString(effect.messageResId, *effect.formatArgs.toTypedArray()),
+                            message = message,
                             actionLabel = null,
                             withDismissAction = true,
                         )
@@ -58,10 +60,11 @@ fun SearchScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .padding(innerPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(innerPadding),
         ) {
             SearchBar(
                 inputField = {
@@ -84,9 +87,10 @@ fun SearchScreen(
                 },
                 expanded = false,
                 onExpandedChange = {},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimens.PaddingMedium),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Dimens.PaddingMedium),
             ) {}
 
             Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
@@ -107,9 +111,10 @@ fun SearchScreen(
                     if (state.searchHistory.isNotEmpty()) {
                         item {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(Dimens.PaddingMedium),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(Dimens.PaddingMedium),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -136,9 +141,10 @@ fun SearchScreen(
                     if (state.isLoading) {
                         item {
                             Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(Dimens.PaddingExtraLarge),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(Dimens.PaddingExtraLarge),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 CircularProgressIndicator()
@@ -147,12 +153,16 @@ fun SearchScreen(
                     } else if (state.searchResults.isEmpty() && state.isSearching) {
                         item {
                             Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(Dimens.PaddingExtraLarge),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(Dimens.PaddingExtraLarge),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Text(stringResource(R.string.msg_no_results), style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    stringResource(R.string.msg_no_results),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
                             }
                         }
                     } else {
@@ -188,17 +198,18 @@ fun SourceSelector(
                 selected = isSelected,
                 onClick = { onToggleSource(source.id) },
                 label = { Text(source.name) },
-                leadingIcon = if (isSelected) {
-                    {
-                        Icon(
-                            imageVector = Icons.Default.Done,
-                            contentDescription = null,
-                            modifier = Modifier.size(FilterChipDefaults.IconSize),
-                        )
-                    }
-                } else {
-                    null
-                },
+                leadingIcon =
+                    if (isSelected) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Done,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize),
+                            )
+                        }
+                    } else {
+                        null
+                    },
             )
         }
     }
@@ -211,10 +222,11 @@ fun HistoryItem(
     onRemove: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.CornerRadiusLarge),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.CornerRadiusLarge),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -224,9 +236,10 @@ fun HistoryItem(
         )
         Text(
             text = query,
-            modifier = Modifier
-                .padding(start = Dimens.PaddingMedium)
-                .weight(1f),
+            modifier =
+                Modifier
+                    .padding(start = Dimens.PaddingMedium)
+                    .weight(1f),
             style = MaterialTheme.typography.bodyLarge,
         )
         IconButton(onClick = onRemove) {
@@ -247,19 +260,21 @@ fun SearchSongListItem(
     artistJoinString: String,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
             model = song.coverUrl,
             contentDescription = null,
-            modifier = Modifier
-                .size(Dimens.AlbumCoverSizeListItem)
-                .clip(RoundedCornerShape(Dimens.CornerRadiusMedium))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+            modifier =
+                Modifier
+                    .size(Dimens.AlbumCoverSizeListItem)
+                    .clip(RoundedCornerShape(Dimens.CornerRadiusMedium))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
             contentScale = ContentScale.Crop,
         )
         Column(modifier = Modifier.padding(start = Dimens.PaddingMedium).weight(1f)) {

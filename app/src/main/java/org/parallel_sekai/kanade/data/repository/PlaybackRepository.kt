@@ -30,7 +30,6 @@ open class PlaybackRepository(
     private val settingsRepository: SettingsRepository,
     private val scope: kotlinx.coroutines.CoroutineScope, // 注入外部作用域（通常是 applicationScope）
 ) {
-
     private val sourceManager = SourceManager.getInstance(context, settingsRepository)
     val scriptSources = sourceManager.scriptSources
 
@@ -64,30 +63,32 @@ open class PlaybackRepository(
      */
     private val frameDelay: Long by lazy {
         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
-        val refreshRate = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            try {
-                context.display.refreshRate
-            } catch (e: Exception) {
-                60f
+        val refreshRate =
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                try {
+                    context.display.refreshRate
+                } catch (e: Exception) {
+                    60f
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                windowManager.defaultDisplay.refreshRate
             }
-        } else {
-            @Suppress("DEPRECATION")
-            windowManager.defaultDisplay.refreshRate
-        }
         (1000 / refreshRate.coerceAtLeast(60f)).toLong()
     }
 
     /**
      * 提供实时的播放进度和时长
      */
-    val progressFlow: Flow<Pair<Long, Long>> = flow {
-        while (true) {
-            controller?.let {
-                emit(it.currentPosition to it.duration.coerceAtLeast(0L))
+    val progressFlow: Flow<Pair<Long, Long>> =
+        flow {
+            while (true) {
+                controller?.let {
+                    emit(it.currentPosition to it.duration.coerceAtLeast(0L))
+                }
+                delay(frameDelay)
             }
-            delay(frameDelay)
         }
-    }
 
     init {
         setupControllerListener()
@@ -107,6 +108,10 @@ open class PlaybackRepository(
         sourceManager.importScript(uri)
     }
 
+    suspend fun deleteScript(scriptId: String) {
+        sourceManager.deleteScript(scriptId)
+    }
+
     private val allSources: List<IMusicSource>
         get() = sourceManager.getAllSources()
 
@@ -118,32 +123,43 @@ open class PlaybackRepository(
             try {
                 val ctrl = controllerFuture.get()
                 controller = ctrl
-                ctrl.addListener(object : Player.Listener {
-                    override fun onIsPlayingChanged(isPlaying: Boolean) {
-                        _isPlaying.value = isPlaying
-                        if (!isPlaying) {
+                ctrl.addListener(
+                    object : Player.Listener {
+                        override fun onIsPlayingChanged(isPlaying: Boolean) {
+                            _isPlaying.value = isPlaying
+                            if (!isPlaying) {
+                                savePlaybackState()
+                            }
+                        }
+
+                        override fun onMediaItemTransition(
+                            mediaItem: MediaItem?,
+                            reason: Int,
+                        ) {
+                            _currentMediaId.value = mediaItem?.mediaId
+                            _currentMediaItem.value = mediaItem
                             savePlaybackState()
                         }
-                    }
-                    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                        _currentMediaId.value = mediaItem?.mediaId
-                        _currentMediaItem.value = mediaItem
-                        savePlaybackState()
-                    }
-                    override fun onRepeatModeChanged(repeatMode: Int) {
-                        _repeatMode.value = repeatMode
-                        savePlaybackState()
-                    }
-                    override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
-                        _shuffleModeEnabled.value = shuffleModeEnabled
-                        savePlaybackState()
-                    }
 
-                    override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
-                        updatePlaylist(ctrl)
-                        savePlaybackState()
-                    }
-                })
+                        override fun onRepeatModeChanged(repeatMode: Int) {
+                            _repeatMode.value = repeatMode
+                            savePlaybackState()
+                        }
+
+                        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                            _shuffleModeEnabled.value = shuffleModeEnabled
+                            savePlaybackState()
+                        }
+
+                        override fun onTimelineChanged(
+                            timeline: androidx.media3.common.Timeline,
+                            reason: Int,
+                        ) {
+                            updatePlaylist(ctrl)
+                            savePlaybackState()
+                        }
+                    },
+                )
                 // 初始化状态
                 _repeatMode.value = ctrl.repeatMode
                 _shuffleModeEnabled.value = ctrl.shuffleModeEnabled
@@ -153,7 +169,10 @@ open class PlaybackRepository(
 
                 // 恢复播放状态
                 scope.launch {
-                    android.util.Log.d("PlaybackRepository", "Checking for playback restoration. Current item count: ${ctrl.mediaItemCount}")
+                    android.util.Log.d(
+                        "PlaybackRepository",
+                        "Checking for playback restoration. Current item count: ${ctrl.mediaItemCount}",
+                    )
                     if (ctrl.mediaItemCount == 0) {
                         restorePlaybackState(ctrl)
                     }
@@ -172,19 +191,23 @@ open class PlaybackRepository(
         val shuffleMode = ctrl.shuffleModeEnabled
 
         // Convert MediaItems back to MusicModels for serialization
-        val playlist = (0 until ctrl.mediaItemCount).map { i ->
-            val item = ctrl.getMediaItemAt(i)
-            MusicModel(
-                id = item.mediaMetadata.extras?.getString("original_id") ?: item.mediaId,
-                title = item.mediaMetadata.title?.toString() ?: "",
-                artists = item.mediaMetadata.artist?.toString()?.split(_artistJoinString.value) ?: emptyList(),
-                album = item.mediaMetadata.albumTitle?.toString() ?: "",
-                coverUrl = item.mediaMetadata.artworkUri?.toString() ?: "",
-                mediaUri = item.requestMetadata.mediaUri?.toString() ?: "",
-                duration = item.mediaMetadata.extras?.getLong("duration") ?: 0L,
-                sourceId = item.mediaMetadata.extras?.getString("source_id") ?: "local_storage",
-            )
-        }
+        val playlist =
+            (0 until ctrl.mediaItemCount).map { i ->
+                val item = ctrl.getMediaItemAt(i)
+                MusicModel(
+                    id = item.mediaMetadata.extras?.getString("original_id") ?: item.mediaId,
+                    title = item.mediaMetadata.title?.toString() ?: "",
+                    artists =
+                        item.mediaMetadata.artist
+                            ?.toString()
+                            ?.split(_artistJoinString.value) ?: emptyList(),
+                    album = item.mediaMetadata.albumTitle?.toString() ?: "",
+                    coverUrl = item.mediaMetadata.artworkUri?.toString() ?: "",
+                    mediaUri = item.requestMetadata.mediaUri?.toString() ?: "",
+                    duration = item.mediaMetadata.extras?.getLong("duration") ?: 0L,
+                    sourceId = item.mediaMetadata.extras?.getString("source_id") ?: "local_storage",
+                )
+            }
 
         scope.launch {
             try {
@@ -238,10 +261,16 @@ open class PlaybackRepository(
                 android.util.Log.d("PlaybackRepository", "Decoded ${musicList.size} music items from JSON")
 
                 if (musicList.isNotEmpty()) {
-                    val mediaItems = musicList.map { music ->
-                        createMediaItem(music)
-                    }
-                    val startIndex = musicList.indexOfFirst { "${it.sourceId}:${it.id}" == state.lastMediaId }.coerceAtLeast(0)
+                    val mediaItems =
+                        musicList.map { music ->
+                            createMediaItem(music)
+                        }
+                    val startIndex =
+                        musicList
+                            .indexOfFirst { "${it.sourceId}:${it.id}" == state.lastMediaId }
+                            .coerceAtLeast(
+                                0,
+                            )
 
                     // 设置列表并跳转到保存的位置
                     controller.setMediaItems(mediaItems, startIndex, state.lastPosition)
@@ -249,7 +278,10 @@ open class PlaybackRepository(
                     controller.shuffleModeEnabled = state.shuffleMode
                     controller.prepare()
 
-                    android.util.Log.d("PlaybackRepository", "Restoration applied via JSON: index=$startIndex, pos=${state.lastPosition}")
+                    android.util.Log.d(
+                        "PlaybackRepository",
+                        "Restoration applied via JSON: index=$startIndex, pos=${state.lastPosition}",
+                    )
 
                     // 显式且立即更新内部状态
                     val restoredItem = mediaItems.getOrNull(startIndex)
@@ -270,7 +302,10 @@ open class PlaybackRepository(
         }
     }
 
-    private fun updatePlaylist(controller: MediaController, items: List<MediaItem>? = null) {
+    private fun updatePlaylist(
+        controller: MediaController,
+        items: List<MediaItem>? = null,
+    ) {
         if (items != null) {
             _currentPlaylist.value = items
             return
@@ -294,31 +329,38 @@ open class PlaybackRepository(
         localMusicSource.excludedFolders = folders
     }
 
-    suspend fun fetchMusicList(query: String = "", sourceIds: List<String>? = null): MusicListResult = coroutineScope {
-        if (query.isEmpty()) {
-            localMusicSource.getMusicList("")
-        } else {
-            val sourcesToSearch = if (sourceIds == null) {
-                allSources
+    suspend fun fetchMusicList(
+        query: String = "",
+        sourceIds: List<String>? = null,
+    ): MusicListResult =
+        coroutineScope {
+            if (query.isEmpty()) {
+                localMusicSource.getMusicList("")
             } else {
-                allSources.filter { it.sourceId in sourceIds }
-            }
-
-            val allResults = sourcesToSearch.map { source ->
-                async {
-                    try {
-                        source.getMusicList(query)
-                    } catch (e: Exception) {
-                        MusicListResult(emptyList())
+                val sourcesToSearch =
+                    if (sourceIds == null) {
+                        allSources
+                    } else {
+                        allSources.filter { it.sourceId in sourceIds }
                     }
-                }
-            }.awaitAll()
-            
-            val allItems = allResults.flatMap { it.items }
-            // 对于搜索结果，我们目前不合并总数，因为多源总数合并逻辑复杂
-            MusicListResult(allItems)
+
+                val allResults =
+                    sourcesToSearch
+                        .map { source ->
+                            async {
+                                try {
+                                    source.getMusicList(query)
+                                } catch (e: Exception) {
+                                    MusicListResult(emptyList())
+                                }
+                            }
+                        }.awaitAll()
+
+                val allItems = allResults.flatMap { it.items }
+                // 对于搜索结果，我们目前不合并总数，因为多源总数合并逻辑复杂
+                MusicListResult(allItems)
+            }
         }
-    }
 
     suspend fun fetchArtistList(): List<ArtistModel> = localMusicSource.getArtistList()
 
@@ -339,20 +381,28 @@ open class PlaybackRepository(
      */
     suspend fun fetchHomeList(page: Int = 1): MusicListResult = sourceManager.getHomeList(page)
 
-    suspend fun fetchSongsByPlaylist(playlistId: String): List<MusicModel> = localMusicSource.getSongsByPlaylist(playlistId)
+    suspend fun fetchSongsByPlaylist(playlistId: String): List<MusicModel> =
+        localMusicSource.getSongsByPlaylist(playlistId)
 
-    suspend fun fetchLyrics(musicId: String, sourceId: String? = null): String? {
+    suspend fun fetchLyrics(
+        musicId: String,
+        sourceId: String? = null,
+    ): String? {
         if (sourceId == null || sourceId == localMusicSource.sourceId) {
             return localMusicSource.getLyrics(musicId)
         }
         return sourceManager.getLyrics(sourceId, musicId)
     }
 
-    fun setPlaylist(list: List<MusicModel>, startIndex: Int = 0) {
+    fun setPlaylist(
+        list: List<MusicModel>,
+        startIndex: Int = 0,
+    ) {
         controller?.let { ctrl ->
-            val mediaItems = list.map { music ->
-                createMediaItem(music)
-            }
+            val mediaItems =
+                list.map { music ->
+                    createMediaItem(music)
+                }
 
             ctrl.setMediaItems(mediaItems, startIndex, 0L)
             ctrl.prepare()
@@ -362,45 +412,51 @@ open class PlaybackRepository(
 
     fun addPlaylistItems(list: List<MusicModel>) {
         controller?.let { ctrl ->
-            val mediaItems = list.map { music ->
-                createMediaItem(music)
-            }
+            val mediaItems =
+                list.map { music ->
+                    createMediaItem(music)
+                }
             ctrl.addMediaItems(mediaItems)
         }
     }
 
     private fun createMediaItem(music: MusicModel): MediaItem {
         val uniqueId = "${music.sourceId}:${music.id}"
-        val extras = android.os.Bundle().apply {
-            putString("source_id", music.sourceId)
-            putString("original_id", music.id)
-            putLong("duration", music.duration)
-        }
+        val extras =
+            android.os.Bundle().apply {
+                putString("source_id", music.sourceId)
+                putString("original_id", music.id)
+                putLong("duration", music.duration)
+            }
 
         val isLocal = music.sourceId == localMusicSource.sourceId
-        val mediaUri = if (isLocal) {
-            music.mediaUri
-        } else {
-            "kanade://resolve?source_id=${music.sourceId}&original_id=${music.id}"
-        }
+        val mediaUri =
+            if (isLocal) {
+                music.mediaUri
+            } else {
+                "kanade://resolve?source_id=${music.sourceId}&original_id=${music.id}"
+            }
 
-        val builder = MediaItem.Builder()
-            .setMediaId(uniqueId)
-            .setUri(mediaUri)
-            .setRequestMetadata(
-                androidx.media3.common.MediaItem.RequestMetadata.Builder()
-                    .setMediaUri(android.net.Uri.parse(mediaUri))
-                    .build(),
-            )
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setTitle(music.title)
-                    .setArtist(music.artists.joinToString(_artistJoinString.value))
-                    .setAlbumTitle(music.album)
-                    .setArtworkUri(android.net.Uri.parse(music.coverUrl))
-                    .setExtras(extras)
-                    .build(),
-            )
+        val builder =
+            MediaItem
+                .Builder()
+                .setMediaId(uniqueId)
+                .setUri(mediaUri)
+                .setRequestMetadata(
+                    androidx.media3.common.MediaItem.RequestMetadata
+                        .Builder()
+                        .setMediaUri(android.net.Uri.parse(mediaUri))
+                        .build(),
+                ).setMediaMetadata(
+                    MediaMetadata
+                        .Builder()
+                        .setTitle(music.title)
+                        .setArtist(music.artists.joinToString(_artistJoinString.value))
+                        .setAlbumTitle(music.album)
+                        .setArtworkUri(android.net.Uri.parse(music.coverUrl))
+                        .setExtras(extras)
+                        .build(),
+                )
 
         return builder.build()
     }

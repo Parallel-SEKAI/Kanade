@@ -7,8 +7,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.parallel_sekai.kanade.data.repository.*
 
 // This is a fake implementation for preview purposes only
-class FakeSettingsRepository(context: Context) : SettingsRepository(context) {
-
+class FakeSettingsRepository(
+    context: Context,
+) : SettingsRepository(context) {
     private val _fakeLyricsSettingsFlow = MutableStateFlow(LyricsSettings())
     override val lyricsSettingsFlow: StateFlow<LyricsSettings> = _fakeLyricsSettingsFlow.asStateFlow()
 
@@ -18,14 +19,17 @@ class FakeSettingsRepository(context: Context) : SettingsRepository(context) {
     private val _fakeExcludedFoldersFlow = MutableStateFlow(emptySet<String>())
     override val excludedFoldersFlow: StateFlow<Set<String>> = _fakeExcludedFoldersFlow.asStateFlow()
 
-    private val _fakeArtistParsingSettingsFlow = MutableStateFlow(
-        ArtistParsingSettings(
-            separators = listOf("/", ";", " & "),
-            whitelist = listOf("Leo/need", "Artist with / in name"),
-            joinString = " | ",
-        ),
-    )
-    override val artistParsingSettingsFlow: StateFlow<ArtistParsingSettings> = _fakeArtistParsingSettingsFlow.asStateFlow()
+    private val _fakeArtistParsingSettingsFlow =
+        MutableStateFlow(
+            ArtistParsingSettings(
+                separators = listOf("/", ";", " & "),
+                whitelist = listOf("Leo/need", "Artist with / in name"),
+                joinString = " | ",
+            ),
+        )
+    override val artistParsingSettingsFlow: StateFlow<ArtistParsingSettings> =
+        _fakeArtistParsingSettingsFlow
+            .asStateFlow()
 
     private val _fakeSearchHistoryFlow = MutableStateFlow(emptyList<String>())
     override val searchHistoryFlow: StateFlow<List<String>> = _fakeSearchHistoryFlow.asStateFlow()
@@ -44,15 +48,26 @@ class FakeSettingsRepository(context: Context) : SettingsRepository(context) {
     }
 
     override suspend fun updateShowTranslation(show: Boolean) { /* do nothing */ }
+
     override suspend fun updateFontSize(size: Float) { /* do nothing */ }
+
     override suspend fun updateFontWeight(weight: Int) { /* do nothing */ }
+
     override suspend fun updateBlurEnabled(enabled: Boolean) { /* do nothing */ }
+
     override suspend fun updateAlignment(alignment: Int) { /* do nothing */ }
+
     override suspend fun updateBalanceLines(balance: Boolean) { /* do nothing */ }
+
     override suspend fun addExcludedFolder(path: String) { /* do nothing */ }
+
     override suspend fun removeExcludedFolder(path: String) { /* do nothing */ }
+
     override suspend fun updateSearchResultAsPlaylist(enabled: Boolean) { /* do nothing */ }
+
     override suspend fun addSearchHistory(query: String) { /* do nothing */ }
+
     override suspend fun removeSearchHistory(query: String) { /* do nothing */ }
+
     override suspend fun clearSearchHistory() { /* do nothing */ }
 }

@@ -58,6 +58,7 @@ You must implement the following functions. They can be standard functions or `a
 Called once when the engine starts or when settings change.
 - `config`: A JavaScript object containing current user settings.
 - **Note**: Values are provided based on the `type` defined in the manifest.
+- **Migration (v1.1)**: Previously, `config` was passed as a JSON string. In v1.1+, it is a native JS object. If your script uses `JSON.parse(config)`, please remove it or add a type check: `if (typeof config === "string") config = JSON.parse(config);`.
 
 ### `getHomeList()`
 Called to populate the "Discover" section on the Library screen.

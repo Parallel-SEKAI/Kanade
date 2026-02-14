@@ -29,17 +29,21 @@ fun SuperLyricApiScreen(
                 title = { Text(stringResource(R.string.label_super_lyric_api), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.desc_back),
+                        )
                     }
                 },
             )
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(scrollState),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(scrollState),
         ) {
             SettingsSectionHeader(title = stringResource(R.string.label_activation_status))
 
@@ -47,8 +51,18 @@ fun SuperLyricApiScreen(
                 headlineContent = { Text(stringResource(R.string.label_super_lyric_api)) },
                 trailingContent = {
                     Text(
-                        text = if (isSuperLyricActivated) stringResource(R.string.status_activated) else stringResource(R.string.status_not_activated),
-                        color = if (isSuperLyricActivated) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        text =
+                            if (isSuperLyricActivated) {
+                                stringResource(R.string.status_activated)
+                            } else {
+                                stringResource(R.string.status_not_activated)
+                            },
+                        color =
+                            if (isSuperLyricActivated) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.error
+                            },
                         fontWeight = FontWeight.Bold,
                     )
                 },

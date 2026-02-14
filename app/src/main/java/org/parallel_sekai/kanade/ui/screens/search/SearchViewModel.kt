@@ -8,14 +8,12 @@ import kotlinx.coroutines.launch
 import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
-import org.parallel_sekai.kanade.data.source.MusicListResult
 
 @OptIn(FlowPreview::class)
 class SearchViewModel(
     private val playbackRepository: PlaybackRepository,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
-
     private val _state = MutableStateFlow(SearchState())
     val state = _state.asStateFlow()
 
@@ -33,7 +31,8 @@ class SearchViewModel(
             _state.update {
                 val newSourceIds = sources.map { s -> s.id }.toSet()
                 // Auto-select newly added sources (e.g. after import)
-                val updatedSelected = it.selectedSourceIds + (newSourceIds - it.availableSources.map { s -> s.id }.toSet())
+                val updatedSelected =
+                    it.selectedSourceIds + (newSourceIds - it.availableSources.map { s -> s.id }.toSet())
 
                 it.copy(
                     availableSources = sources,
@@ -65,7 +64,8 @@ class SearchViewModel(
 
         // Debounced search logic
         viewModelScope.launch {
-            _state.map { it.searchQuery }
+            _state
+                .map { it.searchQuery }
                 .distinctUntilChanged()
                 .debounce(500)
                 .collect { query ->

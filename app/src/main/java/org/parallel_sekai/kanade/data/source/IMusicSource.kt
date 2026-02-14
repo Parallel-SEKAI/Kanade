@@ -87,8 +87,11 @@ class ScriptSourceManager {
         return object : IMusicSource {
             override val sourceId = "dynamic_script_id"
             override val sourceName = "Remote Source via Script"
+
             override suspend fun getMusicList(query: String) = MusicListResult(emptyList())
+
             override suspend fun getPlayUrl(musicId: String) = "https://..."
+
             override suspend fun getLyrics(musicId: String): String? = null
         }
     }

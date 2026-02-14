@@ -1,3 +1,5 @@
+@file:Suppress("KtlintStandardMaxLineLength")
+
 package org.parallel_sekai.kanade.data.utils
 
 import android.content.ContentValues
@@ -81,11 +83,16 @@ object LyricImageUtils {
         val titleLayout = createStaticLayout(song.title, paintTitle, textMaxWidth.toInt(), Layout.Alignment.ALIGN_NORMAL)
 
         val artistNames = song.artists.joinToString(artistJoinString)
-        val artistLayout = createStaticLayout(artistNames, paintArtist, textMaxWidth.toInt(), Layout.Alignment.ALIGN_NORMAL)
+        val artistLayout = createStaticLayout(
+            artistNames, paintArtist, textMaxWidth.toInt(), Layout.Alignment.ALIGN_NORMAL,
+        )
 
-        val albumLayout = createStaticLayout(song.album, paintAlbum, textMaxWidth.toInt(), Layout.Alignment.ALIGN_NORMAL)
+        val albumLayout = createStaticLayout(
+            song.album, paintAlbum, textMaxWidth.toInt(), Layout.Alignment.ALIGN_NORMAL,
+        )
 
-        val totalTextH = titleLayout.height + 20f * quality + artistLayout.height + 15f * quality + albumLayout.height
+        val totalTextH = titleLayout.height + 20f * quality +
+            artistLayout.height + 15f * quality + albumLayout.height
         val metadataHeight = maxOf(coverSize, totalTextH)
 
         // 2. Measure Lyrics Height
@@ -225,7 +232,12 @@ object LyricImageUtils {
             alpha = (255 * 0.6).toInt()
             textAlign = Paint.Align.RIGHT
         }
-        canvas.drawText(context.getString(R.string.app_branding), width - padding, totalHeight - padding, paintBranding)
+        canvas.drawText(
+            context.getString(R.string.app_branding),
+            width - padding,
+            totalHeight - padding,
+            paintBranding,
+        )
 
         bitmap
     }
@@ -248,7 +260,8 @@ object LyricImageUtils {
             .allowHardware(false)
             .build()
         val result = loader.execute(request)
-        return (result as? SuccessResult)?.drawable?.let { (it as android.graphics.drawable.BitmapDrawable).bitmap }
+        val drawable = (result as? SuccessResult)?.drawable
+        return (drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
     }
 
     suspend fun saveBitmapToGallery(context: Context, bitmap: Bitmap): Uri? = withContext(Dispatchers.IO) {

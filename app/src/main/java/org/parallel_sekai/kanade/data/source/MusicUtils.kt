@@ -3,7 +3,6 @@ package org.parallel_sekai.kanade.data.source
 import org.parallel_sekai.kanade.data.repository.ArtistParsingSettings
 
 object MusicUtils {
-
     fun bytesToHex(bytes: ByteArray): String {
         val hexChars = CharArray(bytes.size * 2)
         val hexArray = "0123456789abcdef".toCharArray()
@@ -35,23 +34,28 @@ object MusicUtils {
         }
 
         // 2. Find the highest priority matching separator
-        val usedSeparator = settings.separators.firstOrNull { tempString.contains(it, ignoreCase = true) } // 使用 settings.separators
+        val usedSeparator =
+            settings.separators.firstOrNull {
+                tempString.contains(it, ignoreCase = true)
+            } // 使用 settings.separators
 
         // 3. Execute splitting
-        val parts = if (usedSeparator != null) {
-            tempString.split(Regex(Regex.escape(usedSeparator), RegexOption.IGNORE_CASE))
-        } else {
-            listOf(tempString)
-        }
+        val parts =
+            if (usedSeparator != null) {
+                tempString.split(Regex(Regex.escape(usedSeparator), RegexOption.IGNORE_CASE))
+            } else {
+                listOf(tempString)
+            }
 
         // 4. Restore whitelist items and clean up
-        return parts.map { part ->
-            var restored = part.trim()
-            placeholderMap.forEach { (token, original) ->
-                restored = restored.replace(token, original)
-            }
-            restored
-        }.filter { it.isNotBlank() && it.lowercase() != "unknown" }
+        return parts
+            .map { part ->
+                var restored = part.trim()
+                placeholderMap.forEach { (token, original) ->
+                    restored = restored.replace(token, original)
+                }
+                restored
+            }.filter { it.isNotBlank() && it.lowercase() != "unknown" }
             .distinct()
             .ifEmpty { listOf("Unknown Artist") }
     }

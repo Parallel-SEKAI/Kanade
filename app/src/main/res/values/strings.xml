@@ -124,6 +124,11 @@
     <string name="title_scripts">Script Management</string>
     <string name="header_scripts">External Sources</string>
     <string name="msg_no_scripts">No scripts found</string>
+    <string name="msg_script_deleted">Script deleted</string>
+    <string name="title_delete_script">Delete Script</string>
+    <string name="msg_confirm_delete_script">Are you sure you want to delete script "%1$s"?</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_cancel">Cancel</string>
         <string name="btn_reload_scripts">Reload Scripts</string>
             <string name="btn_import_script">Import Script</string>
             <string name="header_discover">Discover</string>

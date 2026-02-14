@@ -13,13 +13,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Primary,
-    secondary = Secondary,
-    surface = Surface,
-    onPrimary = OnPrimary,
-    onSurface = OnSurface,
-)
+private val DarkColorScheme =
+    darkColorScheme(
+        primary = Primary,
+        secondary = Secondary,
+        surface = Surface,
+        onPrimary = OnPrimary,
+        onSurface = OnSurface,
+    )
 
 @Composable
 fun KanadeTheme(
@@ -27,14 +28,15 @@ fun KanadeTheme(
     dynamicColor: Boolean = true, // MD3 动态颜色支持
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    val colorScheme =
+        when {
+            dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                val context = LocalContext.current
+                if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            }
+            darkTheme -> DarkColorScheme
+            else -> DarkColorScheme // 音乐播放器通常偏好深色模式
         }
-        darkTheme -> DarkColorScheme
-        else -> DarkColorScheme // 音乐播放器通常偏好深色模式
-    }
 
     val view = LocalView.current
     if (!view.isInEditMode) {

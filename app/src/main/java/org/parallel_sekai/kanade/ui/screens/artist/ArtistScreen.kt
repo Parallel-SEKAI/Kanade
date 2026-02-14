@@ -48,7 +48,10 @@ fun ArtistListScreen(
                 title = { Text(stringResource(R.string.title_artists)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.desc_back),
+                        )
                     }
                 },
             )
@@ -61,12 +64,23 @@ fun ArtistListScreen(
             items(state.artistList) { artist ->
                 ListItem(
                     headlineContent = { Text(artist.name) },
-                    supportingContent = { Text(stringResource(R.string.fmt_albums_songs, artist.albumCount, artist.songCount)) },
+                    supportingContent = {
+                        Text(
+                            stringResource(R.string.fmt_albums_songs, artist.albumCount, artist.songCount),
+                        )
+                    },
                     leadingContent = {
                         Icon(
                             Icons.Default.Person,
                             contentDescription = null,
-                            modifier = Modifier.size(Dimens.IconSizeHuge).clip(RoundedCornerShape(Dimens.CornerRadiusExtraLarge)).background(MaterialTheme.colorScheme.surfaceVariant).padding(Dimens.PaddingSmall),
+                            modifier =
+                                Modifier
+                                    .size(
+                                        Dimens.IconSizeHuge,
+                                    ).clip(
+                                        RoundedCornerShape(Dimens.CornerRadiusExtraLarge),
+                                    ).background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .padding(Dimens.PaddingSmall),
                         )
                     },
                     modifier = Modifier.clickable { onArtistClick(artist.name) },

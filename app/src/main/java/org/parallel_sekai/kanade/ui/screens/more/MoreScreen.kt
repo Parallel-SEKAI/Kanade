@@ -32,9 +32,10 @@ fun MoreScreen(
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
             contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding),
         ) {
             item {
@@ -69,10 +70,11 @@ fun MoreItem(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(Dimens.PaddingMedium),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(Dimens.PaddingMedium),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(

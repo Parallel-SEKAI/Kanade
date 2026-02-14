@@ -2,15 +2,34 @@ package org.parallel_sekai.kanade.ui.screens.search
 
 import org.parallel_sekai.kanade.data.model.MusicModel
 
-data class SourceInfo(val id: String, val name: String)
+data class SourceInfo(
+    val id: String,
+    val name: String,
+)
 
 sealed interface SearchIntent {
-    data class UpdateQuery(val query: String) : SearchIntent
-    data class PerformSearch(val query: String) : SearchIntent
+    data class UpdateQuery(
+        val query: String,
+    ) : SearchIntent
+
+    data class PerformSearch(
+        val query: String,
+    ) : SearchIntent
+
     object ClearHistory : SearchIntent
-    data class PlayMusic(val music: MusicModel, val results: List<MusicModel>) : SearchIntent
-    data class RemoveHistoryItem(val query: String) : SearchIntent
-    data class ToggleSource(val sourceId: String) : SearchIntent
+
+    data class PlayMusic(
+        val music: MusicModel,
+        val results: List<MusicModel>,
+    ) : SearchIntent
+
+    data class RemoveHistoryItem(
+        val query: String,
+    ) : SearchIntent
+
+    data class ToggleSource(
+        val sourceId: String,
+    ) : SearchIntent
 }
 
 data class SearchState(
@@ -26,5 +45,8 @@ data class SearchState(
 )
 
 sealed interface SearchEffect {
-    data class ShowError(val messageResId: Int, val formatArgs: List<Any> = emptyList()) : SearchEffect
+    data class ShowError(
+        val messageResId: Int,
+        val formatArgs: List<Any> = emptyList(),
+    ) : SearchEffect
 }

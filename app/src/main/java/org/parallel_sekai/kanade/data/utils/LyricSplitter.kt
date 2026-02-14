@@ -17,7 +17,10 @@ object LyricSplitter {
     private const val FORBIDDEN_START_PUNCTUATION = "）)》」”'"
     private const val FORBIDDEN_END_PUNCTUATION = "（(《「“'"
 
-    fun findBestSplit(content: String, words: List<WordInfo>?): SplitResult? {
+    fun findBestSplit(
+        content: String,
+        words: List<WordInfo>?,
+    ): SplitResult? {
         if (content.length < 6) return null // 降低阈值，更短的行如果字号大也可能需要平衡
 
         val center = content.length / 2
@@ -110,7 +113,10 @@ object LyricSplitter {
         val wordInfo: WordInfo? = null,
     )
 
-    private fun identifyAtoms(content: String, words: List<WordInfo>?): List<Atom> {
+    private fun identifyAtoms(
+        content: String,
+        words: List<WordInfo>?,
+    ): List<Atom> {
         val atoms = mutableListOf<Atom>()
         if (words != null && words.isNotEmpty()) {
             var charIdx = 0

@@ -52,10 +52,11 @@ fun LibraryScreen(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
-            bottom = Dimens.MiniPlayerBottomPadding, // Space for MiniPlayer
-        ),
+        contentPadding =
+            PaddingValues(
+                top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
+                bottom = Dimens.MiniPlayerBottomPadding, // Space for MiniPlayer
+            ),
     ) {
         item {
             SectionHeader(stringResource(R.string.header_your_library))
@@ -73,15 +74,18 @@ fun LibraryScreen(
         // 外部音源 Tab 切换
         if (state.scriptManifests.isNotEmpty()) {
             item {
-                val tabs = androidx.compose.runtime.remember(state.scriptManifests) {
-                    listOf(null) + state.scriptManifests.map { it.id }
-                }
-                val selectedIndex = androidx.compose.runtime.remember(tabs, state.activeScriptId) {
-                    tabs.indexOf(state.activeScriptId).coerceAtLeast(0)
-                }
-                val scriptNamesMap = androidx.compose.runtime.remember(state.scriptManifests) {
-                    state.scriptManifests.associate { it.id to it.name }
-                }
+                val tabs =
+                    androidx.compose.runtime.remember(state.scriptManifests) {
+                        listOf(null) + state.scriptManifests.map { it.id }
+                    }
+                val selectedIndex =
+                    androidx.compose.runtime.remember(tabs, state.activeScriptId) {
+                        tabs.indexOf(state.activeScriptId).coerceAtLeast(0)
+                    }
+                val scriptNamesMap =
+                    androidx.compose.runtime.remember(state.scriptManifests) {
+                        state.scriptManifests.associate { it.id to it.name }
+                    }
 
                 SecondaryScrollableTabRow(
                     selectedTabIndex = selectedIndex,
@@ -90,11 +94,12 @@ fun LibraryScreen(
                     divider = {},
                 ) {
                     tabs.forEachIndexed { index, scriptId ->
-                        val title = if (scriptId == null) {
-                            stringResource(R.string.label_local)
-                        } else {
-                            scriptNamesMap[scriptId] ?: ""
-                        }
+                        val title =
+                            if (scriptId == null) {
+                                stringResource(R.string.label_local)
+                            } else {
+                                scriptNamesMap[scriptId] ?: ""
+                            }
                         Tab(
                             selected = selectedIndex == index,
                             onClick = { onScriptClick(scriptId) },
@@ -113,11 +118,12 @@ fun LibraryScreen(
 
         // 主列表部分：根据音源状态切换
         item {
-            val title = if (isScriptActive) {
-                activeManifest.name
-            } else {
-                stringResource(R.string.header_all_music)
-            }
+            val title =
+                if (isScriptActive) {
+                    activeManifest.name
+                } else {
+                    stringResource(R.string.header_all_music)
+                }
             val icon = if (isScriptActive) Icons.Default.AutoAwesome else null
             SectionHeader(title = title, icon = icon)
         }
@@ -145,16 +151,18 @@ fun LibraryScreen(
         } else {
             itemsIndexed(displayList) { index, song ->
                 // 预加载逻辑：距离末尾还有 20 个项目时触发加载
-                if (isScriptActive && state.canLoadMoreHome && !state.isHomeLoadingMore && index >= displayList.size - 20) {
+                if (isScriptActive && state.canLoadMoreHome && !state.isHomeLoadingMore &&
+                    index >= displayList.size - 20
+                ) {
                     onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.LoadMoreHome)
                 }
 
                 SongListItem(
                     song = song,
                     isSelected = state.currentSong?.id == song.id,
-                    onClick = { 
+                    onClick = {
                         // 如果是脚本首页，不传入 displayList，让 ViewModel 触发完整列表获取逻辑
-                        onSongClick(song, if (isScriptActive) null else displayList) 
+                        onSongClick(song, if (isScriptActive) null else displayList)
                     },
                     artistJoinString = state.artistJoinString,
                 )
@@ -184,12 +192,17 @@ fun LibraryGrid(
     onNavigateToPlaylists: () -> Unit,
     onNavigateToFolders: () -> Unit,
 ) {
-    val items = listOf(
-        LibraryGridItem(stringResource(R.string.label_artists), Icons.Default.Person, onNavigateToArtists),
-        LibraryGridItem(stringResource(R.string.label_albums), Icons.Default.Album, onNavigateToAlbums),
-        LibraryGridItem(stringResource(R.string.label_playlists), Icons.AutoMirrored.Filled.PlaylistPlay, onNavigateToPlaylists),
-        LibraryGridItem(stringResource(R.string.label_folders), Icons.Default.Folder, onNavigateToFolders),
-    )
+    val items =
+        listOf(
+            LibraryGridItem(stringResource(R.string.label_artists), Icons.Default.Person, onNavigateToArtists),
+            LibraryGridItem(stringResource(R.string.label_albums), Icons.Default.Album, onNavigateToAlbums),
+            LibraryGridItem(
+                stringResource(R.string.label_playlists),
+                Icons.AutoMirrored.Filled.PlaylistPlay,
+                onNavigateToPlaylists,
+            ),
+            LibraryGridItem(stringResource(R.string.label_folders), Icons.Default.Folder, onNavigateToFolders),
+        )
 
     Column(modifier = Modifier.padding(horizontal = Dimens.PaddingSmall)) {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -203,19 +216,27 @@ fun LibraryGrid(
     }
 }
 
-data class LibraryGridItem(val title: String, val icon: ImageVector, val onClick: () -> Unit)
+data class LibraryGridItem(
+    val title: String,
+    val icon: ImageVector,
+    val onClick: () -> Unit,
+)
 
 @Composable
-fun LibraryCard(item: LibraryGridItem, modifier: Modifier = Modifier) {
+fun LibraryCard(
+    item: LibraryGridItem,
+    modifier: Modifier = Modifier,
+) {
     ElevatedCard(
         onClick = item.onClick,
         modifier = modifier.padding(Dimens.PaddingSmall),
         shape = RoundedCornerShape(Dimens.CornerRadiusLarge),
     ) {
         Column(
-            modifier = Modifier
-                .padding(Dimens.PaddingMedium)
-                .fillMaxWidth(),
+            modifier =
+                Modifier
+                    .padding(Dimens.PaddingMedium)
+                    .fillMaxWidth(),
             horizontalAlignment = Alignment.Start,
         ) {
             Icon(item.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -226,7 +247,10 @@ fun LibraryCard(item: LibraryGridItem, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun SectionHeader(title: String, icon: ImageVector? = null) {
+fun SectionHeader(
+    title: String,
+    icon: ImageVector? = null,
+) {
     Row(
         modifier = Modifier.padding(Dimens.PaddingMedium),
         verticalAlignment = Alignment.CenterVertically,
@@ -258,27 +282,30 @@ fun SongListItem(
     showArtist: Boolean = true,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (showCover) {
             AsyncImage(
                 model = song.coverUrl,
                 contentDescription = null,
-                modifier = Modifier
-                    .size(Dimens.AlbumCoverSizeListItem)
-                    .clip(RoundedCornerShape(Dimens.CornerRadiusMedium))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                modifier =
+                    Modifier
+                        .size(Dimens.AlbumCoverSizeListItem)
+                        .clip(RoundedCornerShape(Dimens.CornerRadiusMedium))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentScale = ContentScale.Crop,
             )
         }
         Column(
-            modifier = Modifier
-                .padding(start = if (showCover) Dimens.PaddingMedium else 0.dp)
-                .weight(1f),
+            modifier =
+                Modifier
+                    .padding(start = if (showCover) Dimens.PaddingMedium else 0.dp)
+                    .weight(1f),
         ) {
             val color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
             Text(
@@ -318,7 +345,10 @@ fun AlbumListScreen(
                 title = { Text(stringResource(R.string.label_albums)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.desc_back),
+                        )
                     }
                 },
             )
@@ -331,12 +361,26 @@ fun AlbumListScreen(
             items(state.albumList) { album ->
                 ListItem(
                     headlineContent = { Text(album.title) },
-                    supportingContent = { Text(stringResource(R.string.fmt_item_info_songs, album.artists.joinToString(state.artistJoinString), album.songCount)) },
+                    supportingContent = {
+                        Text(
+                            stringResource(
+                                R.string.fmt_item_info_songs,
+                                album.artists.joinToString(state.artistJoinString),
+                                album.songCount,
+                            ),
+                        )
+                    },
                     leadingContent = {
                         AsyncImage(
                             model = album.coverUrl,
                             contentDescription = null,
-                            modifier = Modifier.size(Dimens.AlbumCoverSizeListItem).clip(RoundedCornerShape(Dimens.CornerRadiusMedium)).background(MaterialTheme.colorScheme.surfaceVariant),
+                            modifier =
+                                Modifier
+                                    .size(
+                                        Dimens.AlbumCoverSizeListItem,
+                                    ).clip(
+                                        RoundedCornerShape(Dimens.CornerRadiusMedium),
+                                    ).background(MaterialTheme.colorScheme.surfaceVariant),
                             contentScale = ContentScale.Crop,
                         )
                     },
@@ -365,7 +409,10 @@ fun PlaylistListScreen(
                 title = { Text(stringResource(R.string.label_playlists)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.desc_back),
+                        )
                     }
                 },
             )
@@ -383,7 +430,14 @@ fun PlaylistListScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.PlaylistPlay,
                             contentDescription = null,
-                            modifier = Modifier.size(Dimens.IconSizeHuge).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Dimens.CornerRadiusMedium)).padding(Dimens.PaddingSmall),
+                            modifier =
+                                Modifier
+                                    .size(
+                                        Dimens.IconSizeHuge,
+                                    ).background(
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                        RoundedCornerShape(Dimens.CornerRadiusMedium),
+                                    ).padding(Dimens.PaddingSmall),
                         )
                     },
                     modifier = Modifier.clickable { onPlaylistClick(playlist.id, playlist.name) },
@@ -411,7 +465,10 @@ fun FolderListScreen(
                 title = { Text(stringResource(R.string.label_folders)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.desc_back),
+                        )
                     }
                 },
             )
@@ -424,12 +481,23 @@ fun FolderListScreen(
             items(state.folderList) { folder ->
                 ListItem(
                     headlineContent = { Text(folder.name) },
-                    supportingContent = { Text(stringResource(R.string.fmt_folder_info, folder.path, folder.songCount)) },
+                    supportingContent = {
+                        Text(
+                            stringResource(R.string.fmt_folder_info, folder.path, folder.songCount),
+                        )
+                    },
                     leadingContent = {
                         Icon(
                             Icons.Default.Folder,
                             contentDescription = null,
-                            modifier = Modifier.size(Dimens.IconSizeHuge).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Dimens.CornerRadiusMedium)).padding(Dimens.PaddingSmall),
+                            modifier =
+                                Modifier
+                                    .size(
+                                        Dimens.IconSizeHuge,
+                                    ).background(
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                        RoundedCornerShape(Dimens.CornerRadiusMedium),
+                                    ).padding(Dimens.PaddingSmall),
                         )
                     },
                     modifier = Modifier.clickable { onFolderClick(folder.path) },
@@ -459,12 +527,16 @@ fun MusicListDetailScreen(
                 title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.desc_back),
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                    ),
             )
         },
     ) { innerPadding ->
@@ -475,9 +547,10 @@ fun MusicListDetailScreen(
             if (coverUrl != null) {
                 item {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(Dimens.AlbumCoverSizeFullScreenPlayer),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(Dimens.AlbumCoverSizeFullScreenPlayer),
                     ) {
                         AsyncImage(
                             model = coverUrl,
@@ -486,18 +559,20 @@ fun MusicListDetailScreen(
                             contentScale = ContentScale.Crop,
                         )
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.verticalGradient(
-                                        listOf(Color.Transparent, MaterialTheme.colorScheme.surface),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            listOf(Color.Transparent, MaterialTheme.colorScheme.surface),
+                                        ),
                                     ),
-                                ),
                         )
                         Column(
-                            modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(Dimens.PaddingMedium),
+                            modifier =
+                                Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(Dimens.PaddingMedium),
                         ) {
                             Text(
                                 text = title,
@@ -552,17 +627,19 @@ fun AlbumDetailScreen(
 
     // Calculate intersection of artists for all songs in the album
     val allArtistsList = state.detailMusicList.map { it.artists.toSet() }
-    val commonArtists = if (allArtistsList.isNotEmpty()) {
-        allArtistsList.reduce { acc, set -> acc.intersect(set) }
-    } else {
-        emptySet()
-    }
+    val commonArtists =
+        if (allArtistsList.isNotEmpty()) {
+            allArtistsList.reduce { acc, set -> acc.intersect(set) }
+        } else {
+            emptySet()
+        }
 
-    val albumArtist = if (commonArtists.isNotEmpty()) {
-        commonArtists.joinToString(state.artistJoinString)
-    } else {
-        ""
-    }
+    val albumArtist =
+        if (commonArtists.isNotEmpty()) {
+            commonArtists.joinToString(state.artistJoinString)
+        } else {
+            ""
+        }
 
     // Determine if we show artist for each song
     // Hide artist if all songs share the exact same set of artists (equal to the intersection)

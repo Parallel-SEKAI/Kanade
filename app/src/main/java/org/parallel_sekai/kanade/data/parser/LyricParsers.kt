@@ -11,19 +11,22 @@ object LyricUtils {
      */
     fun parseTimestamp(timeStr: String): Long {
         return try {
-            val cleanTime = timeStr.trim()
-                .removeSurrounding("[", "]")
-                .removeSurrounding("<", ">")
-                .replace(",", ".") // 兼容某些格式的逗号
+            val cleanTime =
+                timeStr
+                    .trim()
+                    .removeSurrounding("[", "]")
+                    .removeSurrounding("<", ">")
+                    .replace(",", ".") // 兼容某些格式的逗号
 
             // 针对 [mm:ss:xx] 这种乱格式，如果存在两个冒号，将最后一个冒号替换为点
             val lastColonIndex = cleanTime.lastIndexOf(':')
             val firstColonIndex = cleanTime.indexOf(':')
-            val normalizedTime = if (lastColonIndex > firstColonIndex && lastColonIndex != -1) {
-                cleanTime.substring(0, lastColonIndex) + "." + cleanTime.substring(lastColonIndex + 1)
-            } else {
-                cleanTime
-            }
+            val normalizedTime =
+                if (lastColonIndex > firstColonIndex && lastColonIndex != -1) {
+                    cleanTime.substring(0, lastColonIndex) + "." + cleanTime.substring(lastColonIndex + 1)
+                } else {
+                    cleanTime
+                }
 
             val parts = normalizedTime.split(":")
             if (parts.size < 2) return 0L
@@ -77,11 +80,12 @@ class LrcParser : LyricParser {
                 val wordMatches = wordRegex.findAll(textPart).toList()
                 wordMatches.forEachIndexed { index, wMatch ->
                     val start = LyricUtils.parseTimestamp(wMatch.groupValues[1])
-                    val nextStart = if (index < wordMatches.size - 1) {
-                        LyricUtils.parseTimestamp(wordMatches[index + 1].groupValues[1])
-                    } else {
-                        start + 500
-                    }
+                    val nextStart =
+                        if (index < wordMatches.size - 1) {
+                            LyricUtils.parseTimestamp(wordMatches[index + 1].groupValues[1])
+                        } else {
+                            start + 500
+                        }
                     words.add(WordInfo(wMatch.groupValues[2], start, nextStart))
                 }
                 val cleanText = if (words.isNotEmpty()) words.joinToString("") { it.text } else textPart
@@ -118,13 +122,14 @@ class LrcParser : LyricParser {
             } else if (current.timestamp == entry.timestamp) {
                 // Merge as translation if text is different
                 if (current.text != entry.text) {
-                    current = if (current.translation == null) {
-                        current.copy(translation = entry.text)
-                    } else if (!current.translation.contains(entry.text)) {
-                        current.copy(translation = current.translation + "\n" + entry.text)
-                    } else {
-                        current
-                    }
+                    current =
+                        if (current.translation == null) {
+                            current.copy(translation = entry.text)
+                        } else if (!current.translation.contains(entry.text)) {
+                            current.copy(translation = current.translation + "\n" + entry.text)
+                        } else {
+                            current
+                        }
                 }
             } else {
                 mergedLines.add(current.toLyricLine())
@@ -134,10 +139,16 @@ class LrcParser : LyricParser {
         current?.let { mergedLines.add(it.toLyricLine()) }
 
         // 4. Calculate endTimes
-        val processedLines = mergedLines.mapIndexed { index, line ->
-            val endTime = if (index < mergedLines.size - 1) mergedLines[index + 1].startTime else line.startTime + 5000
-            line.copy(endTime = endTime)
-        }
+        val processedLines =
+            mergedLines.mapIndexed { index, line ->
+                val endTime =
+                    if (index < mergedLines.size - 1) {
+                        mergedLines[index + 1].startTime
+                    } else {
+                        line.startTime + 5000
+                    }
+                line.copy(endTime = endTime)
+            }
 
         return LyricData(title, artist, album, processedLines)
     }
@@ -148,13 +159,14 @@ class LrcParser : LyricParser {
         val words: List<WordInfo> = emptyList(),
         val translation: String? = null,
     ) {
-        fun toLyricLine() = LyricLine(
-            startTime = timestamp,
-            endTime = 0, // Placeholder
-            content = text,
-            translation = translation,
-            words = words,
-        )
+        fun toLyricLine() =
+            LyricLine(
+                startTime = timestamp,
+                endTime = 0, // Placeholder
+                content = text,
+                translation = translation,
+                words = words,
+            )
     }
 }
 
@@ -190,19 +202,21 @@ class TtmlParser : LyricParser {
                         val end = parser.getAttributeValue(null, "end")
 
                         if (role == "x-translation") {
-                            translation = try {
-                                parser.nextText()
-                            } catch (e: Exception) {
-                                null
-                            }
+                            translation =
+                                try {
+                                    parser.nextText()
+                                } catch (e: Exception) {
+                                    null
+                                }
                         } else if (begin != null) {
                             val startTime = LyricUtils.parseTimestamp(begin)
                             val endTime = LyricUtils.parseTimestamp(end ?: begin)
-                            val text = try {
-                                parser.nextText()
-                            } catch (e: Exception) {
-                                ""
-                            }
+                            val text =
+                                try {
+                                    parser.nextText()
+                                } catch (e: Exception) {
+                                    ""
+                                }
                             currentWords.add(WordInfo(text, startTime, endTime))
                             lineContent += text
                         }

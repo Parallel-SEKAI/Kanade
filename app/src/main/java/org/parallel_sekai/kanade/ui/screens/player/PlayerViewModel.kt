@@ -1,3 +1,5 @@
+@file:Suppress("KtlintStandardMaxLineLength")
+
 package org.parallel_sekai.kanade.ui.screens.player
 
 import android.content.Context
@@ -255,13 +257,13 @@ class PlayerViewModel(
 
                         if (lyricContent != lastSentLyric) {
                             val nextLine = lines?.getOrNull(currentLineIndex + 1)
-                            val delay = if (currentLine != null && nextLine != null) {
-                                nextLine.startTime - currentLine.startTime
-                            } else if (currentLine != null && state.value.duration > 0) {
-                                (state.value.duration - currentLine.startTime).coerceAtLeast(0L)
-                            } else {
-                                0L
-                            }
+                        val delay = if (currentLine != null && nextLine != null) {
+                            nextLine.startTime - currentLine.startTime
+                        } else if (currentLine != null && state.value.duration > 0) {
+                            (state.value.duration - currentLine.startTime).coerceAtLeast(0L)
+                        } else {
+                            0L
+                        }
 
                             lyricGetterManager.sendLyric(
                                 lyric = lyricContent,
@@ -477,7 +479,12 @@ class PlayerViewModel(
                     val index = listToPlay.indexOf(intent.song).coerceAtLeast(0)
 
                     // 如果是脚本首页点击，且点击位置接近当前列表末尾，先尝试预加载一页以保证连续播放体验
-                    if (isScriptActive && intent.customList == null && state.value.canLoadMoreHome && index >= listToPlay.size - 5) {
+                    val shouldPreload = isScriptActive &&
+                        intent.customList == null &&
+                        state.value.canLoadMoreHome &&
+                        index >= listToPlay.size - 5
+
+                    if (shouldPreload) {
                         val nextPage = state.value.homePage + 1
                         val result = withContext(Dispatchers.IO) {
                             try {
@@ -493,7 +500,7 @@ class PlayerViewModel(
                                     homeMusicList = listToPlay,
                                     homeTotalCount = result.totalCount ?: it.homeTotalCount,
                                     homePage = nextPage,
-                                    canLoadMoreHome = true
+                                    canLoadMoreHome = true,
                                 )
                             }
                         }
@@ -645,6 +652,12 @@ class PlayerViewModel(
                         LyricImageUtils.shareBitmap(applicationContext, bitmap)
                         _state.update { it.copy(showLyricShare = false, selectedLyricIndices = emptySet()) }
                     }
+                }
+            }
+            is PlayerIntent.DeleteScript -> {
+                viewModelScope.launch {
+                    playbackRepository.deleteScript(intent.scriptId)
+                    _effect.emit(PlayerEffect.ShowMessage(applicationContext.getString(R.string.msg_script_deleted)))
                 }
             }
         }

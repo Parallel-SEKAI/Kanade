@@ -1,12 +1,11 @@
 package org.parallel_sekai.kanade.data.script
 
 import android.util.Log
+import kotlinx.serialization.json.*
 import kotlinx.serialization.json.Json
 import org.parallel_sekai.kanade.data.model.*
 import org.parallel_sekai.kanade.data.source.IMusicSource
 import org.parallel_sekai.kanade.data.source.MusicListResult
-
-import kotlinx.serialization.json.*
 
 class ScriptMusicSource(
     val manifest: ScriptManifest,
@@ -26,13 +25,13 @@ class ScriptMusicSource(
             val result = engine.callAsync(null, "search", query, 1)
             Log.d("ScriptMusicSource", "Raw result from [${manifest.name}]: $result")
             if (result == "null") return MusicListResult(emptyList())
-            
+
             val jsonElement = json.parseToJsonElement(result)
             if (jsonElement is JsonObject) {
                 val response = json.decodeFromJsonElement<ScriptMusicListResponse>(jsonElement)
                 MusicListResult(
                     items = response.items.map { it.toMusicModel(sourceId) },
-                    totalCount = response.total
+                    totalCount = response.total,
                 )
             } else {
                 val items = json.decodeFromJsonElement<List<ScriptMusicItem>>(jsonElement)
@@ -50,13 +49,13 @@ class ScriptMusicSource(
         return try {
             val result = engine.callAsync(null, "getHomeList", page)
             if (result == "null") return MusicListResult(emptyList())
-            
+
             val jsonElement = json.parseToJsonElement(result)
             if (jsonElement is JsonObject) {
                 val response = json.decodeFromJsonElement<ScriptMusicListResponse>(jsonElement)
                 MusicListResult(
                     items = response.items.map { it.toMusicModel(sourceId) },
-                    totalCount = response.total
+                    totalCount = response.total,
                 )
             } else {
                 val items = json.decodeFromJsonElement<List<ScriptMusicItem>>(jsonElement)
@@ -88,11 +87,12 @@ class ScriptMusicSource(
             // getLyrics is optional in the contract
             val rawLyrics = engine.callAsync(null, "getLyrics", musicId)
             // The bridge returns a JSON-stringified result, so we need to decode it
-            val decoded = try {
-                json.decodeFromString<String?>(rawLyrics)
-            } catch (e: Exception) {
-                rawLyrics // Fallback if it's already a plain string for some reason
-            }
+            val decoded =
+                try {
+                    json.decodeFromString<String?>(rawLyrics)
+                } catch (e: Exception) {
+                    rawLyrics // Fallback if it's already a plain string for some reason
+                }
             // Normalize line endings: replace \r\n and \r with \n
             decoded?.replace("\r\n", "\n")?.replace("\r", "\n")
         } catch (e: Exception) {
@@ -125,14 +125,15 @@ class ScriptMusicSource(
         }
     }
 
-    private fun ScriptMusicItem.toMusicModel(sourceId: String): MusicModel = MusicModel(
-        id = id,
-        title = title,
-        artists = artist.split(",").map { it.trim() },
-        album = album ?: "",
-        coverUrl = cover ?: "",
-        mediaUri = "", // Remote sources need getPlayUrl
-        duration = (duration ?: 0L) * 1000, // Convert to ms
-        sourceId = sourceId,
-    )
+    private fun ScriptMusicItem.toMusicModel(sourceId: String): MusicModel =
+        MusicModel(
+            id = id,
+            title = title,
+            artists = artist.split(",").map { it.trim() },
+            album = album ?: "",
+            coverUrl = cover ?: "",
+            mediaUri = "", // Remote sources need getPlayUrl
+            duration = (duration ?: 0L) * 1000, // Convert to ms
+            sourceId = sourceId,
+        )
 }

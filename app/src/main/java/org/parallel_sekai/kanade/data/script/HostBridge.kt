@@ -6,49 +6,83 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-
 import org.parallel_sekai.kanade.data.source.MusicUtils
 
 interface HttpBridge {
-    fun get(url: String, options: String?): String
-    fun post(url: String, body: String, options: String?): String
+    fun get(
+        url: String,
+        options: String?,
+    ): String
+
+    fun post(
+        url: String,
+        body: String,
+        options: String?,
+    ): String
 }
 
 interface CacheBridge {
     fun get(key: String): String?
-    fun set(key: String, value: String, ttl: Int)
+
+    fun set(
+        key: String,
+        value: String,
+        ttl: Int,
+    )
 }
 
 interface LogBridge {
     fun log(message: String?)
+
     fun error(message: String?)
+
     fun warn(message: String?)
 }
 
 interface CryptoBridge {
     fun md5(text: String): String
-    fun aesEncrypt(text: String, key: String, mode: String, padding: String): String
-    fun aesDecrypt(hex: String, key: String, mode: String, padding: String): String
+
+    fun aesEncrypt(
+        text: String,
+        key: String,
+        mode: String,
+        padding: String,
+    ): String
+
+    fun aesDecrypt(
+        hex: String,
+        key: String,
+        mode: String,
+        padding: String,
+    ): String
 }
 
-class HostBridge(private val client: OkHttpClient) :
-    HttpBridge,
+class HostBridge(
+    private val client: OkHttpClient,
+) : HttpBridge,
     LogBridge,
     CryptoBridge {
-
     private val json = Json { ignoreUnknownKeys = true }
-    private val DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    private val DEFAULT_UA =
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-    override fun md5(text: String): String = try {
-        val md = java.security.MessageDigest.getInstance("MD5")
-        val bytes = md.digest(text.toByteArray())
-        MusicUtils.bytesToHex(bytes)
-    } catch (e: Exception) {
-        Log.e("HostBridge", "MD5 failed", e)
-        ""
-    }
+    override fun md5(text: String): String =
+        try {
+            val md = java.security.MessageDigest.getInstance("MD5")
+            val bytes = md.digest(text.toByteArray())
+            MusicUtils.bytesToHex(bytes)
+        } catch (e: Exception) {
+            Log.e("HostBridge", "MD5 failed", e)
+            ""
+        }
 
-    override fun aesEncrypt(text: String, key: String, mode: String, padding: String): String {
+    override fun aesEncrypt(
+        text: String,
+        key: String,
+        mode: String,
+        padding: String,
+    ): String {
         val transformation = "AES/$mode/$padding"
         return try {
             val cipher = javax.crypto.Cipher.getInstance(transformation)
@@ -62,7 +96,12 @@ class HostBridge(private val client: OkHttpClient) :
         }
     }
 
-    override fun aesDecrypt(hex: String, key: String, mode: String, padding: String): String {
+    override fun aesDecrypt(
+        hex: String,
+        key: String,
+        mode: String,
+        padding: String,
+    ): String {
         val transformation = "AES/$mode/$padding"
         return try {
             val cipher = javax.crypto.Cipher.getInstance(transformation)
@@ -78,12 +117,15 @@ class HostBridge(private val client: OkHttpClient) :
         }
     }
 
-    override fun get(url: String, options: String?): String {
+    override fun get(
+        url: String,
+        options: String?,
+    ): String {
         val startTime = System.currentTimeMillis()
         return try {
             val builder = Request.Builder().url(url)
             builder.addHeader("User-Agent", DEFAULT_UA) // Set default UA
-            
+
             var responseType = "text"
 
             options?.let { parseOptions(it) }?.let { opt ->
@@ -119,12 +161,16 @@ class HostBridge(private val client: OkHttpClient) :
         }
     }
 
-    override fun post(url: String, body: String, options: String?): String {
+    override fun post(
+        url: String,
+        body: String,
+        options: String?,
+    ): String {
         val startTime = System.currentTimeMillis()
         return try {
             val builder = Request.Builder().url(url)
             builder.addHeader("User-Agent", DEFAULT_UA)
-            
+
             var contentType = "text/plain"
             var responseType = "text"
 

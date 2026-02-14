@@ -12,9 +12,11 @@ class ScriptEngine : Closeable {
     private val TAG = "ScriptEngine"
 
     // Create a single thread with a larger stack size (2MB) for QuickJS
-    private val executor = Executors.newSingleThreadExecutor { runnable ->
-        Thread(null, runnable, "quickjs-worker", 2 * 1024 * 1024)
-    }.asCoroutineDispatcher()
+    private val executor =
+        Executors
+            .newSingleThreadExecutor { runnable ->
+                Thread(null, runnable, "quickjs-worker", 2 * 1024 * 1024)
+            }.asCoroutineDispatcher()
 
     private val scope = CoroutineScope(executor + SupervisorJob())
     private var quickJs: QuickJs? = null
@@ -22,8 +24,15 @@ class ScriptEngine : Closeable {
     private val engineReady = CompletableDeferred<Unit>()
 
     interface PromiseBridge {
-        fun resolve(id: String, result: String?)
-        fun reject(id: String, error: String?)
+        fun resolve(
+            id: String,
+            result: String?,
+        )
+
+        fun reject(
+            id: String,
+            error: String?,
+        )
     }
 
     init {
@@ -36,12 +45,18 @@ class ScriptEngine : Closeable {
                     "__kanade_bridge",
                     PromiseBridge::class.java,
                     object : PromiseBridge {
-                        override fun resolve(id: String, result: String?) {
+                        override fun resolve(
+                            id: String,
+                            result: String?,
+                        ) {
                             Log.d(TAG, "Bridge resolved: $id")
                             callbacks[id]?.complete(result ?: "null")
                         }
 
-                        override fun reject(id: String, error: String?) {
+                        override fun reject(
+                            id: String,
+                            error: String?,
+                        ) {
                             Log.e(TAG, "Bridge rejected: $id, error: $error")
                             callbacks[id]?.completeExceptionally(Exception(error ?: "Unknown JS Error"))
                         }
@@ -150,14 +165,21 @@ class ScriptEngine : Closeable {
         }
     }
 
-    suspend fun <T : Any> registerInterface(name: String, type: Class<T>, instance: T) {
+    suspend fun <T : Any> registerInterface(
+        name: String,
+        type: Class<T>,
+        instance: T,
+    ) {
         engineReady.await()
         withContext(executor) {
             quickJs?.set(name, type, instance)
         }
     }
 
-    suspend fun evaluate(script: String, fileName: String = "script.js"): Any? {
+    suspend fun evaluate(
+        script: String,
+        fileName: String = "script.js",
+    ): Any? {
         engineReady.await()
         return withContext(executor) {
             quickJs?.evaluate(script, fileName)
@@ -169,7 +191,11 @@ class ScriptEngine : Closeable {
         callAsync(null, "init", config)
     }
 
-    suspend fun callAsync(objectName: String?, methodName: String, vararg args: Any?): String {
+    suspend fun callAsync(
+        objectName: String?,
+        methodName: String,
+        vararg args: Any?,
+    ): String {
         engineReady.await()
         return withContext(executor) {
             val callbackId = UUID.randomUUID().toString()
@@ -177,7 +203,9 @@ class ScriptEngine : Closeable {
             callbacks[callbackId] = deferred
 
             val argsJson = args.joinToString(", ") { toJson(it) }
-            val callScript = "__kanade_call_async(${if (objectName != null) "'$objectName'" else "null"}, '$methodName', [$argsJson], '$callbackId')"
+            val callScript =
+                "__kanade_call_async(${if (objectName != null) "'$objectName'" else "null"}, " +
+                    "'$methodName', [$argsJson], '$callbackId')"
 
             try {
                 quickJs?.evaluate(callScript)
@@ -199,30 +227,35 @@ class ScriptEngine : Closeable {
         }
     }
 
-    private fun toJson(arg: Any?): String = try {
-        toJsonElement(arg).toString()
-    } catch (e: Exception) {
-        "null"
-    }
+    private fun toJson(arg: Any?): String =
+        try {
+            toJsonElement(arg).toString()
+        } catch (e: Exception) {
+            "null"
+        }
 
-    private fun toJsonElement(arg: Any?): JsonElement = when (arg) {
-        null -> JsonNull
-        is String -> JsonPrimitive(arg)
-        is Number -> JsonPrimitive(arg)
-        is Boolean -> JsonPrimitive(arg)
-        is Map<*, *> -> buildJsonObject {
-            arg.forEach { (k, v) ->
-                put(k.toString(), toJsonElement(v))
-            }
+    private fun toJsonElement(arg: Any?): JsonElement =
+        when (arg) {
+            null -> JsonNull
+            is String -> JsonPrimitive(arg)
+            is Number -> JsonPrimitive(arg)
+            is Boolean -> JsonPrimitive(arg)
+            is Map<*, *> ->
+                buildJsonObject {
+                    arg.forEach { (k, v) ->
+                        put(k.toString(), toJsonElement(v))
+                    }
+                }
+            is Iterable<*> ->
+                buildJsonArray {
+                    arg.forEach { add(toJsonElement(it)) }
+                }
+            is Array<*> ->
+                buildJsonArray {
+                    arg.forEach { add(toJsonElement(it)) }
+                }
+            else -> JsonPrimitive(arg.toString())
         }
-        is Iterable<*> -> buildJsonArray {
-            arg.forEach { add(toJsonElement(it)) }
-        }
-        is Array<*> -> buildJsonArray {
-            arg.forEach { add(toJsonElement(it)) }
-        }
-        else -> JsonPrimitive(arg.toString())
-    }
 
     override fun close() {
         scope.cancel()

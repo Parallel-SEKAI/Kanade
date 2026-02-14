@@ -13,8 +13,9 @@ val Context.urlCacheDataStore: DataStore<Preferences> by preferencesDataStore(na
  * 用于永久持久化缓存脚本音源解析出的真实 URL
  * 只有在过期或播放失败时才会通过 clearCache 显式清除
  */
-class UrlCacheManager(private val context: Context) {
-
+class UrlCacheManager(
+    private val context: Context,
+) {
     companion object {
         private const val EXPIRATION_TIME = 20 * 60 * 1000 // 20 分钟
     }
@@ -23,19 +24,22 @@ class UrlCacheManager(private val context: Context) {
         val urlKey = stringPreferencesKey("url_$mediaId")
         val timeKey = longPreferencesKey("time_$mediaId")
         val preferences = context.urlCacheDataStore.data.first()
-        
+
         val url = preferences[urlKey] ?: return null
         val time = preferences[timeKey] ?: 0L
-        
+
         // 检查是否过期
         if (System.currentTimeMillis() - time > EXPIRATION_TIME) {
             return null
         }
-        
+
         return url
     }
 
-    suspend fun saveUrl(mediaId: String, url: String) {
+    suspend fun saveUrl(
+        mediaId: String,
+        url: String,
+    ) {
         val urlKey = stringPreferencesKey("url_$mediaId")
         val timeKey = longPreferencesKey("time_$mediaId")
         context.urlCacheDataStore.edit { preferences ->
