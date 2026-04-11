@@ -20,6 +20,11 @@ interface IMusicSource {
     suspend fun getHomeList(page: Int = 1): MusicListResult = MusicListResult(emptyList())
 
     /**
+     * 一次性获取全部首页歌单内容
+     */
+    suspend fun getAllHomeList(): MusicListResult = MusicListResult(emptyList())
+
+    /**
      * 获取真实的播放链接（对于流媒体脚本尤其重要）
      */
     suspend fun getPlayUrl(musicId: String): String
