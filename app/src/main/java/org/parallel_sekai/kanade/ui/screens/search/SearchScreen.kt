@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +27,7 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.data.model.MusicModel
+import org.parallel_sekai.kanade.ui.adaptive.rememberAdaptiveLayoutInfo
 import org.parallel_sekai.kanade.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +40,7 @@ fun SearchScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
+    val adaptiveInfo = rememberAdaptiveLayoutInfo()
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -59,122 +63,248 @@ fun SearchScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .padding(innerPadding),
-        ) {
-            SearchBar(
-                inputField = {
-                    SearchBarDefaults.InputField(
+        if (adaptiveInfo.isWideScreen) {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .padding(innerPadding)
+                        .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingMedium),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge),
+            ) {
+                Column(
+                    modifier =
+                        Modifier
+                            .width(adaptiveInfo.sidebarWidth)
+                            .fillMaxHeight()
+                            .verticalScroll(rememberScrollState()),
+                ) {
+                    SearchInputSection(
                         query = state.searchQuery,
                         onQueryChange = { viewModel.handleIntent(SearchIntent.UpdateQuery(it)) },
                         onSearch = { viewModel.handleIntent(SearchIntent.PerformSearch(it)) },
-                        expanded = false,
-                        onExpandedChange = {},
-                        placeholder = { Text(stringResource(R.string.hint_search_music)) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        trailingIcon = {
-                            if (state.searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.handleIntent(SearchIntent.UpdateQuery("")) }) {
-                                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.desc_clear))
-                                }
-                            }
-                        },
                     )
-                },
-                expanded = false,
-                onExpandedChange = {},
+
+                    Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
+
+                    SourceSelector(
+                        availableSources = state.availableSources,
+                        selectedSourceIds = state.selectedSourceIds,
+                        onToggleSource = { viewModel.handleIntent(SearchIntent.ToggleSource(it)) },
+                    )
+
+                    if (state.searchHistory.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(Dimens.SpacingLarge))
+                        SearchHistorySection(
+                            history = state.searchHistory,
+                            onClear = { viewModel.handleIntent(SearchIntent.ClearHistory) },
+                            onSearch = { viewModel.handleIntent(SearchIntent.PerformSearch(it)) },
+                            onRemove = { viewModel.handleIntent(SearchIntent.RemoveHistoryItem(it)) },
+                        )
+                    }
+                }
+
+                SearchResultsSection(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    state = state,
+                    onPlaySong = { song ->
+                        viewModel.handleIntent(SearchIntent.PlayMusic(song, state.searchResults))
+                    },
+                    emptyBottomPadding = Dimens.PaddingLarge,
+                )
+            }
+        } else {
+            Column(
                 modifier =
                     Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Dimens.PaddingMedium),
-            ) {}
-
-            Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
-
-            SourceSelector(
-                availableSources = state.availableSources,
-                selectedSourceIds = state.selectedSourceIds,
-                onToggleSource = { viewModel.handleIntent(SearchIntent.ToggleSource(it)) },
-            )
-
-            Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
-
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding),
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .padding(innerPadding),
             ) {
+                SearchInputSection(
+                    query = state.searchQuery,
+                    onQueryChange = { viewModel.handleIntent(SearchIntent.UpdateQuery(it)) },
+                    onSearch = { viewModel.handleIntent(SearchIntent.PerformSearch(it)) },
+                )
+
+                Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
+
+                SourceSelector(
+                    availableSources = state.availableSources,
+                    selectedSourceIds = state.selectedSourceIds,
+                    onToggleSource = { viewModel.handleIntent(SearchIntent.ToggleSource(it)) },
+                )
+
+                Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
+
                 if (state.searchQuery.isEmpty()) {
-                    if (state.searchHistory.isNotEmpty()) {
-                        item {
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(Dimens.PaddingMedium),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.title_recent_searches),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                                TextButton(onClick = { viewModel.handleIntent(SearchIntent.ClearHistory) }) {
-                                    Text(stringResource(R.string.action_clear))
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding),
+                    ) {
+                        if (state.searchHistory.isNotEmpty()) {
+                            item {
+                                Row(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(Dimens.PaddingMedium),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.title_recent_searches),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    TextButton(onClick = { viewModel.handleIntent(SearchIntent.ClearHistory) }) {
+                                        Text(stringResource(R.string.action_clear))
+                                    }
                                 }
                             }
-                        }
 
-                        items(state.searchHistory) { query ->
-                            HistoryItem(
-                                query = query,
-                                onClick = { viewModel.handleIntent(SearchIntent.PerformSearch(query)) },
-                                onRemove = { viewModel.handleIntent(SearchIntent.RemoveHistoryItem(query)) },
-                            )
+                            items(state.searchHistory) { query ->
+                                HistoryItem(
+                                    query = query,
+                                    onClick = { viewModel.handleIntent(SearchIntent.PerformSearch(query)) },
+                                    onRemove = { viewModel.handleIntent(SearchIntent.RemoveHistoryItem(query)) },
+                                )
+                            }
                         }
                     }
                 } else {
-                    if (state.isLoading) {
-                        item {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(Dimens.PaddingExtraLarge),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        }
-                    } else if (state.searchResults.isEmpty() && state.isSearching) {
-                        item {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(Dimens.PaddingExtraLarge),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    stringResource(R.string.msg_no_results),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                )
-                            }
-                        }
-                    } else {
-                        items(state.searchResults) { song ->
-                            SearchSongListItem(
-                                song = song,
-                                onClick = { viewModel.handleIntent(SearchIntent.PlayMusic(song, state.searchResults)) },
-                                artistJoinString = state.artistJoinString,
-                            )
+                    SearchResultsSection(
+                        modifier = Modifier.fillMaxSize(),
+                        state = state,
+                        onPlaySong = { song ->
+                            viewModel.handleIntent(SearchIntent.PlayMusic(song, state.searchResults))
+                        },
+                        emptyBottomPadding = Dimens.MiniPlayerBottomPadding,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SearchInputSection(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSearch: (String) -> Unit,
+) {
+    SearchBar(
+        inputField = {
+            SearchBarDefaults.InputField(
+                query = query,
+                onQueryChange = onQueryChange,
+                onSearch = onSearch,
+                expanded = false,
+                onExpandedChange = {},
+                placeholder = { Text(stringResource(R.string.hint_search_music)) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { onQueryChange("") }) {
+                            Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.desc_clear))
                         }
                     }
+                },
+            )
+        },
+        expanded = false,
+        onExpandedChange = {},
+        modifier = Modifier.fillMaxWidth(),
+    ) {}
+}
+
+@Composable
+private fun SearchHistorySection(
+    history: List<String>,
+    onClear: () -> Unit,
+    onSearch: (String) -> Unit,
+    onRemove: (String) -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.PaddingSmall),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.title_recent_searches),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            TextButton(onClick = onClear) {
+                Text(stringResource(R.string.action_clear))
+            }
+        }
+
+        history.forEach { query ->
+            HistoryItem(
+                query = query,
+                onClick = { onSearch(query) },
+                onRemove = { onRemove(query) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchResultsSection(
+    modifier: Modifier = Modifier,
+    state: SearchState,
+    onPlaySong: (MusicModel) -> Unit,
+    emptyBottomPadding: androidx.compose.ui.unit.Dp,
+) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(bottom = emptyBottomPadding),
+    ) {
+        if (state.searchQuery.isBlank()) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingExtraLarge),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(R.string.hint_search_music),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
+            }
+        } else if (state.isLoading) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingExtraLarge),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        } else if (state.searchResults.isEmpty() && state.isSearching) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingExtraLarge),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        stringResource(R.string.msg_no_results),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            }
+        } else {
+            items(state.searchResults) { song ->
+                SearchSongListItem(
+                    song = song,
+                    onClick = { onPlaySong(song) },
+                    artistJoinString = state.artistJoinString,
+                )
             }
         }
     }

@@ -4,6 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.data.model.*
+import org.parallel_sekai.kanade.data.script.ScriptManifest
+import org.parallel_sekai.kanade.ui.adaptive.rememberAdaptiveLayoutInfo
 import org.parallel_sekai.kanade.ui.screens.player.PlayerState
 import org.parallel_sekai.kanade.ui.theme.Dimens
 
@@ -43,6 +49,11 @@ fun LibraryScreen(
 ) {
     val activeManifest = state.scriptManifests.find { it.id == state.activeScriptId }
     val isScriptActive = activeManifest != null
+    val adaptiveInfo = rememberAdaptiveLayoutInfo()
+    val topPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val displayList = if (isScriptActive) state.homeMusicList else state.allMusicList
+    val listTitle = if (isScriptActive) activeManifest.name else stringResource(R.string.header_all_music)
+    val listIcon = if (isScriptActive) Icons.Default.AutoAwesome else null
 
     androidx.compose.runtime.LaunchedEffect(state.activeScriptId) {
         if (isScriptActive) {
@@ -50,138 +61,257 @@ fun LibraryScreen(
         }
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding =
-            PaddingValues(
-                top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
-                bottom = Dimens.MiniPlayerBottomPadding, // Space for MiniPlayer
-            ),
-    ) {
-        item {
-            SectionHeader(stringResource(R.string.header_your_library))
-        }
-
-        item {
-            LibraryGrid(
-                onNavigateToArtists = onNavigateToArtists,
-                onNavigateToAlbums = onNavigateToAlbums,
-                onNavigateToPlaylists = onNavigateToPlaylists,
-                onNavigateToFolders = onNavigateToFolders,
-            )
-        }
-
-        // 外部音源 Tab 切换
-        if (state.scriptManifests.isNotEmpty()) {
-            item {
-                val tabs =
-                    androidx.compose.runtime.remember(state.scriptManifests) {
-                        listOf(null) + state.scriptManifests.map { it.id }
-                    }
-                val selectedIndex =
-                    androidx.compose.runtime.remember(tabs, state.activeScriptId) {
-                        tabs.indexOf(state.activeScriptId).coerceAtLeast(0)
-                    }
-                val scriptNamesMap =
-                    androidx.compose.runtime.remember(state.scriptManifests) {
-                        state.scriptManifests.associate { it.id to it.name }
-                    }
-
-                SecondaryScrollableTabRow(
-                    selectedTabIndex = selectedIndex,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingSmall),
-                    edgePadding = Dimens.PaddingMedium,
-                    divider = {},
+    if (adaptiveInfo.isWideScreen) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(top = topPadding)
+                    .padding(horizontal = Dimens.PaddingMedium)
+                    .padding(bottom = Dimens.MiniPlayerBottomPadding),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge),
+        ) {
+            Surface(
+                modifier =
+                    Modifier
+                        .width(adaptiveInfo.sidebarWidth)
+                        .fillMaxHeight(),
+                shape = RoundedCornerShape(Dimens.CornerRadiusExtraLarge),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+            ) {
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(vertical = Dimens.PaddingSmall),
                 ) {
-                    tabs.forEachIndexed { index, scriptId ->
-                        val title =
-                            if (scriptId == null) {
-                                stringResource(R.string.label_local)
-                            } else {
-                                scriptNamesMap[scriptId] ?: ""
-                            }
-                        Tab(
-                            selected = selectedIndex == index,
-                            onClick = { onScriptClick(scriptId) },
-                            text = {
-                                Text(
-                                    text = title,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = if (selectedIndex == index) FontWeight.Bold else FontWeight.Normal,
-                                )
-                            },
-                        )
+                    SectionHeader(stringResource(R.string.header_your_library))
+                    LibraryGrid(
+                        onNavigateToArtists = onNavigateToArtists,
+                        onNavigateToAlbums = onNavigateToAlbums,
+                        onNavigateToPlaylists = onNavigateToPlaylists,
+                        onNavigateToFolders = onNavigateToFolders,
+                    )
+                }
+            }
+
+            Surface(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                shape = RoundedCornerShape(Dimens.CornerRadiusExtraLarge),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f),
+            ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = Dimens.PaddingMedium, top = Dimens.PaddingSmall),
+                ) {
+                    if (state.scriptManifests.isNotEmpty()) {
+                        item {
+                            CompactSectionLabel(
+                                text = stringResource(R.string.title_scripts),
+                                icon = Icons.Default.AutoAwesome,
+                            )
+                            ScriptSourceTabs(
+                                scriptManifests = state.scriptManifests,
+                                activeScriptId = state.activeScriptId,
+                                onScriptClick = onScriptClick,
+                            )
+                        }
                     }
+                    item {
+                        SectionHeader(title = listTitle, icon = listIcon)
+                    }
+                    librarySongsContent(
+                        state = state,
+                        displayList = displayList,
+                        isScriptActive = isScriptActive,
+                        onIntent = onIntent,
+                        onSongClick = onSongClick,
+                    )
                 }
             }
         }
-
-        // 主列表部分：根据音源状态切换
-        item {
-            val title =
-                if (isScriptActive) {
-                    activeManifest.name
-                } else {
-                    stringResource(R.string.header_all_music)
-                }
-            val icon = if (isScriptActive) Icons.Default.AutoAwesome else null
-            SectionHeader(title = title, icon = icon)
-        }
-
-        val displayList = if (isScriptActive) state.homeMusicList else state.allMusicList
-
-        if (isScriptActive && state.isHomeLoading) {
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding =
+                PaddingValues(
+                    top = topPadding,
+                    bottom = Dimens.MiniPlayerBottomPadding,
+                ),
+        ) {
             item {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingExtraLarge),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
+                SectionHeader(stringResource(R.string.header_your_library))
             }
-        } else if (isScriptActive && displayList.isEmpty()) {
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingExtraLarge),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(text = stringResource(R.string.no_content), style = MaterialTheme.typography.bodyLarge)
-                }
-            }
-        } else {
-            itemsIndexed(displayList) { index, song ->
-                // 预加载逻辑：距离末尾还有 20 个项目时触发加载
-                if (isScriptActive && state.canLoadMoreHome && !state.isHomeLoadingMore &&
-                    index >= displayList.size - 20
-                ) {
-                    onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.LoadMoreHome)
-                }
 
-                SongListItem(
-                    song = song,
-                    isSelected = state.currentSong?.id == song.id,
-                    onClick = {
-                        // 如果是脚本首页，不传入 displayList，让 ViewModel 触发完整列表获取逻辑
-                        onSongClick(song, if (isScriptActive) null else displayList)
-                    },
-                    artistJoinString = state.artistJoinString,
+            item {
+                LibraryGrid(
+                    onNavigateToArtists = onNavigateToArtists,
+                    onNavigateToAlbums = onNavigateToAlbums,
+                    onNavigateToPlaylists = onNavigateToPlaylists,
+                    onNavigateToFolders = onNavigateToFolders,
                 )
             }
 
-            // 底部加载状态指示器
-            if (isScriptActive && state.canLoadMoreHome && displayList.isNotEmpty()) {
+            if (state.scriptManifests.isNotEmpty()) {
                 item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingMedium),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (state.isHomeLoadingMore) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    ScriptSourceTabs(
+                        scriptManifests = state.scriptManifests,
+                        activeScriptId = state.activeScriptId,
+                        onScriptClick = onScriptClick,
+                    )
+                }
+            }
+
+            item {
+                SectionHeader(title = listTitle, icon = listIcon)
+            }
+            librarySongsContent(
+                state = state,
+                displayList = displayList,
+                isScriptActive = isScriptActive,
+                onIntent = onIntent,
+                onSongClick = onSongClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScriptSourceTabs(
+    scriptManifests: List<ScriptManifest>,
+    activeScriptId: String?,
+    onScriptClick: (String?) -> Unit,
+) {
+    val tabs =
+        androidx.compose.runtime.remember(scriptManifests) {
+            listOf<String?>(null) + scriptManifests.map { it.id }
+        }
+    val scriptNamesMap =
+        androidx.compose.runtime.remember(scriptManifests) {
+            scriptManifests.associate { it.id to it.name }
+        }
+
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall),
+    ) {
+        items(tabs) { scriptId ->
+            val title =
+                if (scriptId == null) {
+                    stringResource(R.string.label_local)
+                } else {
+                    scriptNamesMap[scriptId] ?: ""
+                }
+            FilterChip(
+                selected = activeScriptId == scriptId,
+                onClick = { onScriptClick(scriptId) },
+                label = {
+                    Text(
+                        text = title,
+                        fontWeight = if (activeScriptId == scriptId) FontWeight.Bold else FontWeight.Normal,
+                    )
+                },
+                leadingIcon =
+                    if (activeScriptId == scriptId) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Done,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize),
+                            )
                         }
+                    } else {
+                        null
+                    },
+            )
+        }
+    }
+}
+
+private fun LazyListScope.librarySongsContent(
+    state: PlayerState,
+    displayList: List<MusicModel>,
+    isScriptActive: Boolean,
+    onIntent: (org.parallel_sekai.kanade.ui.screens.player.PlayerIntent) -> Unit,
+    onSongClick: (MusicModel, List<MusicModel>?) -> Unit,
+) {
+    if (isScriptActive && state.isHomeLoading) {
+        item {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingExtraLarge),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+    } else if (isScriptActive && displayList.isEmpty()) {
+        item {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingExtraLarge),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = stringResource(R.string.no_content), style = MaterialTheme.typography.bodyLarge)
+            }
+        }
+    } else {
+        itemsIndexed(displayList) { index, song ->
+            if (isScriptActive && state.canLoadMoreHome && !state.isHomeLoadingMore &&
+                index >= displayList.size - 20
+            ) {
+                onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.LoadMoreHome)
+            }
+
+            SongListItem(
+                song = song,
+                isSelected = state.currentSong?.id == song.id,
+                onClick = {
+                    onSongClick(song, if (isScriptActive) null else displayList)
+                },
+                artistJoinString = state.artistJoinString,
+            )
+        }
+
+        if (isScriptActive && state.canLoadMoreHome && displayList.isNotEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingMedium),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (state.isHomeLoadingMore) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CompactSectionLabel(
+    text: String,
+    icon: ImageVector? = null,
+) {
+    Row(
+        modifier = Modifier.padding(horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(Dimens.IconSizeMedium),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Spacer(modifier = Modifier.width(Dimens.SpacingSmall))
+        }
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 

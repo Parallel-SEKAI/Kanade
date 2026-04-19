@@ -2,11 +2,13 @@
 
 package org.parallel_sekai.kanade.ui.screens.player
 
+import android.view.View
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -29,6 +31,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
@@ -44,17 +47,21 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
@@ -67,6 +74,7 @@ import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.data.model.*
 import org.parallel_sekai.kanade.data.repository.LyricsSettings
 import org.parallel_sekai.kanade.data.utils.*
+import org.parallel_sekai.kanade.ui.adaptive.rememberAdaptiveLayoutInfo
 import org.parallel_sekai.kanade.ui.theme.Dimens
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
@@ -74,6 +82,67 @@ import kotlin.math.roundToInt
 enum class PlayerExpansionValue {
     Collapsed,
     Expanded,
+}
+
+private enum class FullScreenSidePanel {
+    Lyrics,
+    Playlist,
+}
+
+/**
+ * 跑马灯文本组件 - 当文本超出容器宽度时自动滚动
+ */
+@Composable
+private fun MarqueeText(
+    text: String,
+    style: TextStyle,
+    color: Color,
+    modifier: Modifier = Modifier,
+    fontWeight: FontWeight? = null,
+) {
+    var textWidthPx by remember { mutableStateOf(0f) }
+    var containerWidthPx by remember { mutableStateOf(0f) }
+    val density = LocalDensity.current
+
+    val shouldScroll = textWidthPx > containerWidthPx && containerWidthPx > 0
+
+    // 计算滚动动画
+    val scrollDistance = if (shouldScroll) textWidthPx - containerWidthPx + with(density) { 32.dp.toPx() } else 0f
+    val scrollDuration = (scrollDistance / 50f * 1000f).toInt().coerceIn(3000, 10000) // 3-10秒
+
+    val infiniteTransition = rememberInfiniteTransition(label = "Marquee")
+    val scrollOffset by infiniteTransition.animateValue(
+        initialValue = 0f,
+        targetValue = if (shouldScroll) -scrollDistance else 0f,
+        typeConverter = Float.VectorConverter,
+            animationSpec = infiniteRepeatable(
+            animation = tween(scrollDuration, easing = LinearEasing, delayMillis = 1500),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Restart,
+        ),
+        label = "MarqueeOffset",
+    )
+
+    Box(
+        modifier = modifier
+            .onSizeChanged { containerWidthPx = it.width.toFloat() }
+            .border(0.dp, Color.Transparent) // 强制裁剪
+    ) {
+        Text(
+            text = text,
+            style = style,
+            color = color,
+            fontWeight = fontWeight,
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier
+                .graphicsLayer {
+                    if (shouldScroll) {
+                        translationX = scrollOffset
+                    }
+                }
+                .onSizeChanged { textWidthPx = it.width.toFloat() },
+        )
+    }
 }
 
 @Composable
@@ -166,11 +235,23 @@ fun KanadePlayerContainer(
     onIntent: (PlayerIntent) -> Unit,
     onNavigateToSongInfo: () -> Unit = {},
     bottomPadding: Dp = 0.dp,
+    contentStartPadding: Dp = 0.dp,
 ) {
     if (state.currentSong == null) return
 
+    // 屏幕常亮：全屏展开时保持屏幕常亮
+    val view = LocalView.current
+    DisposableEffect(state.isExpanded) {
+        view.keepScreenOn = state.isExpanded
+        onDispose {
+            view.keepScreenOn = false
+        }
+    }
+
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
+    val adaptiveInfo = rememberAdaptiveLayoutInfo()
+    var wideSidePanel by remember { mutableStateOf(FullScreenSidePanel.Lyrics) }
     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
 
     val miniPlayerHeightPx = with(density) { (Dimens.MiniPlayerHeight + Dimens.PaddingMedium).toPx() } // MiniPlayer height + vertical padding
@@ -217,6 +298,7 @@ fun KanadePlayerContainer(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(start = contentStartPadding * (1f - fraction))
                 .height(lerp(Dimens.MiniPlayerHeight + Dimens.PaddingMedium, configuration.screenHeightDp.dp, fraction))
                 .offset {
                     val backOffset = (predictiveBackProgress * 100.dp.toPx()).roundToInt()
@@ -275,18 +357,31 @@ fun KanadePlayerContainer(
 
             // 全屏播放器层
             if (fraction > 0f) {
+                val fullPlayerEntryAlpha = FastOutSlowInEasing.transform((fraction / 0.12f).coerceIn(0f, 1f))
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .zIndex(if (isTransitioning) 1f else 0f), // 滑动时在前面，切换前在后面
+                        .zIndex(if (isTransitioning) 1f else 0f)
+                        .alpha(fullPlayerEntryAlpha),
                 ) {
-                    FullScreenContent(
-                        state = state,
-                        onIntent = onIntent,
-                        onNavigateToSongInfo = onNavigateToSongInfo,
-                        expansionFraction = fraction,
-                        offsetY = 0f,
-                    )
+                    if (adaptiveInfo.isWideScreen) {
+                        WideFullScreenPlayerContent(
+                            state = state,
+                            onIntent = onIntent,
+                            onNavigateToSongInfo = onNavigateToSongInfo,
+                            sidePanel = wideSidePanel,
+                            onSidePanelChange = { wideSidePanel = it },
+                            expansionFraction = fraction,
+                        )
+                    } else {
+                        FullScreenContent(
+                            state = state,
+                            onIntent = onIntent,
+                            onNavigateToSongInfo = onNavigateToSongInfo,
+                            expansionFraction = fraction,
+                            offsetY = 0f,
+                        )
+                    }
                 }
             }
         }
@@ -476,10 +571,30 @@ private fun FullScreenContent(
     expansionFraction: Float,
     offsetY: Float,
 ) {
+    val adaptiveInfo = rememberAdaptiveLayoutInfo()
+    var sidePanel by remember { mutableStateOf(FullScreenSidePanel.Lyrics) }
+
     var showLyrics by remember { mutableStateOf(false) }
     var showPlaylist by remember { mutableStateOf(false) }
     var controlsVisible by remember { mutableStateOf(true) }
     val density = LocalDensity.current
+
+    val coverPrimary = state.gradientColors.getOrElse(0) { Color(0xFF3A4659) }
+    val coverSecondary = state.gradientColors.getOrElse(1) { Color(0xFF1F2632) }
+    val pageBackground = lerp(coverSecondary, Color.Black, 0.84f)
+    val buttonBackground = lerp(coverPrimary, pageBackground, 0.74f)
+    val buttonPressedBackground = lerp(coverPrimary, pageBackground, 0.46f)
+    val primaryTextColor = lerp(coverPrimary, Color.White, 0.88f)
+    val secondaryTextColor = lerp(primaryTextColor, pageBackground, 0.18f)
+    val tertiaryTextColor = lerp(primaryTextColor, pageBackground, 0.34f)
+    val panelIndicatorColor = lerp(coverPrimary, primaryTextColor, 0.55f)
+    val playlistRowActiveColor = lerp(coverPrimary, pageBackground, 0.72f)
+    val inactiveTrackColor = lerp(coverSecondary, pageBackground, 0.28f)
+    val lyricPageBackground = pageBackground
+    val lyricPrimaryTextColor = primaryTextColor
+    val lyricInactiveColor = lerp(lyricPrimaryTextColor, lyricPageBackground, 0.28f)
+    val lyricTranslationColor = lerp(lyricPrimaryTextColor, lyricPageBackground, 0.16f)
+    val lyricEmptyColor = lerp(lyricPrimaryTextColor, lyricPageBackground, 0.42f)
 
     // 新增：歌词模式切换动画进度
     val lyricTransitionFraction by animateFloatAsState(
@@ -525,7 +640,7 @@ private fun FullScreenContent(
 
             // 1. 定义三种状态下的基础值
 
-            // 小播放器 (Mini)
+            // 小播放器 (Mini) - 竖屏和宽屏共用
             val miniArtSize = Dimens.AlbumCoverSizeMiniPlayer
             val miniArtX = Dimens.PaddingMedium
             val miniArtY = Dimens.PaddingMedium
@@ -533,25 +648,57 @@ private fun FullScreenContent(
             val miniArtistSize = 12.sp
             val miniTextX = 72.dp
 
+            val isWide = adaptiveInfo.isWideScreen
+            val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+            val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
+            // 宽屏最终布局的真实几何，与 WideFullScreenPlayerContent 保持一致
+            val wideHorizontalPadding = 40.dp
+            val wideVerticalPadding = 28.dp
+            val wideColumnSpacing = 32.dp
+            val widePanelMaxWidth = 460.dp
+            val wideHeaderButtonSize = 44.dp
+            val wideTopInset = statusBarTop + wideVerticalPadding
+            val wideAvailableWidth = (screenWidth - wideHorizontalPadding * 2 - wideColumnSpacing).coerceAtLeast(0.dp)
+            val wideOuterColumnWidth = wideAvailableWidth / 2
+            val widePanelWidth = minOf(wideOuterColumnWidth, widePanelMaxWidth)
+            val widePanelStartX = wideHorizontalPadding + ((wideOuterColumnWidth - widePanelWidth) / 2)
+            val wideAvailableHeight = (screenHeight - statusBarTop - navigationBarBottom - wideVerticalPadding * 2).coerceAtLeast(0.dp)
+            val wideCoverArtSize = minOf(widePanelWidth * 0.8f, wideAvailableHeight * 0.4f)
+            val wideCoverArtX = widePanelStartX + ((widePanelWidth - wideCoverArtSize) / 2)
+            val wideCoverArtY = wideTopInset + wideHeaderButtonSize + 20.dp
+            val wideTextX = widePanelStartX
+            val wideTitleY = wideCoverArtY + wideCoverArtSize + 20.dp
+            val wideMoreX = widePanelStartX + widePanelWidth - wideHeaderButtonSize
+            val wideMoreY = wideTopInset
+            val wideTextWidth = widePanelWidth
+
             // 全屏封面模式 (Full Cover)
-            val fullCoverArtSize = screenWidth * 0.85f
-            val fullCoverArtX = (screenWidth - fullCoverArtSize) / 2
-            val fullCoverArtY = 140.dp
+            val fullCoverArtSize = if (isWide) wideCoverArtSize else screenWidth * 0.85f
+            val fullCoverArtX = if (isWide) wideCoverArtX else (screenWidth - fullCoverArtSize) / 2
+            val fullCoverArtY = if (isWide) wideCoverArtY else 140.dp
             val fullCoverTitleSize = 24.sp
-            val fullCoverArtistSize = 20.sp
-            val fullCoverTitleY = screenHeight - 380.dp
-            val fullCoverArtistY = screenHeight - 340.dp
-            val fullCoverTextX = fullCoverArtX
+            val fullCoverArtistSize = if (isWide) 16.sp else 20.sp
+            val fullCoverTitleY = if (isWide) wideTitleY else screenHeight - 380.dp
+            val fullCoverArtistY = if (isWide) wideTitleY + 32.dp else screenHeight - 340.dp
+            val fullCoverTextX = if (isWide) wideTextX else fullCoverArtX
+            val fullCoverTextWidth = if (isWide) wideTextWidth else fullCoverArtSize - 48.dp
+            val fullCoverMoreX = if (isWide) wideMoreX else screenWidth - fullCoverArtX - Dimens.PaddingExtraLarge
+            val fullCoverMoreY = if (isWide) wideMoreY else fullCoverTitleY + Dimens.PaddingExtraSmall
 
             // 全屏歌词/列表模式 (Full Lyric/Playlist)
-            val fullLyricArtSize = Dimens.IconSizeHuge
-            val fullLyricArtX = Dimens.PaddingLarge
-            val fullLyricArtY = 66.dp // This looks like it's tied to status bar height + padding, keep for now
-            val fullLyricTitleSize = 16.sp
-            val fullLyricArtistSize = 14.sp
-            val fullLyricTitleY = 64.dp // Keep as is, possibly derived from status bar
-            val fullLyricArtistY = 88.dp // Keep as is, possibly derived from status bar
-            val fullLyricTextX = 76.dp // Keep as is, derived from fullLyricArtX + its size + padding
+            // 宽屏下左侧布局不会切成竖屏歌词小头图，所以直接复用宽屏封面布局坐标
+            val fullLyricArtSize = if (isWide) fullCoverArtSize else Dimens.IconSizeHuge
+            val fullLyricArtX = if (isWide) fullCoverArtX else Dimens.PaddingLarge
+            val fullLyricArtY = if (isWide) fullCoverArtY else 66.dp
+            val fullLyricTitleSize = if (isWide) fullCoverTitleSize else 16.sp
+            val fullLyricArtistSize = if (isWide) fullCoverArtistSize else 14.sp
+            val fullLyricTitleY = if (isWide) fullCoverTitleY else 64.dp
+            val fullLyricArtistY = if (isWide) fullCoverArtistY else 88.dp
+            val fullLyricTextX = if (isWide) fullCoverTextX else 76.dp
+            val fullLyricTextWidth = if (isWide) fullCoverTextWidth else screenWidth - 160.dp
+            val fullLyricMoreX = if (isWide) fullCoverMoreX else screenWidth - Dimens.AlbumCoverSizeMiniPlayer
+            val fullLyricMoreY = if (isWide) fullCoverMoreY else 72.dp
 
             // 2. 首先在全屏的两个模式之间插值，得到“当前全屏目标”
             val fullTargetArtSize = lerp(fullCoverArtSize, fullLyricArtSize, lyricTransitionFraction)
@@ -564,14 +711,9 @@ private fun FullScreenContent(
             val fullTargetTitleY = lerp(fullCoverTitleY, fullLyricTitleY, lyricTransitionFraction)
             val fullTargetArtistY = lerp(fullCoverArtistY, fullLyricArtistY, lyricTransitionFraction)
             val fullTargetTextX = lerp(fullCoverTextX, fullLyricTextX, lyricTransitionFraction)
-            val fullTargetTextWidth = lerp(fullCoverArtSize - 48.dp, screenWidth - 160.dp, lyricTransitionFraction)
+            val fullTargetTextWidth = lerp(fullCoverTextWidth, fullLyricTextWidth, lyricTransitionFraction)
 
             // 三点按钮位置插值
-            val fullCoverMoreX = screenWidth - fullCoverArtX - Dimens.PaddingExtraLarge
-            val fullCoverMoreY = fullCoverTitleY + Dimens.PaddingExtraSmall
-            val fullLyricMoreX = screenWidth - Dimens.AlbumCoverSizeMiniPlayer
-            val fullLyricMoreY = 72.dp // Keep as is for now
-
             val fullTargetMoreX = lerp(fullCoverMoreX, fullLyricMoreX, lyricTransitionFraction)
             val fullTargetMoreY = lerp(fullCoverMoreY, fullLyricMoreY, lyricTransitionFraction)
 
@@ -594,7 +736,7 @@ private fun FullScreenContent(
             val currentMoreY = lerp(miniArtY + Dimens.PaddingLarge, fullTargetMoreY, expansionFraction)
 
             val miniArtistColor = MaterialTheme.colorScheme.onSurfaceVariant
-            val fullArtistColor = Color.White.copy(alpha = 0.6f)
+            val fullArtistColor = Color.White.copy(alpha = 0.78f)
             val currentArtistColor = lerp(miniArtistColor, fullArtistColor, expansionFraction)
 
             val controlsAlpha by animateFloatAsState(
@@ -727,7 +869,7 @@ private fun FullScreenContent(
                             modifier = Modifier
                                 .size(Dimens.IconSizeExtraLarge, Dimens.PaddingExtraSmall)
                                 .clip(RoundedCornerShape(Dimens.CornerRadiusSmall))
-                                .background(Color.White.copy(alpha = 0.3f))
+                                .background(primaryTextColor.copy(alpha = 0.3f))
                                 .align(Alignment.TopCenter),
                         ) // 36.dp, 4.dp, 2.dp
                         }
@@ -743,7 +885,16 @@ private fun FullScreenContent(
                         enter = fadeIn(tween(500)) + expandVertically(expandFrom = Alignment.CenterVertically),
                         exit = fadeOut(tween(500)) + shrinkVertically(shrinkTowards = Alignment.CenterVertically),
                     ) {
-                        LyricContent(state, onIntent)
+                        LyricContent(
+                            state = state,
+                            onIntent = onIntent,
+                            activeTextColor = lyricPrimaryTextColor,
+                            inactiveTextColor = lyricInactiveColor,
+                            translationTextColor = lyricTranslationColor,
+                            emptyTextColor = lyricEmptyColor,
+                            fadeMaskColor = lyricPageBackground,
+                            glowColor = lyricPrimaryTextColor,
+                        )
                     }
 
                     androidx.compose.animation.AnimatedVisibility(
@@ -793,10 +944,10 @@ private fun FullScreenContent(
                         )
                         Spacer(modifier = Modifier.height(dynamicSpacerHeightValue.dp))
                         PlayerControlsSection(
-                            state,
-                            onIntent,
-                            showLyrics,
-                            showPlaylist,
+                            state = state,
+                            onIntent = onIntent,
+                            showLyrics = showLyrics,
+                            showPlaylist = showPlaylist,
                             onToggleLyrics = {
                                 showLyrics = it
                                 if (it) showPlaylist = false
@@ -807,6 +958,12 @@ private fun FullScreenContent(
                                 if (it) showLyrics = false
                                 controlsVisible = true
                             },
+                            textColor = primaryTextColor,
+                            secondaryTextColor = secondaryTextColor,
+                            tertiaryTextColor = tertiaryTextColor,
+                            buttonBackground = buttonBackground,
+                            buttonPressedBackground = buttonPressedBackground,
+                            inactiveTrackColor = inactiveTrackColor,
                         )
                     }
                 }
@@ -816,9 +973,554 @@ private fun FullScreenContent(
                     animationSpec = tween(500),
                     label = "BottomSafeMarginAnimation",
                 )
-                Spacer(modifier = Modifier.height(bottomSafeMarginValue.dp))
+            Spacer(modifier = Modifier.height(bottomSafeMarginValue.dp))
             }
         }
+
+    }
+}
+
+
+
+@Composable
+private fun WideFullScreenPlayerContent(
+    state: PlayerState,
+    onIntent: (PlayerIntent) -> Unit,
+    onNavigateToSongInfo: () -> Unit,
+    sidePanel: FullScreenSidePanel,
+    onSidePanelChange: (FullScreenSidePanel) -> Unit,
+    expansionFraction: Float = 1f,
+) {
+    val currentSong = state.currentSong ?: return
+    var showMoreMenu by remember { mutableStateOf(false) }
+    val density = LocalDensity.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val coverModel = remember(context, currentSong.coverUrl) {
+        coil.request.ImageRequest.Builder(context)
+            .data(currentSong.coverUrl)
+            .crossfade(false)
+            .size(coil.size.Size.ORIGINAL)
+            .build()
+    }
+    val showCoverPlaceholder = currentSong.coverUrl.isNullOrBlank()
+
+    val coverPrimary = state.gradientColors.getOrElse(0) { Color(0xFF3A4659) }
+    val coverSecondary = state.gradientColors.getOrElse(1) { Color(0xFF1F2632) }
+    val pageBackground = lerp(coverSecondary, Color.Black, 0.84f)
+    val coverPlaceholder = lerp(coverPrimary, pageBackground, 0.5f)
+    val buttonBackground = lerp(coverPrimary, pageBackground, 0.74f)
+    val buttonPressedBackground = lerp(coverPrimary, pageBackground, 0.46f)
+    val primaryTextColor = lerp(coverPrimary, Color.White, 0.88f)
+    val secondaryTextColor = lerp(primaryTextColor, pageBackground, 0.18f)
+    val tertiaryTextColor = lerp(primaryTextColor, pageBackground, 0.34f)
+    val panelIndicatorColor = lerp(coverPrimary, primaryTextColor, 0.55f)
+    val playlistRowActiveColor = lerp(coverPrimary, pageBackground, 0.72f)
+    val inactiveTrackColor = lerp(coverSecondary, pageBackground, 0.28f)
+    val lyricInactiveColor = lerp(primaryTextColor, pageBackground, 0.28f)
+    val lyricTranslationColor = lerp(primaryTextColor, pageBackground, 0.16f)
+    val lyricEmptyColor = lerp(primaryTextColor, pageBackground, 0.42f)
+
+    val progress = expansionFraction.coerceIn(0f, 1f)
+    val shellAlpha = ((progress - 0.45f) / 0.4f).coerceIn(0f, 1f)
+    val staticSharedAlpha = ((progress - 0.94f) / 0.06f).coerceIn(0f, 1f)
+    val overlaySharedAlpha = 1f - ((progress - 0.94f) / 0.06f).coerceIn(0f, 1f)
+
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize().background(pageBackground),
+    ) {
+        val screenWidth = maxWidth
+        val screenHeight = maxHeight
+        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
+        val wideHorizontalPadding = 40.dp
+        val wideVerticalPadding = 28.dp
+        val wideColumnSpacing = 32.dp
+        val widePanelMaxWidth = 460.dp
+        val wideHeaderButtonSize = 44.dp
+        val wideTopInset = statusBarTop + wideVerticalPadding
+        val wideAvailableWidth = (screenWidth - wideHorizontalPadding * 2 - wideColumnSpacing).coerceAtLeast(0.dp)
+        val wideOuterColumnWidth = wideAvailableWidth / 2
+        val widePanelWidth = minOf(wideOuterColumnWidth, widePanelMaxWidth)
+        val widePanelStartX = wideHorizontalPadding + ((wideOuterColumnWidth - widePanelWidth) / 2)
+        val wideAvailableHeight = (screenHeight - statusBarTop - navigationBarBottom - wideVerticalPadding * 2).coerceAtLeast(0.dp)
+        val wideCoverSize = minOf(widePanelWidth * 0.8f, wideAvailableHeight * 0.4f)
+        val wideCoverX = widePanelStartX + ((widePanelWidth - wideCoverSize) / 2)
+        val wideCoverY = wideTopInset + wideHeaderButtonSize + 20.dp
+        val wideTextX = widePanelStartX
+        val wideTitleY = wideCoverY + wideCoverSize + 20.dp
+        val wideTextWidth = widePanelWidth
+
+        val miniArtSize = Dimens.AlbumCoverSizeMiniPlayer
+        val miniArtX = Dimens.PaddingMedium
+        val miniArtY = Dimens.PaddingMedium
+        val miniTitleSize = 14.sp
+        val miniArtistSize = 12.sp
+        val miniTextX = 72.dp
+        val miniTextWidth = screenWidth - miniTextX - Dimens.IconSizeGigantic
+
+        val currentArtSize = lerp(miniArtSize, wideCoverSize, progress)
+        val currentArtX = lerp(miniArtX, wideCoverX, progress)
+        val currentArtY = lerp(miniArtY, wideCoverY, progress)
+        val currentArtCornerRadius = lerp(Dimens.CornerRadiusSmall, 28.dp, progress)
+        val currentTitleSize = lerp(miniTitleSize, 24.sp, progress)
+        val currentArtistSize = lerp(miniArtistSize, 16.sp, progress)
+        val currentTextX = lerp(miniTextX, wideTextX, progress)
+        val currentTitleY = lerp(miniArtY + Dimens.PaddingSmall, wideTitleY, progress)
+        val currentTextWidth = lerp(miniTextWidth, wideTextWidth, progress)
+        val currentArtistColor = lerp(MaterialTheme.colorScheme.onSurfaceVariant, secondaryTextColor, progress)
+
+        FluidBackground(
+            colors = state.gradientColors,
+            modifier = Modifier.fillMaxSize().alpha(0.85f * progress),
+        )
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f * progress)))
+
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 40.dp, vertical = 28.dp)
+                    .alpha(shellAlpha),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+        ) {
+            Box(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                BoxWithConstraints(
+                    modifier = Modifier.widthIn(max = 460.dp).fillMaxHeight(),
+                ) {
+                    val coverSize = minOf(maxWidth * 0.8f, maxHeight * 0.4f)
+
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            AppleMusicHeaderButton(
+                                icon = Icons.Default.KeyboardArrowDown,
+                                onClick = { onIntent(PlayerIntent.Collapse) },
+                                backgroundColor = buttonBackground,
+                                contentColor = primaryTextColor,
+                            )
+
+                            Box {
+                                AppleMusicHeaderButton(
+                                    icon = Icons.Default.MoreHoriz,
+                                    onClick = { showMoreMenu = true },
+                                    backgroundColor = buttonBackground,
+                                    contentColor = primaryTextColor,
+                                )
+
+                                DropdownMenu(
+                                    expanded = showMoreMenu,
+                                    onDismissRequest = { showMoreMenu = false },
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.title_song_info)) },
+                                        onClick = {
+                                            showMoreMenu = false
+                                            onNavigateToSongInfo()
+                                        },
+                                        leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Box(
+                            modifier = Modifier.fillMaxWidth().alpha(staticSharedAlpha),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            AsyncImage(
+                                model = coverModel,
+                                contentDescription = null,
+                                modifier =
+                                    Modifier
+                                        .size(coverSize)
+                                        .clip(RoundedCornerShape(28.dp))
+                                        .then(if (showCoverPlaceholder) Modifier.background(coverPlaceholder) else Modifier),
+                                contentScale = ContentScale.Crop,
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Column(modifier = Modifier.fillMaxWidth().alpha(staticSharedAlpha)) {
+                            MarqueeText(
+                                text = currentSong.title,
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = primaryTextColor,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            MarqueeText(
+                                text = currentSong.artists.joinToString(state.artistJoinString),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = secondaryTextColor,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            currentSong.album.takeIf { it.isNotBlank() }?.let { album ->
+                                Spacer(modifier = Modifier.height(6.dp))
+                                MarqueeText(
+                                    text = album,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = tertiaryTextColor,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+        AppleMusicTransportControls(
+            state = state,
+            onIntent = onIntent,
+            textColor = primaryTextColor,
+            secondaryTextColor = secondaryTextColor,
+            primaryButtonBackground = buttonPressedBackground,
+            inactiveTrackColor = inactiveTrackColor,
+        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            AppleMusicSmallControlButton(
+                                icon = Icons.Default.Shuffle,
+                                onClick = { onIntent(PlayerIntent.ToggleShuffle) },
+                                active = state.shuffleModeEnabled,
+                                backgroundColor = buttonBackground,
+                                activeBackgroundColor = buttonPressedBackground,
+                                contentColor = primaryTextColor,
+                            )
+                            AppleMusicSmallControlButton(
+                                icon = if (state.repeatMode == RepeatMode.ONE) Icons.Default.RepeatOne else Icons.Default.Repeat,
+                                onClick = { onIntent(PlayerIntent.ToggleRepeat) },
+                                active = state.repeatMode != RepeatMode.OFF,
+                                backgroundColor = buttonBackground,
+                                activeBackgroundColor = buttonPressedBackground,
+                                contentColor = primaryTextColor,
+                            )
+                        }
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+            ) {
+                AppleMusicPanelSwitcher(
+                    sidePanel = sidePanel,
+                    onSidePanelChange = onSidePanelChange,
+                    selectedTextColor = primaryTextColor,
+                    unselectedTextColor = tertiaryTextColor,
+                    indicatorColor = panelIndicatorColor,
+                    modifier = Modifier.padding(start = Dimens.LyricHorizontalPadding),
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    when (sidePanel) {
+                        FullScreenSidePanel.Lyrics -> {
+                            LyricContent(
+                                state = state,
+                                onIntent = onIntent,
+                                modifier = Modifier.fillMaxSize(),
+                                topContentPadding = 8.dp,
+                                bottomContentPadding = 140.dp,
+                                activeTextColor = primaryTextColor,
+                                inactiveTextColor = lyricInactiveColor,
+                                translationTextColor = lyricTranslationColor,
+                                emptyTextColor = lyricEmptyColor,
+                                fadeMaskColor = pageBackground,
+                                glowColor = primaryTextColor,
+                            )
+                        }
+                        FullScreenSidePanel.Playlist -> {
+                            PlaylistContent(
+                                state = state,
+                                onIntent = onIntent,
+                                modifier = Modifier.fillMaxSize(),
+                                bottomContentPadding = 24.dp,
+                                currentSongHighlightColor = primaryTextColor,
+                                primaryTextColor = primaryTextColor,
+                                secondaryTextColor = secondaryTextColor,
+                                handleTint = tertiaryTextColor,
+                                activeRowColor = playlistRowActiveColor,
+                                maskColor = pageBackground,
+                                showHeader = false,
+                                horizontalPadding = 0.dp,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        if (overlaySharedAlpha > 0f) {
+            AsyncImage(
+                model = coverModel,
+                contentDescription = null,
+                modifier = Modifier
+                    .offset { IntOffset(currentArtX.roundToPx(), currentArtY.roundToPx()) }
+                    .size(currentArtSize)
+                    .clip(RoundedCornerShape(currentArtCornerRadius))
+                    .then(if (showCoverPlaceholder) Modifier.background(coverPlaceholder) else Modifier)
+                    .alpha(overlaySharedAlpha),
+                contentScale = ContentScale.Crop,
+            )
+
+            Column(
+                modifier = Modifier
+                    .offset { IntOffset(currentTextX.roundToPx(), currentTitleY.roundToPx()) }
+                    .width(currentTextWidth)
+                    .alpha(overlaySharedAlpha),
+            ) {
+                Text(
+                    text = currentSong.title,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = currentTitleSize,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = currentSong.artists.joinToString(state.artistJoinString),
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = currentArtistSize,
+                        color = currentArtistColor,
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppleMusicHeaderButton(
+    icon: ImageVector,
+    onClick: () -> Unit,
+    backgroundColor: Color,
+    contentColor: Color,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(backgroundColor)
+                .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(Dimens.IconSizeLarge),
+        )
+    }
+}
+
+@Composable
+private fun AppleMusicPanelSwitcher(
+    sidePanel: FullScreenSidePanel,
+    onSidePanelChange: (FullScreenSidePanel) -> Unit,
+    selectedTextColor: Color,
+    unselectedTextColor: Color,
+    indicatorColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(28.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AppleMusicPanelSwitchItem(
+            label = stringResource(R.string.label_lyrics),
+            selected = sidePanel == FullScreenSidePanel.Lyrics,
+            onClick = { onSidePanelChange(FullScreenSidePanel.Lyrics) },
+            selectedTextColor = selectedTextColor,
+            unselectedTextColor = unselectedTextColor,
+            indicatorColor = indicatorColor,
+        )
+        AppleMusicPanelSwitchItem(
+            label = stringResource(R.string.header_playing_next),
+            selected = sidePanel == FullScreenSidePanel.Playlist,
+            onClick = { onSidePanelChange(FullScreenSidePanel.Playlist) },
+            selectedTextColor = selectedTextColor,
+            unselectedTextColor = unselectedTextColor,
+            indicatorColor = indicatorColor,
+        )
+    }
+}
+
+@Composable
+private fun AppleMusicPanelSwitchItem(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    selectedTextColor: Color,
+    unselectedTextColor: Color,
+    indicatorColor: Color,
+) {
+    Column(
+        modifier = Modifier.clickable(onClick = onClick),
+        horizontalAlignment = Alignment.Start,
+    ) {
+        Text(
+            text = label,
+            color = if (selected) selectedTextColor else unselectedTextColor,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Box(
+            modifier =
+                Modifier
+                    .height(2.dp)
+                    .width(if (selected) 34.dp else 0.dp)
+                    .background(indicatorColor),
+        )
+    }
+}
+
+@Composable
+private fun AppleMusicTransportControls(
+    state: PlayerState,
+    onIntent: (PlayerIntent) -> Unit,
+    textColor: Color,
+    secondaryTextColor: Color,
+    primaryButtonBackground: Color,
+    inactiveTrackColor: Color,
+) {
+    var sliderPosition by remember { mutableFloatStateOf(state.progress.toFloat()) }
+    val isDragging = remember { mutableStateOf(false) }
+
+    LaunchedEffect(state.progress) {
+        if (!isDragging.value) sliderPosition = state.progress.toFloat()
+    }
+
+    Slider(
+        value = sliderPosition,
+        onValueChange = {
+            isDragging.value = true
+            sliderPosition = it
+        },
+        onValueChangeFinished = {
+            isDragging.value = false
+            onIntent(PlayerIntent.SeekTo(sliderPosition.toLong()))
+        },
+        valueRange = 0f..state.duration.toFloat().coerceAtLeast(1f),
+        modifier = Modifier.fillMaxWidth(),
+        colors = SliderDefaults.colors(
+            thumbColor = textColor,
+            activeTrackColor = textColor,
+            inactiveTrackColor = Color(0xFF2A3039),
+        ),
+    )
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = formatTime(state.progress),
+            style = MaterialTheme.typography.labelMedium,
+            color = secondaryTextColor,
+        )
+        Text(
+            text = "-" + formatTime((state.duration - state.progress).coerceAtLeast(0L)),
+            style = MaterialTheme.typography.labelMedium,
+            color = secondaryTextColor,
+        )
+    }
+
+    Spacer(modifier = Modifier.height(28.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = { onIntent(PlayerIntent.Previous) }) {
+            Icon(
+                imageVector = Icons.Default.SkipPrevious,
+                contentDescription = null,
+                tint = textColor,
+                modifier = Modifier.size(42.dp),
+            )
+        }
+        Box(
+            modifier =
+                Modifier
+                    .size(76.dp)
+                    .clip(CircleShape)
+                    .background(primaryButtonBackground)
+                    .clickable { onIntent(PlayerIntent.PlayPause) },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                contentDescription = null,
+                tint = textColor,
+                modifier = Modifier.size(38.dp),
+            )
+        }
+        IconButton(onClick = { onIntent(PlayerIntent.Next) }) {
+            Icon(
+                imageVector = Icons.Default.SkipNext,
+                contentDescription = null,
+                tint = textColor,
+                modifier = Modifier.size(42.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AppleMusicSmallControlButton(
+    icon: ImageVector,
+    onClick: () -> Unit,
+    active: Boolean,
+    backgroundColor: Color,
+    activeBackgroundColor: Color,
+    contentColor: Color,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(if (active) activeBackgroundColor else backgroundColor)
+                .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(Dimens.IconSizeMedium),
+        )
     }
 }
 
@@ -837,74 +1539,77 @@ private fun PlayerControlsSection(
     showPlaylist: Boolean,
     onToggleLyrics: (Boolean) -> Unit,
     onTogglePlaylist: (Boolean) -> Unit,
+    textColor: Color,
+    secondaryTextColor: Color,
+    tertiaryTextColor: Color,
+    buttonBackground: Color,
+    buttonPressedBackground: Color,
+    inactiveTrackColor: Color,
+    showPanelToggleButtons: Boolean = true,
 ) {
-    var sliderPosition by remember { mutableFloatStateOf(state.progress.toFloat()) }
-    val isDragging = remember { mutableStateOf(false) }
-    LaunchedEffect(state.progress) {
-        if (!isDragging.value) sliderPosition = state.progress.toFloat()
-    }
-
-    Slider(
-        value = sliderPosition,
-        onValueChange = {
-            isDragging.value = true
-            sliderPosition = it
-        },
-        onValueChangeFinished = {
-            isDragging.value = false
-            onIntent(PlayerIntent.SeekTo(sliderPosition.toLong()))
-        },
-        valueRange = 0f..(state.duration.toFloat().coerceAtLeast(1f)),
-        modifier = Modifier.fillMaxWidth(),
-        colors = SliderDefaults.colors(
-            thumbColor = Color.White,
-            activeTrackColor = Color.White,
-            inactiveTrackColor = Color.White.copy(alpha = 0.2f),
-        ),
+    AppleMusicTransportControls(
+        state = state,
+        onIntent = onIntent,
+        textColor = textColor,
+        secondaryTextColor = secondaryTextColor,
+        primaryButtonBackground = buttonPressedBackground,
+        inactiveTrackColor = inactiveTrackColor,
     )
 
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.PaddingExtraSmall),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(text = formatTime(state.progress), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
-        Text(text = "-" + formatTime(state.duration - state.progress), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
-    }
+    if (showPanelToggleButtons) {
+        Spacer(modifier = Modifier.height(20.dp))
 
-    Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AppleMusicSmallControlButton(
+                icon = Icons.Default.Shuffle,
+                onClick = { onIntent(PlayerIntent.ToggleShuffle) },
+                active = state.shuffleModeEnabled,
+                backgroundColor = buttonBackground,
+                activeBackgroundColor = buttonPressedBackground,
+                contentColor = textColor,
+            )
+            AppleMusicSmallControlButton(
+                icon = Icons.Default.Lyrics,
+                onClick = { onToggleLyrics(!showLyrics) },
+                active = showLyrics,
+                backgroundColor = buttonBackground,
+                activeBackgroundColor = buttonPressedBackground,
+                contentColor = textColor,
+            )
+            AppleMusicSmallControlButton(
+                icon = Icons.AutoMirrored.Filled.QueueMusic,
+                onClick = { onTogglePlaylist(!showPlaylist) },
+                active = showPlaylist,
+                backgroundColor = buttonBackground,
+                activeBackgroundColor = buttonPressedBackground,
+                contentColor = textColor,
+            )
+            AppleMusicSmallControlButton(
+                icon = if (state.repeatMode == RepeatMode.ONE) Icons.Default.RepeatOne else Icons.Default.Repeat,
+                onClick = { onIntent(PlayerIntent.ToggleRepeat) },
+                active = state.repeatMode != RepeatMode.OFF,
+                backgroundColor = buttonBackground,
+                activeBackgroundColor = buttonPressedBackground,
+                contentColor = textColor,
+            )
+        }
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = { onIntent(PlayerIntent.Previous) }) {
-            Icon(Icons.Default.SkipPrevious, contentDescription = null, modifier = Modifier.size(Dimens.IconSizeSuperHuge), tint = Color.White)
-        }
-        IconButton(onClick = { onIntent(PlayerIntent.PlayPause) }, modifier = Modifier.size(Dimens.IconSizeColossal)) {
-            Icon(imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(Dimens.IconSizeGigantic), tint = Color.White)
-        }
-        IconButton(onClick = { onIntent(PlayerIntent.Next) }) {
-            Icon(Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(Dimens.IconSizeSuperHuge), tint = Color.White)
-        }
-    }
-
-    Spacer(modifier = Modifier.height(Dimens.SpacingLarge))
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = { onToggleLyrics(!showLyrics) }) {
-            Icon(imageVector = Icons.Default.Lyrics, contentDescription = null, tint = if (showLyrics) Color.White else Color.White.copy(alpha = 0.5f), modifier = Modifier.size(Dimens.IconSizeMedium))
-        }
-        IconButton(onClick = { }) {
-            Icon(Icons.Default.Airplay, contentDescription = null, tint = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(Dimens.IconSizeMedium))
-        }
-        IconButton(onClick = { onTogglePlaylist(!showPlaylist) }) {
-            Icon(imageVector = Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null, tint = if (showPlaylist) Color.White else Color.White.copy(alpha = 0.5f), modifier = Modifier.size(Dimens.IconSizeMedium))
-        }
+        Spacer(modifier = Modifier.height(14.dp))
+        Text(
+            text = when {
+                showLyrics -> stringResource(R.string.label_lyrics)
+                showPlaylist -> stringResource(R.string.label_playlists)
+                else -> ""
+            },
+            color = tertiaryTextColor,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -918,6 +1623,16 @@ private fun formatTime(millis: Long): String {
 fun PlaylistContent(
     state: PlayerState,
     onIntent: (PlayerIntent) -> Unit,
+    modifier: Modifier = Modifier,
+    bottomContentPadding: Dp = 100.dp,
+    currentSongHighlightColor: Color = MaterialTheme.colorScheme.primary,
+    primaryTextColor: Color = Color.White,
+    secondaryTextColor: Color = Color.White.copy(alpha = 0.6f),
+    handleTint: Color = Color.White.copy(alpha = 0.3f),
+    activeRowColor: Color = Color.White.copy(alpha = 0.1f),
+    maskColor: Color = Color.Black,
+    showHeader: Boolean = true,
+    horizontalPadding: Dp = Dimens.PaddingLarge,
 ) {
     val listState = rememberLazyListState()
 
@@ -929,49 +1644,50 @@ fun PlaylistContent(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Dimens.PaddingLarge),
+                .padding(horizontal = horizontalPadding),
         ) {
-            // 缩减顶部占位，标题紧贴上方信息
             Spacer(modifier = Modifier.height(Dimens.SpacingSmall))
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = Dimens.PaddingMedium),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.header_playing_next),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    PlaylistModeButton(
-                        icon = Icons.Default.Shuffle,
-                        isActive = state.shuffleModeEnabled,
-                        onClick = { onIntent(PlayerIntent.ToggleShuffle) },
-                        contentDescription = stringResource(R.string.desc_shuffle),
+            if (showHeader) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Dimens.PaddingMedium),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.header_playing_next),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = primaryTextColor,
+                        fontWeight = FontWeight.Bold,
                     )
 
-                    Spacer(modifier = Modifier.width(Dimens.SpacingExtraSmall))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        PlaylistModeButton(
+                            icon = Icons.Default.Shuffle,
+                            isActive = state.shuffleModeEnabled,
+                            onClick = { onIntent(PlayerIntent.ToggleShuffle) },
+                            contentDescription = stringResource(R.string.desc_shuffle),
+                        )
 
-                    PlaylistModeButton(
-                        icon = when (state.repeatMode) {
-                            RepeatMode.ONE -> Icons.Default.RepeatOne
-                            else -> Icons.Default.Repeat
-                        },
-                        isActive = state.repeatMode != RepeatMode.OFF,
-                        onClick = { onIntent(PlayerIntent.ToggleRepeat) },
-                        contentDescription = stringResource(R.string.desc_repeat),
-                    )
+                        Spacer(modifier = Modifier.width(Dimens.SpacingExtraSmall))
+
+                        PlaylistModeButton(
+                            icon = when (state.repeatMode) {
+                                RepeatMode.ONE -> Icons.Default.RepeatOne
+                                else -> Icons.Default.Repeat
+                            },
+                            isActive = state.repeatMode != RepeatMode.OFF,
+                            onClick = { onIntent(PlayerIntent.ToggleRepeat) },
+                            contentDescription = stringResource(R.string.desc_repeat),
+                        )
+                    }
                 }
             }
 
@@ -985,20 +1701,20 @@ fun PlaylistContent(
                         drawContent()
                         val fadingBrush = Brush.verticalGradient(
                             0f to Color.Transparent,
-                            0.05f to Color.Black,
-                            0.95f to Color.Black,
+                            0.05f to maskColor,
+                            0.95f to maskColor,
                             1f to Color.Transparent,
                         )
                         drawRect(brush = fadingBrush, blendMode = BlendMode.DstIn)
                     },
-                contentPadding = PaddingValues(bottom = 100.dp),
+                contentPadding = PaddingValues(bottom = bottomContentPadding),
             ) {
                 itemsIndexed(state.currentPlaylist) { index, music ->
                     val isCurrent = music.id == state.currentSong?.id
 
                     Surface(
                         onClick = { onIntent(PlayerIntent.SelectSong(music)) },
-                        color = if (isCurrent) Color.White.copy(alpha = 0.1f) else Color.Transparent,
+                        color = if (isCurrent) activeRowColor else Color.Transparent,
                         shape = RoundedCornerShape(Dimens.PaddingSmall),
                         modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.PaddingExtraSmall),
                     ) {
@@ -1017,14 +1733,14 @@ fun PlaylistContent(
                                 Text(
                                     text = music.title,
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = if (isCurrent) MaterialTheme.colorScheme.primary else Color.White,
+                                    color = if (isCurrent) currentSongHighlightColor else Color.White,
                                     maxLines = 1,
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                 )
                                 Text(
                                     text = music.artists.joinToString(state.artistJoinString),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.6f),
+                                    color = secondaryTextColor,
                                     maxLines = 1,
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                 )
@@ -1032,7 +1748,7 @@ fun PlaylistContent(
                             Icon(
                                 imageVector = Icons.Default.DragHandle,
                                 contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.3f),
+                                tint = handleTint,
                                 modifier = Modifier.size(Dimens.IconSizeMedium),
                             )
                         }
@@ -1051,6 +1767,9 @@ private fun KaraokeWord(
     currentProgress: Long,
     isActiveLine: Boolean,
     textStyle: androidx.compose.ui.text.TextStyle,
+    inactiveColor: Color = Color.White.copy(alpha = 0.6f),
+    activeColor: Color = Color.White,
+    glowColor: Color = Color.White,
     modifier: Modifier = Modifier,
 ) {
     val duration = endTime - startTime
@@ -1080,6 +1799,7 @@ private fun KaraokeWord(
     )
 
     val baseAlpha = if (isActiveLine) 0.35f else 1f
+    val highlightOverflow = if (shouldGlow) glowRadius.coerceAtLeast(8f) else 0f
 
     Box(
         modifier = modifier
@@ -1087,19 +1807,20 @@ private fun KaraokeWord(
                 scaleX = wordScale
                 scaleY = wordScale
                 transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.5f)
+                clip = false
             },
     ) {
         Text(
             text = text,
             style = textStyle,
-            color = Color.White.copy(alpha = baseAlpha),
+            color = inactiveColor.copy(alpha = baseAlpha),
             softWrap = false,
         )
 
         if (isActiveLine && fillProgress > 0f) {
             val shadow = if (shouldGlow && glowRadius > 0f) {
                 Shadow(
-                    color = Color.White.copy(alpha = (glowRadius / 20f) * 0.7f),
+                    color = glowColor.copy(alpha = (glowRadius / 20f) * 0.7f),
                     blurRadius = glowRadius,
                     offset = Offset.Zero,
                 )
@@ -1110,10 +1831,18 @@ private fun KaraokeWord(
             Text(
                 text = text,
                 style = textStyle.copy(shadow = shadow),
-                color = Color.White,
+                color = activeColor,
                 softWrap = false,
-                modifier = Modifier.drawWithContent {
-                    clipRect(right = size.width * fillProgress) {
+                modifier = Modifier.graphicsLayer {
+                    compositingStrategy = CompositingStrategy.Offscreen
+                    clip = false
+                }.drawWithContent {
+                    clipRect(
+                        left = -highlightOverflow,
+                        top = -highlightOverflow,
+                        right = size.width * fillProgress + highlightOverflow,
+                        bottom = size.height + highlightOverflow,
+                    ) {
                         this@drawWithContent.drawContent()
                     }
                 },
@@ -1130,6 +1859,9 @@ fun WordByWordLine(
     isActive: Boolean,
     textStyle: TextStyle,
     modifier: Modifier = Modifier,
+    inactiveColor: Color = Color.White.copy(alpha = 0.6f),
+    activeColor: Color = Color.White,
+    glowColor: Color = Color.White,
 ) {
     val horizontalArrangement = when (textStyle.textAlign) {
         TextAlign.Center -> Arrangement.Center
@@ -1165,6 +1897,10 @@ fun BalancedLyricView(
     textAlign: TextAlign,
     horizontalAlignment: Alignment.Horizontal,
     modifier: Modifier = Modifier,
+    inactiveColor: Color = Color.White.copy(alpha = 0.6f),
+    activeColor: Color = Color.White,
+    glowColor: Color = Color.White,
+    translationColor: Color = Color.White.copy(alpha = 0.8f),
 ) {
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
@@ -1205,6 +1941,9 @@ fun BalancedLyricView(
                     isActive = isActive,
                     textStyle = baseTextStyle,
                     textAlign = textAlign,
+                    inactiveColor = inactiveColor,
+                    activeColor = activeColor,
+                    glowColor = glowColor,
                 )
                 RenderLyricLine(
                     content = splitResult.line2,
@@ -1213,6 +1952,9 @@ fun BalancedLyricView(
                     isActive = isActive,
                     textStyle = baseTextStyle,
                     textAlign = textAlign,
+                    inactiveColor = inactiveColor,
+                    activeColor = activeColor,
+                    glowColor = glowColor,
                 )
             } else {
                 RenderLyricLine(
@@ -1222,6 +1964,9 @@ fun BalancedLyricView(
                     isActive = isActive,
                     textStyle = baseTextStyle,
                     textAlign = textAlign,
+                    inactiveColor = inactiveColor,
+                    activeColor = activeColor,
+                    glowColor = glowColor,
                 )
             }
 
@@ -1229,7 +1974,7 @@ fun BalancedLyricView(
                 Text(
                     text = line.translation,
                     style = translationTextStyle,
-                    color = Color.White.copy(alpha = 0.8f),
+                    color = translationColor,
                     textAlign = textAlign,
                     modifier = Modifier.padding(top = Dimens.PaddingExtraSmall).padding(horizontal = Dimens.LyricHorizontalPadding),
                 )
@@ -1246,6 +1991,9 @@ private fun RenderLyricLine(
     isActive: Boolean,
     textStyle: TextStyle,
     textAlign: TextAlign,
+    inactiveColor: Color = Color.White.copy(alpha = 0.6f),
+    activeColor: Color = Color.White,
+    glowColor: Color = Color.White,
 ) {
     if (words.isNotEmpty()) {
         WordByWordLine(
@@ -1254,12 +2002,15 @@ private fun RenderLyricLine(
             isActive = isActive,
             textStyle = textStyle.copy(textAlign = textAlign),
             modifier = Modifier.padding(horizontal = Dimens.LyricHorizontalPadding),
+            inactiveColor = inactiveColor,
+            activeColor = activeColor,
+            glowColor = glowColor,
         )
     } else {
         Text(
             text = content,
             style = textStyle,
-            color = Color.White,
+            color = activeColor,
             textAlign = textAlign,
             modifier = Modifier.padding(horizontal = Dimens.LyricHorizontalPadding),
         )
@@ -1270,6 +2021,15 @@ private fun RenderLyricLine(
 fun LyricContent(
     state: PlayerState,
     onIntent: (PlayerIntent) -> Unit,
+    modifier: Modifier = Modifier,
+    topContentPadding: Dp = 40.dp,
+    bottomContentPadding: Dp = 500.dp,
+    activeTextColor: Color = Color.White,
+    inactiveTextColor: Color = Color.White.copy(alpha = 0.6f),
+    translationTextColor: Color = Color.White.copy(alpha = 0.8f),
+    emptyTextColor: Color = Color.White.copy(alpha = 0.4f),
+    fadeMaskColor: Color = Color.Black,
+    glowColor: Color = Color.White,
 ) {
     val lyricData = state.lyricData
     val currentProgress = state.progress
@@ -1319,33 +2079,33 @@ fun LyricContent(
     }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
             .drawWithContent {
                 drawContent()
                 val fadingBrush = Brush.verticalGradient(
                     0f to Color.Transparent,
-                    0.05f to Color.Black,
-                    0.85f to Color.Black,
+                    0.05f to fadeMaskColor,
+                    0.85f to fadeMaskColor,
                     1f to Color.Transparent,
                 )
                 drawRect(brush = fadingBrush, blendMode = BlendMode.DstIn)
             },
         contentAlignment = Alignment.TopStart,
     ) {
-        if (lyricData == null || lyricData.lines.isEmpty()) {
-            Text(
-                text = stringResource(R.string.msg_no_lyrics),
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color.White.copy(alpha = 0.4f),
-                modifier = Modifier.align(Alignment.Center),
-            )
+            if (lyricData == null || lyricData.lines.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.msg_no_lyrics),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = emptyTextColor,
+                    modifier = Modifier.align(Alignment.Center),
+                )
         } else {
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 40.dp, bottom = 500.dp), // Keep 40.dp and 500.dp for now, these seem specific layout values
+                contentPadding = PaddingValues(top = topContentPadding, bottom = bottomContentPadding),
                 horizontalAlignment = lyricHorizontalAlignment,
             ) {
                 itemsIndexed(lyricData.lines) { index, line ->
@@ -1365,7 +2125,7 @@ fun LyricContent(
                     )
 
                     val targetBlur = if (settings.blurEnabled && (isActive || isDragged).not()) {
-                        (distance.toFloat() * 4f).dp.coerceAtMost(Dimens.PaddingMedium) // 16.dp
+                        (distance.toFloat() * 4f).dp.coerceAtMost(Dimens.PaddingMedium)
                     } else {
                         0.dp
                     }
@@ -1376,7 +2136,15 @@ fun LyricContent(
                         label = "LyricBlur",
                     )
 
-                    Box(modifier = Modifier.fillMaxWidth()) {
+                    // 关键修复：外扩空间保持固定，避免歌词项高度在播放过程中动态变化，导致滚动跳动
+                    val blurOverflowPadding = if (settings.blurEnabled) 6.dp else 0.dp
+                    val highlightOverflowPadding = 4.dp
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = blurOverflowPadding + highlightOverflowPadding),
+                    ) {
                         BalancedLyricView(
                             line = line,
                             currentProgress = currentProgress,
@@ -1386,10 +2154,17 @@ fun LyricContent(
                             settings = settings,
                             textAlign = lyricTextAlign,
                             horizontalAlignment = lyricHorizontalAlignment,
+                            inactiveColor = inactiveTextColor,
+                            activeColor = activeTextColor,
+                            glowColor = glowColor,
+                            translationColor = translationTextColor,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 20.dp) // Keep 20.dp for now, seems specific
-                                .blur(blurRadius)
+                                .padding(vertical = 12.dp)
+                                .blur(
+                                    radius = blurRadius,
+                                    edgeTreatment = BlurredEdgeTreatment.Unbounded,
+                                )
                                 .graphicsLayer {
                                     this.alpha = alpha
                                     this.scaleX = scale

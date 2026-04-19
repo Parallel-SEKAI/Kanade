@@ -159,7 +159,7 @@ class PlayerViewModel(
         playbackRepository.currentMediaItem
             .onEach { mediaItem ->
                 if (mediaItem != null) {
-                    val song = MusicModel(
+                    val baseSong = MusicModel(
                         id = mediaItem.mediaMetadata.extras?.getString("original_id") ?: mediaItem.mediaId,
                         title = mediaItem.mediaMetadata.title?.toString() ?: "",
                         artists = MusicUtils.parseArtists(
@@ -173,18 +173,29 @@ class PlayerViewModel(
                         sourceId = mediaItem.mediaMetadata.extras?.getString("source_id") ?: "unknown",
                     )
 
-                    if (song.id != state.value.currentSong?.id || song.sourceId != state.value.currentSong?.sourceId) {
+                    val song = resolveSongForDisplay(baseSong, mediaItem.mediaId)
+                    val previousSong = state.value.currentSong
+                    val songChanged = song.id != previousSong?.id || song.sourceId != previousSong?.sourceId
+                    val songMetadataChanged =
+                        previousSong == null ||
+                            song.title != previousSong.title ||
+                            song.artists != previousSong.artists ||
+                            song.album != previousSong.album ||
+                            song.coverUrl != previousSong.coverUrl ||
+                            song.duration != previousSong.duration
+
+                    if (songChanged || songMetadataChanged) {
                         _state.update {
                             it.copy(
                                 currentSong = song,
-                                lyrics = null, // 重置旧歌词
+                                lyrics = if (songChanged) null else it.lyrics,
+                                lyricData = if (songChanged) null else it.lyricData,
                             )
                         }
-                        lyricGetterManager.clearLyric()
-                        lastSentLyric = null
 
-                        // 异步加载歌词和颜色
-                        viewModelScope.launch {
+                        if (songChanged) {
+                            lyricGetterManager.clearLyric()
+                            lastSentLyric = null
                             extractColors(song)
                             val lyrics = playbackRepository.fetchLyrics(song.id, song.sourceId)
                             val lyricData = lyrics?.let { LyricParserFactory.getParser(it).parse(it) }
@@ -194,6 +205,8 @@ class PlayerViewModel(
                                     lyricData = lyricData,
                                 )
                             }
+                        } else if (song.coverUrl != previousSong?.coverUrl && song.coverUrl.isNotBlank()) {
+                            extractColors(song)
                         }
                     }
                 }
@@ -683,6 +696,65 @@ class PlayerViewModel(
             artistJoinString,
         )
     }
+
+    private suspend fun resolveSongForDisplay(
+        baseSong: MusicModel,
+        mediaId: String,
+    ): MusicModel {
+        val stateSnapshot = state.value
+        val localMatch = sequenceOf(
+            stateSnapshot.currentPlaylist.find { it.id == baseSong.id && it.sourceId == baseSong.sourceId },
+            stateSnapshot.detailMusicList.find { it.id == baseSong.id && it.sourceId == baseSong.sourceId },
+            stateSnapshot.homeMusicList.find { it.id == baseSong.id && it.sourceId == baseSong.sourceId },
+            stateSnapshot.allMusicList.find { it.id == baseSong.id && it.sourceId == baseSong.sourceId },
+        ).filterNotNull().sortedByDescending { candidate ->
+            listOf(
+                candidate.coverUrl.isNotBlank(),
+                candidate.title.isNotBlank(),
+                candidate.artists.isNotEmpty(),
+                candidate.album.isNotBlank(),
+                candidate.duration > 0L,
+            ).count { it }
+        }.firstOrNull()
+
+        val fallbackSong =
+            if (needsSongMetadataFallback(baseSong)) {
+                localMatch ?: playbackRepository.resolveMusicByMediaId(mediaId)
+            } else {
+                localMatch
+            }
+
+        return if (fallbackSong != null) {
+            mergeSongMetadata(baseSong, fallbackSong)
+        } else {
+            baseSong
+        }
+    }
+
+    private fun needsSongMetadataFallback(song: MusicModel): Boolean =
+        song.title.isBlank() ||
+            song.artists.isEmpty() ||
+            song.album.isBlank() ||
+            song.coverUrl.isBlank() ||
+            song.duration <= 0L
+
+    private fun mergeSongMetadata(
+        primary: MusicModel,
+        fallback: MusicModel,
+    ): MusicModel =
+        primary.copy(
+            title = primary.title.ifBlank { fallback.title },
+            artists = if (primary.artists.isEmpty()) fallback.artists else primary.artists,
+            album = primary.album.ifBlank { fallback.album },
+            coverUrl = primary.coverUrl.ifBlank { fallback.coverUrl },
+            mediaUri =
+                if (primary.mediaUri.isBlank() || primary.mediaUri.startsWith("kanade://resolve")) {
+                    fallback.mediaUri.ifBlank { primary.mediaUri }
+                } else {
+                    primary.mediaUri
+                },
+            duration = if (primary.duration > 0L) primary.duration else fallback.duration,
+        )
 
     private suspend fun extractColors(song: MusicModel) {
         val request = ImageRequest.Builder(applicationContext)

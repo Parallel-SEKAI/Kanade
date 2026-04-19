@@ -15,7 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import org.parallel_sekai.kanade.R
+import org.parallel_sekai.kanade.ui.adaptive.rememberAdaptiveLayoutInfo
 import org.parallel_sekai.kanade.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -24,6 +27,8 @@ fun MoreScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToScripts: () -> Unit,
 ) {
+    val adaptiveInfo = rememberAdaptiveLayoutInfo()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -31,33 +36,47 @@ fun MoreScreen(
             )
         },
     ) { innerPadding ->
-        LazyColumn(
+        Box(
             modifier =
                 Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-            contentPadding = PaddingValues(bottom = Dimens.MiniPlayerBottomPadding),
+            contentAlignment = Alignment.TopCenter,
         ) {
-            item {
-                MoreItem(
-                    icon = Icons.Default.Settings,
-                    label = stringResource(R.string.title_settings),
-                    onClick = onNavigateToSettings,
-                )
-            }
-            item {
-                MoreItem(
-                    icon = Icons.Default.Extension,
-                    label = stringResource(R.string.title_scripts),
-                    onClick = onNavigateToScripts,
-                )
-            }
-            item {
-                MoreItem(
-                    icon = Icons.Default.Info,
-                    label = stringResource(R.string.label_about),
-                    onClick = { /* TODO */ },
-                )
+            LazyColumn(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = if (adaptiveInfo.isWideScreen) 720.dp else Dp.Unspecified),
+                contentPadding =
+                    PaddingValues(
+                        bottom = Dimens.MiniPlayerBottomPadding,
+                        start = Dimens.PaddingMedium,
+                        end = Dimens.PaddingMedium,
+                        top = Dimens.PaddingSmall,
+                    ),
+            ) {
+                item {
+                    MoreItem(
+                        icon = Icons.Default.Settings,
+                        label = stringResource(R.string.title_settings),
+                        onClick = onNavigateToSettings,
+                    )
+                }
+                item {
+                    MoreItem(
+                        icon = Icons.Default.Extension,
+                        label = stringResource(R.string.title_scripts),
+                        onClick = onNavigateToScripts,
+                    )
+                }
+                item {
+                    MoreItem(
+                        icon = Icons.Default.Info,
+                        label = stringResource(R.string.label_about),
+                        onClick = { /* TODO */ },
+                    )
+                }
             }
         }
     }

@@ -420,6 +420,9 @@ open class PlaybackRepository(
         }
     }
 
+    suspend fun resolveMusicByMediaId(mediaId: String): MusicModel? =
+        sourceManager.getMusicListByMediaIds(listOf(mediaId)).firstOrNull()
+
     private fun createMediaItem(music: MusicModel): MediaItem {
         val uniqueId = "${music.sourceId}:${music.id}"
         val extras =

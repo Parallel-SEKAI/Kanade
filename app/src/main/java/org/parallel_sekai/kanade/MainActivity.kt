@@ -1,15 +1,16 @@
 package org.parallel_sekai.kanade
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
+import android.graphics.Color as AndroidColor
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
@@ -20,9 +21,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -66,7 +69,10 @@ import org.parallel_sekai.kanade.ui.screens.settings.ScriptConfigScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ScriptManagementScreen
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
+import org.parallel_sekai.kanade.ui.adaptive.adaptiveContentWidth
+import org.parallel_sekai.kanade.ui.adaptive.rememberAdaptiveLayoutInfo
 import org.parallel_sekai.kanade.ui.screens.settings.SuperLyricApiScreen
+import org.parallel_sekai.kanade.ui.theme.Dimens
 import org.parallel_sekai.kanade.ui.theme.KanadeTheme
 
 sealed class Screen(
@@ -142,6 +148,20 @@ val items =
         Screen.More,
     )
 
+@Composable
+private fun FullScreenPlayerSystemBars(isExpanded: Boolean) {
+    val view = LocalView.current
+    val useLightStatusBarIcons = !isExpanded && !isSystemInDarkTheme()
+
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = AndroidColor.TRANSPARENT
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = useLightStatusBarIcons
+        }
+    }
+}
+
 class MainActivity : ComponentActivity() {
     companion object {
         const val EXTRA_EXPAND_PLAYER = "extra_expand_player"
@@ -207,6 +227,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             KanadeTheme {
                 val state by playerViewModel.state.collectAsState()
+                FullScreenPlayerSystemBars(isExpanded = state.isExpanded)
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
@@ -227,6 +248,17 @@ class MainActivity : ComponentActivity() {
 
                 // 记录底部内边距以便播放器定位
                 var bottomPadding by remember { mutableStateOf<Dp>(0.dp) }
+                val adaptiveInfo = rememberAdaptiveLayoutInfo()
+
+                val navigateToTopLevel: (Screen) -> Unit = { screen ->
+                    navController.navigate(screen.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
 
                 // 权限处理
                 val permissions =
@@ -280,298 +312,369 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Scaffold(
-                        modifier = Modifier.fillMaxSize(),
-                        snackbarHost = { SnackbarHost(snackbarHostState) },
-                        bottomBar = {
-                            // 底部导航栏
-                            NavigationBar {
-                                items.forEach { screen ->
-                                    val label = stringResource(screen.labelResId)
-                                    NavigationBarItem(
-                                        icon = { screen.icon?.let { Icon(it, contentDescription = label) } },
-                                        label = { Text(label) },
-                                        selected = currentRoute == screen.route,
-                                        onClick = {
-                                            navController.navigate(screen.route) {
-                                                popUpTo(navController.graph.findStartDestination().id) {
-                                                    saveState = true
-                                                }
-                                                launchSingleTop = true
-                                                restoreState = true
-                                            }
-                                        },
-                                    )
+                val navHostContent: @Composable (Modifier) -> Unit = { hostModifier ->
+                    NavHost(
+                        navController,
+                        startDestination = Screen.Library.route,
+                        modifier = hostModifier,
+                    ) {
+                        composable(Screen.Library.route) {
+                            if (audioPermissionGranted) {
+                                LibraryScreen(
+                                    state = state,
+                                    onIntent = { playerViewModel.handleIntent(it) },
+                                    onSongClick = {
+                                        song,
+                                        list,
+                                        ->
+                                        playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
+                                    },
+                                    onScriptClick = { id ->
+                                        playerViewModel.handleIntent(PlayerIntent.ToggleActiveScript(id))
+                                    },
+                                    onNavigateToArtists = { navController.navigate(Screen.Artists.route) },
+                                    onNavigateToAlbums = { navController.navigate(Screen.Albums.route) },
+                                    onNavigateToPlaylists = { navController.navigate(Screen.Playlists.route) },
+                                    onNavigateToFolders = { navController.navigate(Screen.Folders.route) },
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(text = stringResource(R.string.msg_grant_permission))
                                 }
                             }
-                        },
-                    ) { innerPadding ->
-                        bottomPadding = innerPadding.calculateBottomPadding()
-                        // NavHost 始终填充全屏
-                        NavHost(
-                            navController,
-                            startDestination = Screen.Library.route,
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(bottom = bottomPadding),
-                        ) {
-                            composable(Screen.Library.route) {
-                                if (audioPermissionGranted) {
-                                    LibraryScreen(
-                                        state = state,
-                                        onIntent = { playerViewModel.handleIntent(it) },
-                                        onSongClick = {
-                                            song,
-                                            list,
-                                            ->
-                                            playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
-                                        },
-                                        onScriptClick = { id ->
-                                            playerViewModel.handleIntent(PlayerIntent.ToggleActiveScript(id))
-                                        },
-                                        onNavigateToArtists = { navController.navigate(Screen.Artists.route) },
-                                        onNavigateToAlbums = { navController.navigate(Screen.Albums.route) },
-                                        onNavigateToPlaylists = { navController.navigate(Screen.Playlists.route) },
-                                        onNavigateToFolders = { navController.navigate(Screen.Folders.route) },
+                        }
+                        composable(Screen.Artists.route) {
+                            ArtistListScreen(
+                                state = state,
+                                onIntent = { playerViewModel.handleIntent(it) },
+                                onBackClick = { navController.popBackStack() },
+                                onArtistClick = { name ->
+                                    playerViewModel.handleIntent(
+                                        PlayerIntent.FetchDetailList(DetailType.ARTIST, name),
                                     )
-                                } else {
+                                    navController.navigate(Screen.ArtistDetail.createRoute(name))
+                                },
+                            )
+                        }
+                        composable(Screen.Albums.route) {
+                            AlbumListScreen(
+                                state = state,
+                                onIntent = { playerViewModel.handleIntent(it) },
+                                onBackClick = { navController.popBackStack() },
+                                onAlbumClick = { id, title ->
+                                    playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.ALBUM, id))
+                                    navController.navigate(Screen.AlbumDetail.createRoute(id, title))
+                                },
+                            )
+                        }
+                        composable(Screen.Playlists.route) {
+                            PlaylistListScreen(
+                                state = state,
+                                onIntent = { playerViewModel.handleIntent(it) },
+                                onBackClick = { navController.popBackStack() },
+                                onPlaylistClick = { id, title ->
+                                    playerViewModel.handleIntent(
+                                        PlayerIntent.FetchDetailList(DetailType.PLAYLIST, id),
+                                    )
+                                    navController.navigate(Screen.PlaylistDetail.createRoute(id, title))
+                                },
+                            )
+                        }
+                        composable(Screen.Folders.route) {
+                            FolderListScreen(
+                                state = state,
+                                onIntent = { playerViewModel.handleIntent(it) },
+                                onBackClick = { navController.popBackStack() },
+                                onFolderClick = { path ->
+                                    playerViewModel.handleIntent(
+                                        PlayerIntent.FetchDetailList(DetailType.FOLDER, path),
+                                    )
+                                    navController.navigate(Screen.FolderDetail.createRoute(path))
+                                },
+                            )
+                        }
+                        composable(Screen.ArtistDetail.route) { backStackEntry ->
+                            val name = backStackEntry.arguments?.getString("name") ?: ""
+                            ArtistDetailScreen(
+                                name = name,
+                                state = state,
+                                onBackClick = { navController.popBackStack() },
+                                onSongClick = {
+                                    song,
+                                    list,
+                                    ->
+                                    playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
+                                },
+                            )
+                        }
+                        composable(Screen.AlbumDetail.route) { backStackEntry ->
+                            val id = backStackEntry.arguments?.getString("id") ?: ""
+                            val title = backStackEntry.arguments?.getString("title") ?: ""
+                            AlbumDetailScreen(
+                                id = id,
+                                title = title,
+                                state = state,
+                                onBackClick = { navController.popBackStack() },
+                                onSongClick = {
+                                    song,
+                                    list,
+                                    ->
+                                    playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
+                                },
+                            )
+                        }
+                        composable(Screen.PlaylistDetail.route) { backStackEntry ->
+                            val id = backStackEntry.arguments?.getString("id") ?: ""
+                            val title = backStackEntry.arguments?.getString("title") ?: ""
+                            PlaylistDetailScreen(
+                                id = id,
+                                title = title,
+                                state = state,
+                                onBackClick = { navController.popBackStack() },
+                                onSongClick = {
+                                    song,
+                                    list,
+                                    ->
+                                    playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
+                                },
+                            )
+                        }
+                        composable(Screen.FolderDetail.route) { backStackEntry ->
+                            val path =
+                                java.net.URLDecoder.decode(
+                                    backStackEntry.arguments?.getString("path") ?: "",
+                                    "UTF-8",
+                                )
+                            FolderDetailScreen(
+                                path = path,
+                                state = state,
+                                onBackClick = { navController.popBackStack() },
+                                onSongClick = {
+                                    song,
+                                    list,
+                                    ->
+                                    playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
+                                },
+                            )
+                        }
+                        composable(Screen.Search.route) {
+                            SearchScreen(
+                                viewModel = searchViewModel,
+                                onBackClick = { navController.popBackStack() },
+                            )
+                        }
+                        composable(Screen.More.route) {
+                            MoreScreen(
+                                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                                onNavigateToScripts = { navController.navigate(Screen.Scripts.route) },
+                            )
+                        }
+                        composable(Screen.Settings.route) {
+                            SettingsScreen(
+                                viewModel = settingsViewModel,
+                                onNavigateBack = { navController.popBackStack() },
+                                onNavigateToLyricsSettings = {
+                                    navController.navigate(
+                                        Screen.LyricsSettings.route,
+                                    )
+                                },
+                                onNavigateToExcludedFolders = {
+                                    navController.navigate(
+                                        Screen.ExcludedFolders.route,
+                                    )
+                                },
+                                onNavigateToArtistParsingSettings = {
+                                    navController.navigate(
+                                        Screen.ArtistParsingSettings.route,
+                                    )
+                                },
+                                onNavigateToCacheSettings = { navController.navigate(Screen.CacheSettings.route) },
+                                onNavigateToLyricsGetterApi = {
+                                    navController.navigate(
+                                        Screen.LyricsGetterApi.route,
+                                    )
+                                },
+                                onNavigateToSuperLyricApi = { navController.navigate(Screen.SuperLyricApi.route) },
+                            )
+                        }
+                        composable(Screen.LyricsSettings.route) {
+                            LyricsSettingsScreen(
+                                viewModel = settingsViewModel,
+                                onNavigateBack = { navController.popBackStack() },
+                            )
+                        }
+                        composable(Screen.LyricsGetterApi.route) {
+                            LyricsGetterApiScreen(
+                                viewModel = settingsViewModel,
+                                onNavigateBack = { navController.popBackStack() },
+                            )
+                        }
+                        composable(Screen.SuperLyricApi.route) {
+                            SuperLyricApiScreen(
+                                viewModel = settingsViewModel,
+                                onNavigateBack = { navController.popBackStack() },
+                            )
+                        }
+                        composable(Screen.ExcludedFolders.route) {
+                            ExcludedFoldersScreen(
+                                viewModel = settingsViewModel,
+                                allFolders = state.folderList,
+                                onNavigateBack = { navController.popBackStack() },
+                            )
+                        }
+                        composable(Screen.CacheSettings.route) {
+                            CacheSettingsScreen(
+                                viewModel = settingsViewModel,
+                                onNavigateBack = { navController.popBackStack() },
+                            )
+                        }
+                        composable(Screen.ArtistParsingSettings.route) {
+                            ArtistParsingSettingsScreen(
+                                viewModel = settingsViewModel,
+                                onNavigateBack = { navController.popBackStack() },
+                            )
+                        }
+                        composable(Screen.Scripts.route) {
+                            ScriptManagementScreen(
+                                state = state,
+                                onIntent = { playerViewModel.handleIntent(it) },
+                                onNavigateToScriptConfig = { id ->
+                                    navController.navigate(Screen.ScriptConfig.createRoute(id))
+                                },
+                                onNavigateBack = { navController.popBackStack() },
+                            )
+                        }
+                        composable(Screen.ScriptConfig.route) { backStackEntry ->
+                            val scriptId = backStackEntry.arguments?.getString("id") ?: ""
+                            ScriptConfigScreen(
+                                scriptId = scriptId,
+                                state = state,
+                                settingsRepository = settingsRepository,
+                                onIntent = { playerViewModel.handleIntent(it) },
+                                onNavigateBack = { navController.popBackStack() },
+                            )
+                        }
+                        composable(Screen.SongInfo.route) {
+                            SongInfoScreen(
+                                state = state,
+                                onBackClick = { navController.popBackStack() },
+                            )
+                        }
+                    }
+                }
+
+                if (adaptiveInfo.isWideScreen) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background,
+                        ) {
+                            Row(modifier = Modifier.fillMaxSize()) {
+                                Surface(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxHeight()
+                                            .width(adaptiveInfo.navigationRailWidth + Dimens.PaddingLarge),
+                                    color = MaterialTheme.colorScheme.surface,
+                                    tonalElevation = 2.dp,
+                                ) {
                                     Box(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center,
+                                        modifier =
+                                            Modifier
+                                                .fillMaxSize()
+                                                .statusBarsPadding(),
+                                        contentAlignment = Alignment.TopCenter,
                                     ) {
-                                        Text(text = stringResource(R.string.msg_grant_permission))
+                                        NavigationRail(
+                                            modifier = Modifier.fillMaxHeight(),
+                                            containerColor = MaterialTheme.colorScheme.surface,
+                                            windowInsets = WindowInsets(0, 0, 0, 0),
+                                        ) {
+                                            items.forEach { screen ->
+                                                val label = stringResource(screen.labelResId)
+                                                NavigationRailItem(
+                                                    icon = { screen.icon?.let { Icon(it, contentDescription = label) } },
+                                                    label = { Text(label) },
+                                                    alwaysShowLabel = true,
+                                                    selected = currentRoute == screen.route,
+                                                    onClick = { navigateToTopLevel(screen) },
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Box(
+                                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                                ) {
+                                    Scaffold(
+                                        modifier = Modifier.fillMaxSize(),
+                                        snackbarHost = { SnackbarHost(snackbarHostState) },
+                                    ) { innerPadding ->
+                                        Box(
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxSize()
+                                                    .padding(innerPadding)
+                                                    .padding(horizontal = adaptiveInfo.screenHorizontalPadding),
+                                            contentAlignment = Alignment.TopCenter,
+                                        ) {
+                                            navHostContent(
+                                                Modifier
+                                                    .fillMaxHeight()
+                                                    .adaptiveContentWidth(adaptiveInfo),
+                                            )
+                                        }
                                     }
                                 }
                             }
-                            composable(Screen.Artists.route) {
-                                ArtistListScreen(
-                                    state = state,
-                                    onIntent = { playerViewModel.handleIntent(it) },
-                                    onBackClick = { navController.popBackStack() },
-                                    onArtistClick = { name ->
-                                        playerViewModel.handleIntent(
-                                            PlayerIntent.FetchDetailList(DetailType.ARTIST, name),
-                                        )
-                                        navController.navigate(Screen.ArtistDetail.createRoute(name))
-                                    },
-                                )
-                            }
-                            composable(Screen.Albums.route) {
-                                AlbumListScreen(
-                                    state = state,
-                                    onIntent = { playerViewModel.handleIntent(it) },
-                                    onBackClick = { navController.popBackStack() },
-                                    onAlbumClick = { id, title ->
-                                        playerViewModel.handleIntent(PlayerIntent.FetchDetailList(DetailType.ALBUM, id))
-                                        navController.navigate(Screen.AlbumDetail.createRoute(id, title))
-                                    },
-                                )
-                            }
-                            composable(Screen.Playlists.route) {
-                                PlaylistListScreen(
-                                    state = state,
-                                    onIntent = { playerViewModel.handleIntent(it) },
-                                    onBackClick = { navController.popBackStack() },
-                                    onPlaylistClick = { id, title ->
-                                        playerViewModel.handleIntent(
-                                            PlayerIntent.FetchDetailList(DetailType.PLAYLIST, id),
-                                        )
-                                        navController.navigate(Screen.PlaylistDetail.createRoute(id, title))
-                                    },
-                                )
-                            }
-                            composable(Screen.Folders.route) {
-                                FolderListScreen(
-                                    state = state,
-                                    onIntent = { playerViewModel.handleIntent(it) },
-                                    onBackClick = { navController.popBackStack() },
-                                    onFolderClick = { path ->
-                                        playerViewModel.handleIntent(
-                                            PlayerIntent.FetchDetailList(DetailType.FOLDER, path),
-                                        )
-                                        navController.navigate(Screen.FolderDetail.createRoute(path))
-                                    },
-                                )
-                            }
-                            composable(Screen.ArtistDetail.route) { backStackEntry ->
-                                val name = backStackEntry.arguments?.getString("name") ?: ""
-                                ArtistDetailScreen(
-                                    name = name,
-                                    state = state,
-                                    onBackClick = { navController.popBackStack() },
-                                    onSongClick = {
-                                        song,
-                                        list,
-                                        ->
-                                        playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
-                                    },
-                                )
-                            }
-                            composable(Screen.AlbumDetail.route) { backStackEntry ->
-                                val id = backStackEntry.arguments?.getString("id") ?: ""
-                                val title = backStackEntry.arguments?.getString("title") ?: ""
-                                AlbumDetailScreen(
-                                    id = id,
-                                    title = title,
-                                    state = state,
-                                    onBackClick = { navController.popBackStack() },
-                                    onSongClick = {
-                                        song,
-                                        list,
-                                        ->
-                                        playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
-                                    },
-                                )
-                            }
-                            composable(Screen.PlaylistDetail.route) { backStackEntry ->
-                                val id = backStackEntry.arguments?.getString("id") ?: ""
-                                val title = backStackEntry.arguments?.getString("title") ?: ""
-                                PlaylistDetailScreen(
-                                    id = id,
-                                    title = title,
-                                    state = state,
-                                    onBackClick = { navController.popBackStack() },
-                                    onSongClick = {
-                                        song,
-                                        list,
-                                        ->
-                                        playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
-                                    },
-                                )
-                            }
-                            composable(Screen.FolderDetail.route) { backStackEntry ->
-                                val path =
-                                    java.net.URLDecoder.decode(
-                                        backStackEntry.arguments?.getString("path") ?: "",
-                                        "UTF-8",
-                                    )
-                                FolderDetailScreen(
-                                    path = path,
-                                    state = state,
-                                    onBackClick = { navController.popBackStack() },
-                                    onSongClick = {
-                                        song,
-                                        list,
-                                        ->
-                                        playerViewModel.handleIntent(PlayerIntent.SelectSong(song, list))
-                                    },
-                                )
-                            }
-                            composable(Screen.Search.route) {
-                                SearchScreen(
-                                    viewModel = searchViewModel,
-                                    onBackClick = { navController.popBackStack() },
-                                )
-                            }
-                            composable(Screen.More.route) {
-                                MoreScreen(
-                                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                                    onNavigateToScripts = { navController.navigate(Screen.Scripts.route) },
-                                )
-                            }
-                            composable(Screen.Settings.route) {
-                                SettingsScreen(
-                                    viewModel = settingsViewModel,
-                                    onNavigateBack = { navController.popBackStack() },
-                                    onNavigateToLyricsSettings = {
-                                        navController.navigate(
-                                            Screen.LyricsSettings.route,
-                                        )
-                                    },
-                                    onNavigateToExcludedFolders = {
-                                        navController.navigate(
-                                            Screen.ExcludedFolders.route,
-                                        )
-                                    },
-                                    onNavigateToArtistParsingSettings = {
-                                        navController.navigate(
-                                            Screen.ArtistParsingSettings.route,
-                                        )
-                                    },
-                                    onNavigateToCacheSettings = { navController.navigate(Screen.CacheSettings.route) },
-                                    onNavigateToLyricsGetterApi = {
-                                        navController.navigate(
-                                            Screen.LyricsGetterApi.route,
-                                        )
-                                    },
-                                    onNavigateToSuperLyricApi = { navController.navigate(Screen.SuperLyricApi.route) },
-                                )
-                            }
-                            composable(Screen.LyricsSettings.route) {
-                                LyricsSettingsScreen(
-                                    viewModel = settingsViewModel,
-                                    onNavigateBack = { navController.popBackStack() },
-                                )
-                            }
-                            composable(Screen.LyricsGetterApi.route) {
-                                LyricsGetterApiScreen(
-                                    viewModel = settingsViewModel,
-                                    onNavigateBack = { navController.popBackStack() },
-                                )
-                            }
-                            composable(Screen.SuperLyricApi.route) {
-                                SuperLyricApiScreen(
-                                    viewModel = settingsViewModel,
-                                    onNavigateBack = { navController.popBackStack() },
-                                )
-                            }
-                            composable(Screen.ExcludedFolders.route) {
-                                ExcludedFoldersScreen(
-                                    viewModel = settingsViewModel,
-                                    allFolders = state.folderList,
-                                    onNavigateBack = { navController.popBackStack() },
-                                )
-                            }
-                            composable(Screen.CacheSettings.route) {
-                                CacheSettingsScreen(
-                                    viewModel = settingsViewModel,
-                                    onNavigateBack = { navController.popBackStack() },
-                                )
-                            }
-                            composable(Screen.ArtistParsingSettings.route) {
-                                ArtistParsingSettingsScreen(
-                                    viewModel = settingsViewModel,
-                                    onNavigateBack = { navController.popBackStack() },
-                                )
-                            }
-                            composable(Screen.Scripts.route) {
-                                ScriptManagementScreen(
-                                    state = state,
-                                    onIntent = { playerViewModel.handleIntent(it) },
-                                    onNavigateToScriptConfig = { id ->
-                                        navController.navigate(Screen.ScriptConfig.createRoute(id))
-                                    },
-                                    onNavigateBack = { navController.popBackStack() },
-                                )
-                            }
-                            composable(Screen.ScriptConfig.route) { backStackEntry ->
-                                val scriptId = backStackEntry.arguments?.getString("id") ?: ""
-                                ScriptConfigScreen(
-                                    scriptId = scriptId,
-                                    state = state,
-                                    settingsRepository = settingsRepository,
-                                    onIntent = { playerViewModel.handleIntent(it) },
-                                    onNavigateBack = { navController.popBackStack() },
-                                )
-                            }
-                            composable(Screen.SongInfo.route) {
-                                SongInfoScreen(
-                                    state = state,
-                                    onBackClick = { navController.popBackStack() },
-                                )
-                            }
                         }
-                    }
 
-                    // 统一的播放器容器，置于顶层（Scaffold 之上）
-                    KanadePlayerContainer(
-                        state = state,
-                        onIntent = { playerViewModel.handleIntent(it) },
-                        onNavigateToSongInfo = { navController.navigate(Screen.SongInfo.route) },
-                        bottomPadding = bottomPadding,
-                    )
+                        KanadePlayerContainer(
+                            state = state,
+                            onIntent = { playerViewModel.handleIntent(it) },
+                            onNavigateToSongInfo = { navController.navigate(Screen.SongInfo.route) },
+                            bottomPadding = 0.dp,
+                            contentStartPadding = adaptiveInfo.navigationRailWidth + Dimens.PaddingLarge,
+                        )
+                    }
+                } else {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Scaffold(
+                            modifier = Modifier.fillMaxSize(),
+                            snackbarHost = { SnackbarHost(snackbarHostState) },
+                            bottomBar = {
+                                NavigationBar {
+                                    items.forEach { screen ->
+                                        val label = stringResource(screen.labelResId)
+                                        NavigationBarItem(
+                                            icon = { screen.icon?.let { Icon(it, contentDescription = label) } },
+                                            label = { Text(label) },
+                                            selected = currentRoute == screen.route,
+                                            onClick = { navigateToTopLevel(screen) },
+                                        )
+                                    }
+                                }
+                            },
+                        ) { innerPadding ->
+                            bottomPadding = innerPadding.calculateBottomPadding()
+                            navHostContent(
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(bottom = bottomPadding),
+                            )
+                        }
+
+                        KanadePlayerContainer(
+                            state = state,
+                            onIntent = { playerViewModel.handleIntent(it) },
+                            onNavigateToSongInfo = { navController.navigate(Screen.SongInfo.route) },
+                            bottomPadding = bottomPadding,
+                        )
+                    }
                 }
             }
         }

@@ -44,6 +44,7 @@
 
     <!-- Player -->
     <string name="header_playing_next">接下來播放</string>
+    <string name="label_lyrics">歌詞</string>
     <string name="desc_shuffle">隨機播放</string>
     <string name="desc_repeat">循環播放</string>
     <string name="msg_no_lyrics">無歌詞</string>

@@ -44,6 +44,7 @@
 
     <!-- Player -->
     <string name="header_playing_next">Playing Next</string>
+    <string name="label_lyrics">Lyrics</string>
     <string name="desc_shuffle">Shuffle</string>
     <string name="desc_repeat">Repeat</string>
     <string name="msg_no_lyrics">No Lyrics</string>

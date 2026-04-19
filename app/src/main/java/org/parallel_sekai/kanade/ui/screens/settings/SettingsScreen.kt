@@ -10,10 +10,13 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import org.parallel_sekai.kanade.R
+import org.parallel_sekai.kanade.ui.adaptive.rememberAdaptiveLayoutInfo
 import org.parallel_sekai.kanade.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,6 +33,7 @@ fun SettingsScreen(
 ) {
     val scrollState = rememberScrollState()
     val searchAsPlaylist = viewModel.searchResultAsPlaylist.collectAsState()
+    val adaptiveInfo = rememberAdaptiveLayoutInfo()
 
     Scaffold(
         topBar = {
@@ -46,74 +50,142 @@ fun SettingsScreen(
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(scrollState),
-        ) {
-            SettingsSectionHeader(title = stringResource(R.string.header_interface))
+        if (adaptiveInfo.isWideScreen) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingMedium),
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().widthIn(max = 1000.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingLarge),
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                    ) {
+                        InterfaceSettingsSection(
+                            onNavigateToLyricsSettings = onNavigateToLyricsSettings,
+                            onNavigateToArtistParsingSettings = onNavigateToArtistParsingSettings,
+                        )
+                    }
+                    Column(
+                        modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                    ) {
+                        GeneralSettingsSection(
+                            searchAsPlaylist = searchAsPlaylist.value,
+                            onUpdateSearchAsPlaylist = { viewModel.updateSearchResultAsPlaylist(it) },
+                            onNavigateToLyricsGetterApi = onNavigateToLyricsGetterApi,
+                            onNavigateToSuperLyricApi = onNavigateToSuperLyricApi,
+                            onNavigateToExcludedFolders = onNavigateToExcludedFolders,
+                            onNavigateToCacheSettings = onNavigateToCacheSettings,
+                        )
+                        Spacer(modifier = Modifier.height(Dimens.MiniPlayerBottomPadding))
+                    }
+                }
+            }
+        } else {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .verticalScroll(scrollState),
+            ) {
+                InterfaceSettingsSection(
+                    onNavigateToLyricsSettings = onNavigateToLyricsSettings,
+                    onNavigateToArtistParsingSettings = onNavigateToArtistParsingSettings,
+                )
 
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.pref_lyrics_settings)) },
-                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onNavigateToLyricsSettings),
-            )
+                Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
 
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.pref_artist_parsing)) }, // 新增入口
-                supportingContent = { Text(stringResource(R.string.desc_artist_parsing)) },
-                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onNavigateToArtistParsingSettings),
-            )
+                GeneralSettingsSection(
+                    searchAsPlaylist = searchAsPlaylist.value,
+                    onUpdateSearchAsPlaylist = { viewModel.updateSearchResultAsPlaylist(it) },
+                    onNavigateToLyricsGetterApi = onNavigateToLyricsGetterApi,
+                    onNavigateToSuperLyricApi = onNavigateToSuperLyricApi,
+                    onNavigateToExcludedFolders = onNavigateToExcludedFolders,
+                    onNavigateToCacheSettings = onNavigateToCacheSettings,
+                )
 
-            Spacer(modifier = Modifier.height(Dimens.SpacingMedium))
-            SettingsSectionHeader(title = stringResource(R.string.header_general))
-
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.pref_lyrics_getter)) },
-                supportingContent = { Text(stringResource(R.string.desc_lyrics_getter)) },
-                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onNavigateToLyricsGetterApi),
-            )
-
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.pref_super_lyric)) },
-                supportingContent = { Text(stringResource(R.string.desc_super_lyric)) },
-                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onNavigateToSuperLyricApi),
-            )
-
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.pref_search_as_playlist)) },
-                supportingContent = { Text(stringResource(R.string.desc_search_as_playlist)) },
-                trailingContent = {
-                    Switch(
-                        checked = searchAsPlaylist.value,
-                        onCheckedChange = { viewModel.updateSearchResultAsPlaylist(it) },
-                    )
-                },
-            )
-
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.pref_excluded_folders)) },
-                supportingContent = { Text(stringResource(R.string.desc_excluded_folders_pref)) },
-                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onNavigateToExcludedFolders),
-            )
-
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.pref_cache_settings)) },
-                supportingContent = { Text(stringResource(R.string.desc_cache_settings)) },
-                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onNavigateToCacheSettings),
-            )
-
-            // 为底部的 MiniPlayer 留出空间
-            Spacer(modifier = Modifier.height(Dimens.MiniPlayerBottomPadding))
+                Spacer(modifier = Modifier.height(Dimens.MiniPlayerBottomPadding))
+            }
         }
     }
+}
+
+@Composable
+private fun InterfaceSettingsSection(
+    onNavigateToLyricsSettings: () -> Unit,
+    onNavigateToArtistParsingSettings: () -> Unit,
+) {
+    SettingsSectionHeader(title = stringResource(R.string.header_interface))
+
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.pref_lyrics_settings)) },
+        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+        modifier = Modifier.clickable(onClick = onNavigateToLyricsSettings),
+    )
+
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.pref_artist_parsing)) },
+        supportingContent = { Text(stringResource(R.string.desc_artist_parsing)) },
+        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+        modifier = Modifier.clickable(onClick = onNavigateToArtistParsingSettings),
+    )
+}
+
+@Composable
+private fun GeneralSettingsSection(
+    searchAsPlaylist: Boolean,
+    onUpdateSearchAsPlaylist: (Boolean) -> Unit,
+    onNavigateToLyricsGetterApi: () -> Unit,
+    onNavigateToSuperLyricApi: () -> Unit,
+    onNavigateToExcludedFolders: () -> Unit,
+    onNavigateToCacheSettings: () -> Unit,
+) {
+    SettingsSectionHeader(title = stringResource(R.string.header_general))
+
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.pref_lyrics_getter)) },
+        supportingContent = { Text(stringResource(R.string.desc_lyrics_getter)) },
+        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+        modifier = Modifier.clickable(onClick = onNavigateToLyricsGetterApi),
+    )
+
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.pref_super_lyric)) },
+        supportingContent = { Text(stringResource(R.string.desc_super_lyric)) },
+        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+        modifier = Modifier.clickable(onClick = onNavigateToSuperLyricApi),
+    )
+
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.pref_search_as_playlist)) },
+        supportingContent = { Text(stringResource(R.string.desc_search_as_playlist)) },
+        trailingContent = {
+            Switch(
+                checked = searchAsPlaylist,
+                onCheckedChange = onUpdateSearchAsPlaylist,
+            )
+        },
+    )
+
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.pref_excluded_folders)) },
+        supportingContent = { Text(stringResource(R.string.desc_excluded_folders_pref)) },
+        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+        modifier = Modifier.clickable(onClick = onNavigateToExcludedFolders),
+    )
+
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.pref_cache_settings)) },
+        supportingContent = { Text(stringResource(R.string.desc_cache_settings)) },
+        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+        modifier = Modifier.clickable(onClick = onNavigateToCacheSettings),
+    )
 }
 
 @Composable
