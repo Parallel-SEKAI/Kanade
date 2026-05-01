@@ -27,6 +27,7 @@
     <string name="label_playlists">播放列表</string>
     <string name="label_folders">文件夹</string>
     <string name="label_search">搜索</string>
+    <string name="hint_filter_songs">筛选歌曲…</string>
     <string name="msg_grant_permission">请授予存储权限以扫描音乐。</string>
     <string name="msg_grant_notification_permission">请授予通知权限以显示播放控制。</string>
     <string name="fmt_albums_songs">%1$d 张专辑 • %2$d 首歌</string>

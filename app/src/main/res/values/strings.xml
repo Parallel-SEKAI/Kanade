@@ -27,6 +27,7 @@
     <string name="label_playlists">Playlists</string>
     <string name="label_folders">Folders</string>
     <string name="label_search">Search</string>
+    <string name="hint_filter_songs">Filter songs…</string>
     <string name="msg_grant_permission">Please grant storage permission to scan music.</string>
     <string name="msg_grant_notification_permission">Please grant notification permission to show playback controls.</string>
     <string name="fmt_albums_songs">%1$d albums • %2$d songs</string>

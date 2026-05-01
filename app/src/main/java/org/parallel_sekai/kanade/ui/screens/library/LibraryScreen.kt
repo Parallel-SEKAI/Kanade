@@ -16,7 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,9 +55,23 @@ fun LibraryScreen(
     val listTitle = if (isScriptActive) activeManifest.name else stringResource(R.string.header_all_music)
     val listIcon = if (isScriptActive) Icons.Default.AutoAwesome else null
 
-    androidx.compose.runtime.LaunchedEffect(state.activeScriptId) {
+    var searchQuery by remember { mutableStateOf("") }
+
+    // Reset search query when switching script source
+    LaunchedEffect(state.activeScriptId) {
+        searchQuery = ""
         if (isScriptActive) {
             onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.RefreshHome)
+        }
+    }
+
+    val filteredList = if (searchQuery.isBlank()) {
+        displayList
+    } else {
+        displayList.filter { song ->
+            song.title.contains(searchQuery, ignoreCase = true) ||
+                song.artists.any { it.contains(searchQuery, ignoreCase = true) } ||
+                song.album.contains(searchQuery, ignoreCase = true)
         }
     }
 
@@ -121,9 +135,16 @@ fun LibraryScreen(
                     item {
                         SectionHeader(title = listTitle, icon = listIcon)
                     }
+                    item {
+                        LibrarySearchBar(
+                            query = searchQuery,
+                            onQueryChange = { searchQuery = it },
+                            modifier = Modifier.padding(horizontal = Dimens.PaddingMedium),
+                        )
+                    }
                     librarySongsContent(
                         state = state,
-                        displayList = displayList,
+                        filteredList = filteredList,
                         isScriptActive = isScriptActive,
                         onIntent = onIntent,
                         onSongClick = onSongClick,
@@ -166,9 +187,16 @@ fun LibraryScreen(
             item {
                 SectionHeader(title = listTitle, icon = listIcon)
             }
+            item {
+                LibrarySearchBar(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                    modifier = Modifier.padding(horizontal = Dimens.PaddingMedium),
+                )
+            }
             librarySongsContent(
                 state = state,
-                displayList = displayList,
+                filteredList = filteredList,
                 isScriptActive = isScriptActive,
                 onIntent = onIntent,
                 onSongClick = onSongClick,
@@ -232,7 +260,7 @@ private fun ScriptSourceTabs(
 
 private fun LazyListScope.librarySongsContent(
     state: PlayerState,
-    displayList: List<MusicModel>,
+    filteredList: List<MusicModel>,
     isScriptActive: Boolean,
     onIntent: (org.parallel_sekai.kanade.ui.screens.player.PlayerIntent) -> Unit,
     onSongClick: (MusicModel, List<MusicModel>?) -> Unit,
@@ -246,7 +274,7 @@ private fun LazyListScope.librarySongsContent(
                 CircularProgressIndicator()
             }
         }
-    } else if (isScriptActive && displayList.isEmpty()) {
+    } else if (isScriptActive && filteredList.isEmpty()) {
         item {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingExtraLarge),
@@ -256,9 +284,9 @@ private fun LazyListScope.librarySongsContent(
             }
         }
     } else {
-        itemsIndexed(displayList) { index, song ->
+        itemsIndexed(filteredList) { index, song ->
             if (isScriptActive && state.canLoadMoreHome && !state.isHomeLoadingMore &&
-                index >= displayList.size - 20
+                index >= filteredList.size - 20
             ) {
                 onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.LoadMoreHome)
             }
@@ -267,13 +295,13 @@ private fun LazyListScope.librarySongsContent(
                 song = song,
                 isSelected = state.currentSong?.id == song.id,
                 onClick = {
-                    onSongClick(song, if (isScriptActive) null else displayList)
+                    onSongClick(song, if (isScriptActive) null else filteredList)
                 },
                 artistJoinString = state.artistJoinString,
             )
         }
 
-        if (isScriptActive && state.canLoadMoreHome && displayList.isNotEmpty()) {
+        if (isScriptActive && state.canLoadMoreHome && filteredList.isNotEmpty()) {
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingMedium),
@@ -286,6 +314,30 @@ private fun LazyListScope.librarySongsContent(
             }
         }
     }
+}
+
+@Composable
+private fun LibrarySearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = modifier.fillMaxWidth(),
+        placeholder = { Text(stringResource(R.string.hint_filter_songs)) },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.desc_clear))
+                }
+            }
+        },
+        singleLine = true,
+        shape = RoundedCornerShape(Dimens.CornerRadiusLarge),
+    )
 }
 
 @Composable
