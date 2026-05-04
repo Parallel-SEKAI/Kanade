@@ -1,0 +1,219 @@
+<resources>
+    <string name="app_name">kanade</string>
+    <string name="various_artists">Various Artists</string>
+
+    <!-- Common -->
+    <string name="desc_back">戻る</string>
+    <string name="desc_clear">クリア</string>
+    <string name="action_clear">クリア</string>
+    <string name="action_cancel">キャンセル</string>
+    <string name="desc_add">追加</string>
+    <string name="desc_remove">削除</string>
+    <string name="desc_delete">削除</string>
+    <string name="error_unknown">不明なエラー</string>
+
+    <!-- Main Screens -->
+    <string name="title_library">ライブラリ</string>
+    <string name="title_settings">設定</string>
+    <string name="title_more">その他</string>
+    <string name="label_about">アプリについて</string>
+
+    <!-- Library Screen -->
+    <string name="header_your_library">マイライブラリ</string>
+    <string name="header_all_music">すべての音楽</string>
+    <string name="label_local">ローカル</string>
+    <string name="label_artists">アーティスト</string>
+    <string name="label_albums">アルバム</string>
+    <string name="label_playlists">プレイリスト</string>
+    <string name="label_folders">フォルダ</string>
+    <string name="label_search">検索</string>
+    <string name="hint_filter_songs">曲を絞り込む…</string>
+    <string name="msg_grant_permission">音楽をスキャンするには、ストレージの権限を許可してください。</string>
+    <string name="msg_grant_notification_permission">再生コントロールを表示するには、通知の権限を許可してください。</string>
+    <string name="fmt_albums_songs">%1$dアルバム • %2$d曲</string>
+    <string name="fmt_songs_count">%d曲</string>
+    <string name="fmt_item_info_songs">%1$s • %2$d曲</string>
+    <string name="fmt_folder_info">%1$s • %2$d曲</string>
+
+    <!-- Artist Screen -->
+    <string name="title_artists">アーティスト</string>
+
+    <!-- Search Screen -->
+    <string name="hint_search_music">音楽を検索...</string>
+    <string name="title_recent_searches">最近の検索</string>
+    <string name="msg_no_results">結果が見つかりません</string>
+
+    <!-- Player -->
+    <string name="header_playing_next">次に再生</string>
+    <string name="label_lyrics">歌詞</string>
+    <string name="desc_shuffle">シャッフル</string>
+    <string name="desc_repeat">リピート</string>
+    <string name="msg_no_lyrics">歌詞なし</string>
+
+    <!-- Settings: Main -->
+    <string name="header_interface">インターフェース</string>
+    <string name="header_general">一般</string>
+    <string name="pref_lyrics_settings">歌詞設定</string>
+    <string name="pref_artist_parsing">アーティスト解析</string>
+    <string name="desc_artist_parsing">アーティストの区切り文字と表示をカスタマイズ</string>
+    <string name="pref_search_as_playlist">検索結果をプレイリストとして再生</string>
+    <string name="desc_search_as_playlist">検索結果から再生する際、リスト全体を現在のキューに設定</string>
+    <string name="pref_excluded_folders">除外フォルダ</string>
+    <string name="desc_excluded_folders_pref">特定のフォルダ内の音楽を非表示</string>
+
+    <!-- Settings: Lyrics -->
+    <string name="title_lyrics_settings">歌詞設定</string>
+    <string name="label_preview">プレビュー</string>
+    <string name="text_lyric_preview">これは歌詞のプレビューです</string>
+    <string name="header_display">表示</string>
+    <string name="pref_show_translation">翻訳を表示</string>
+    <string name="pref_blur_inactive">非アクティブな行をぼかす</string>
+    <string name="pref_balance_lines">長い行をバランス調整</string>
+    <string name="desc_balance_lines">長い行を自動的に分割して、より良いタイポグラフィを実現</string>
+    <string name="pref_lyric_sharing">歌詞共有を有効化</string>
+    <string name="desc_lyric_sharing">現在の歌詞を他のアプリと共有(例:ステータスバー歌詞プロバイダー)</string>
+    <string name="label_font_size">フォントサイズ(%d sp)</string>
+    <string name="header_style">スタイル</string>
+    <string name="label_font_weight">フォントウェイト(%1$s - %2$d)</string>
+    <string name="label_alignment">配置</string>
+    
+    <string name="weight_thin">極細</string>
+    <string name="weight_light">細字</string>
+    <string name="weight_normal">標準</string>
+    <string name="weight_medium">中字</string>
+    <string name="weight_semi_bold">セミボールド</string>
+    <string name="weight_bold">太字</string>
+    <string name="weight_extra_bold">極太</string>
+
+    <string name="align_left">左揃え</string>
+    <string name="align_center">中央揃え</string>
+    <string name="align_right">右揃え</string>
+
+    <!-- Settings: Artist Parsing -->
+    <string name="title_artist_parsing">アーティスト解析</string>
+    <string name="header_artist_separators">アーティスト区切り文字(優先順位順)</string>
+    <string name="desc_artist_separators">このリストから最初に一致する区切り文字を使用してアーティストを分割します。ドラッグして並べ替えできます。</string>
+    <string name="desc_reorder">並べ替え</string>
+    <string name="label_separator">区切り文字</string>
+    <string name="desc_delete_separator">区切り文字を削除</string>
+    <string name="action_add_separator">新しい区切り文字を追加</string>
+    <string name="header_artist_whitelist">アーティストホワイトリスト</string>
+    <string name="desc_artist_whitelist">このリストのアーティスト名は、区切り文字が含まれていても分割されません。</string>
+    <string name="label_whitelisted_artist">ホワイトリスト登録アーティスト</string>
+    <string name="desc_delete_whitelist">ホワイトリストエントリを削除</string>
+    <string name="action_add_whitelist">新しいホワイトリストエントリを追加</string>
+    <string name="header_display_join_string">表示結合文字列</string>
+    <string name="desc_display_join_string">複数のアーティストを表示用に結合するために使用(例:アーティストA &amp; アーティストB)。</string>
+    <string name="label_join_string">結合文字列</string>
+
+    <!-- Settings: Excluded Folders -->
+    <string name="title_excluded_folders">除外フォルダ</string>
+    <string name="msg_no_folders_excluded">除外されているフォルダはありません。</string>
+    <string name="desc_excluded_folders_screen">これらのフォルダ内の音楽はライブラリから非表示になります。</string>
+    <string name="title_exclude_folder_dialog">フォルダを除外</string>
+    <string name="msg_no_more_folders">ライブラリに利用可能なフォルダがありません。</string>
+    <string name="pref_lyrics_getter">Lyric Getter API</string>
+    <string name="desc_lyrics_getter">Lyric Getter APIを設定し、アクティベーション状態を確認</string>
+    <string name="pref_super_lyric">Super Lyric API</string>
+    <string name="desc_super_lyric">Super Lyric APIを設定し、アクティベーション状態を確認</string>
+    <string name="label_activation_status">アクティベーション状態</string>
+    <string name="label_lyric_getter_api">Lyric Getter API</string>
+    <string name="label_super_lyric_api">Super Lyric API</string>
+    <string name="status_activated">アクティベート済み</string>
+    <string name="status_not_activated">未アクティベート</string>
+    <string name="desc_lyric_getter_api_info">Lyric Getter APIは、サードパーティアプリ(例:ステータスバー歌詞アプリ)がKanadeから標準ブロードキャスト経由で歌詞を受信・表示できるようにします。アクティベート済みの場合、互換性のあるフックまたはモジュールがシステム上で現在アクティブであることを意味します。</string>
+    <string name="desc_super_lyric_api_info">Super Lyric APIは高性能な歌詞共有プロトコルです。Kanadeがリッチな歌詞データ(単語ごとの同期や翻訳を含む)を互換性のあるシステムモジュールやアプリにプッシュできるようにします。</string>
+    <string name="title_scripts">スクリプト管理</string>
+    <string name="header_scripts">外部ソース</string>
+    <string name="msg_no_scripts">スクリプトが見つかりません</string>
+    <string name="msg_script_deleted">スクリプトを削除しました</string>
+    <string name="title_delete_script">スクリプトを削除</string>
+    <string name="msg_confirm_delete_script">スクリプト「%1$s」を削除してもよろしいですか?</string>
+    <string name="btn_delete">削除</string>
+    <string name="btn_cancel">キャンセル</string>
+        <string name="btn_reload_scripts">スクリプトを再読み込み</string>
+            <string name="btn_import_script">スクリプトをインポート</string>
+            <string name="header_discover">発見</string>
+    <string name="no_content">コンテンツなし</string>
+
+    <!-- Song Info -->
+    <string name="title_song_info">曲情報</string>
+    <string name="label_title">タイトル</string>
+    <string name="label_artist">アーティスト</string>
+    <string name="label_album">アルバム</string>
+    <string name="label_duration">再生時間</string>
+    <string name="label_file_path">ファイルパス</string>
+    <string name="label_file_size">ファイルサイズ</string>
+    <string name="label_mime_type">MIMEタイプ</string>
+    <string name="label_bitrate">ビットレート</string>
+    <string name="label_sample_rate">サンプルレート</string>
+    <string name="label_source">ソース</string>
+    <string name="label_metadata">生メタデータ</string>
+    <string name="msg_copied_to_clipboard">クリップボードにコピーしました!</string>
+    <!-- Settings: Cache -->
+    <string name="title_cache_settings">キャッシュ設定</string>
+    <string name="pref_cache_settings">キャッシュ設定</string>
+    <string name="desc_cache_settings">オンライン音楽のディスクキャッシュを管理</string>
+    <string name="header_cache_usage">キャッシュ使用量</string>
+    <string name="label_current_cache_size">使用容量</string>
+    <string name="label_cache_limit">キャッシュ上限</string>
+    <string name="fmt_cache_limit_gb">%s GB</string>
+    <string name="action_clear_cache">キャッシュをクリア</string>
+    <string name="msg_confirm_clear_cache">すべてのメディアと画像のキャッシュをクリアしてもよろしいですか?</string>
+
+    <!-- Lyric Share -->
+    <string name="title_share_lyrics">歌詞を共有</string>
+    <string name="action_share">共有</string>
+    <string name="action_save">保存</string>
+    <string name="msg_lyric_saved">歌詞画像をギャラリーに保存しました!</string>
+    <string name="app_branding">Parallel-SEKAI/Kanade</string>
+    <string name="pref_share_quality">共有画像品質</string>
+    <string name="quality_standard">標準(1080p)</string>
+    <string name="quality_high">高画質(2K)</string>
+    <string name="quality_ultra">超高画質(4K)</string>
+
+    <!-- Media Notification Lyrics -->
+    <string name="title_media_notification_lyrics">メディア通知歌詞</string>
+    <string name="pref_media_notification_lyrics_entry">メディア通知歌詞</string>
+    <string name="desc_media_notification_lyrics_entry">メディア通知経由で歌詞を表示</string>
+    <string name="header_media_notification_lyrics">メディア通知歌詞</string>
+    <string name="pref_media_notification_lyrics">メディア通知歌詞を有効化</string>
+    <string name="desc_media_notification_lyrics">メディア通知に歌詞を表示(曲名とアーティストフィールド)</string>
+    <string name="label_display_mode">表示モード</string>
+    <string name="mode_original_only">原文のみ</string>
+    <string name="mode_original_translation">原文 / 翻訳</string>
+    <string name="desc_mode_original_only">タイトル:原文歌詞、アーティスト:曲名 + アーティスト</string>
+    <string name="desc_mode_original_translation">タイトル:原文歌詞、アーティスト:翻訳(翻訳がない場合はモードAにフォールバック)</string>
+    <string name="pref_scrolling_truncate">再生時間による自動省略</string>
+    <string name="desc_scrolling_truncate">スムーズなスクロールのため、行の再生時間に基づいて歌詞を省略</string>
+    <string name="label_max_display_units">最大表示単位(%d)</string>
+    <string name="desc_max_display_units">表示する最大文字単位(CJK=1、欧文=0.5)</string>
+    <string name="label_translation_max_display_units">翻訳最大表示単位(%d)</string>
+    <string name="desc_translation_max_display_units">翻訳表示の最大文字単位(CJK=1、欧文=0.5)</string>
+    <string name="pref_smart_units">スマート単位</string>
+    <string name="desc_smart_units">スマート文字カウントを使用(CJK=1、欧文=0.5)</string>
+    <string name="label_display_states">デバイス状態表示</string>
+    <string name="desc_display_states">これらの状態のときに歌詞を表示(少なくとも1つ必要)</string>
+    <string name="state_unlocked">ロック解除</string>
+    <string name="state_locked_screen_on">ロック中(画面オン)</string>
+    <string name="state_screen_off">画面オフ</string>
+    <string name="pref_restore_on_pause">一時停止時に復元</string>
+    <string name="desc_restore_on_pause">再生が一時停止されたときに元の曲情報を復元</string>
+    <string name="pref_show_timestamp">タイムスタンプを表示</string>
+    <string name="desc_show_timestamp">歌詞にタイムスタンプを表示</string>
+
+    <!-- External Lyric API Settings -->
+    <string name="title_lyric_getter_api_settings">LyricGetter API設定</string>
+    <string name="title_super_lyric_api_settings">SuperLyric API設定</string>
+    <string name="header_lyric_getter_settings">LyricGetter設定</string>
+    <string name="header_super_lyric_settings">SuperLyric設定</string>
+    <string name="pref_api_enabled">API歌詞送信を有効化</string>
+    <string name="pref_enable_lyric_getter_sending">LyricGetter API歌詞送信を有効化</string>
+    <string name="desc_enable_lyric_getter_sending">LyricGetter API互換アプリに歌詞を送信</string>
+    <string name="pref_enable_super_lyric_sending">SuperLyric API歌詞送信を有効化</string>
+    <string name="desc_enable_super_lyric_sending">SuperLyric API互換アプリに歌詞を送信</string>
+    <string name="desc_lyric_getter_api_enabled">LyricGetter API互換アプリに歌詞を送信</string>
+    <string name="desc_super_lyric_api_enabled">SuperLyric API互換アプリに歌詞を送信</string>
+    <string name="pref_clear_on_pause">一時停止時に歌詞をクリア</string>
+    <string name="desc_clear_on_pause">再生が一時停止されたときに自動的に歌詞をクリア</string>
+</resources>
