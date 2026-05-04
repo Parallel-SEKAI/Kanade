@@ -1,4 +1,4 @@
-@file:Suppress("KtlintStandardMaxLineLength")
+@file:Suppress("ktlint:standard:max-line-length")
 
 package org.parallel_sekai.kanade.ui.screens.settings
 
@@ -34,25 +34,35 @@ fun ArtistParsingSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.title_artist_parsing), style = MaterialTheme.typography.titleLarge) },
+                title = {
+                    Text(
+                        stringResource(R.string.title_artist_parsing),
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.desc_back),
+                        )
                     }
                 },
             )
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimens.PaddingMedium),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = Dimens.PaddingMedium),
                 contentPadding = PaddingValues(top = Dimens.PaddingSmall),
             ) {
                 item {
@@ -69,9 +79,10 @@ fun ArtistParsingSettingsScreen(
                     LaunchedEffect(separator) { text = separator }
 
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = Dimens.PaddingExtraSmall),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = Dimens.PaddingExtraSmall),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
@@ -95,7 +106,10 @@ fun ArtistParsingSettingsScreen(
                         IconButton(onClick = {
                             viewModel.updateArtistSeparators(settings.separators.filterIndexed { i, _ -> i != index })
                         }) {
-                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.desc_delete_separator))
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = stringResource(R.string.desc_delete_separator),
+                            )
                         }
                     }
                 }
@@ -123,9 +137,10 @@ fun ArtistParsingSettingsScreen(
                     LaunchedEffect(item) { text = item }
 
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = Dimens.PaddingExtraSmall),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = Dimens.PaddingExtraSmall),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         OutlinedTextField(
@@ -144,7 +159,10 @@ fun ArtistParsingSettingsScreen(
                         IconButton(onClick = {
                             viewModel.updateArtistWhitelist(settings.whitelist.filterIndexed { i, _ -> i != index })
                         }) {
-                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.desc_delete_whitelist))
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = stringResource(R.string.desc_delete_whitelist),
+                            )
                         }
                     }
                 }

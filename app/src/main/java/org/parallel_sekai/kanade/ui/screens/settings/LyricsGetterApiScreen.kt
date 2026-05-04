@@ -7,11 +7,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import org.parallel_sekai.kanade.R
 import org.parallel_sekai.kanade.ui.theme.Dimens
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -19,7 +21,7 @@ fun LyricsGetterApiScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
 ) {
-    val settings by viewModel.lyricsSettings.collectAsState()
+    val lyricGetterApiSettings by viewModel.lyricGetterApiSettings.collectAsState()
     val isLyricGetterActivated = viewModel.isLyricsGetterActivated
     val scrollState = rememberScrollState()
 
@@ -77,15 +79,186 @@ fun LyricsGetterApiScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
 
-            SettingsSectionHeader(title = stringResource(R.string.header_general))
+            SettingsSectionHeader(title = stringResource(R.string.header_lyric_getter_settings))
 
+            // 启用 LyricGetter API 歌词发送
             ListItem(
-                headlineContent = { Text(stringResource(R.string.pref_lyric_sharing)) },
-                supportingContent = { Text(stringResource(R.string.desc_lyric_sharing)) },
+                headlineContent = { Text(stringResource(R.string.pref_enable_lyric_getter_sending)) },
+                supportingContent = { Text(stringResource(R.string.desc_enable_lyric_getter_sending)) },
                 trailingContent = {
                     Switch(
-                        checked = settings.isSharingEnabled,
-                        onCheckedChange = { viewModel.updateLyricSharingEnabled(it) },
+                        checked = lyricGetterApiSettings.enabled,
+                        onCheckedChange = { viewModel.updateLyricGetterApiEnabled(it) },
+                    )
+                },
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
+
+            // 自动滚动
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.pref_scrolling_truncate)) },
+                supportingContent = { Text(stringResource(R.string.desc_scrolling_truncate)) },
+                trailingContent = {
+                    Switch(
+                        checked = lyricGetterApiSettings.scrollingTruncateEnabled,
+                        onCheckedChange = { viewModel.updateLyricGetterApiScrollingTruncateEnabled(it) },
+                    )
+                },
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
+
+            // 最大展示单位
+            ListItem(
+                headlineContent = {
+                    Text(
+                        stringResource(
+                            R.string.label_max_display_units,
+                            lyricGetterApiSettings.maxDisplayUnits,
+                        ),
+                    )
+                },
+                supportingContent = {
+                    Column {
+                        Text(
+                            stringResource(R.string.desc_max_display_units),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(Dimens.PaddingSmall))
+                        Slider(
+                            value = lyricGetterApiSettings.maxDisplayUnits.toFloat(),
+                            onValueChange = { viewModel.updateLyricGetterApiMaxDisplayUnits(it.roundToInt()) },
+                            valueRange = 3f..120f,
+                            steps = 116,
+                        )
+                    }
+                },
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
+
+            // 智能单位
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.pref_smart_units)) },
+                supportingContent = { Text(stringResource(R.string.desc_smart_units)) },
+                trailingContent = {
+                    Switch(
+                        checked = lyricGetterApiSettings.smartUnitsEnabled,
+                        onCheckedChange = { viewModel.updateLyricGetterApiSmartUnitsEnabled(it) },
+                    )
+                },
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
+
+            // 显示时刻
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.pref_show_timestamp)) },
+                supportingContent = { Text(stringResource(R.string.desc_show_timestamp)) },
+                trailingContent = {
+                    Switch(
+                        checked = lyricGetterApiSettings.showTimestamp,
+                        onCheckedChange = { viewModel.updateLyricGetterApiShowTimestamp(it) },
+                    )
+                },
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
+
+            // 展示设备状态多选
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.label_display_states)) },
+                supportingContent = {
+                    Column(verticalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)) {
+                        Text(
+                            stringResource(R.string.desc_display_states),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+
+                        val displayStates = lyricGetterApiSettings.displayStates
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = displayStates.contains(0),
+                                onCheckedChange = { checked ->
+                                    val newStates =
+                                        if (checked) {
+                                            displayStates + 0
+                                        } else {
+                                            if (displayStates.size > 1) displayStates - 0 else displayStates
+                                        }
+                                    viewModel.updateLyricGetterApiDisplayStates(newStates)
+                                },
+                            )
+                            Text(
+                                stringResource(R.string.state_unlocked),
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = displayStates.contains(1),
+                                onCheckedChange = { checked ->
+                                    val newStates =
+                                        if (checked) {
+                                            displayStates + 1
+                                        } else {
+                                            if (displayStates.size > 1) displayStates - 1 else displayStates
+                                        }
+                                    viewModel.updateLyricGetterApiDisplayStates(newStates)
+                                },
+                            )
+                            Text(
+                                stringResource(R.string.state_locked_screen_on),
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = displayStates.contains(2),
+                                onCheckedChange = { checked ->
+                                    val newStates =
+                                        if (checked) {
+                                            displayStates + 2
+                                        } else {
+                                            if (displayStates.size > 1) displayStates - 2 else displayStates
+                                        }
+                                    viewModel.updateLyricGetterApiDisplayStates(newStates)
+                                },
+                            )
+                            Text(
+                                stringResource(R.string.state_screen_off),
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                },
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
+
+            // 暂停时自动清除歌词
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.pref_clear_on_pause)) },
+                supportingContent = { Text(stringResource(R.string.desc_clear_on_pause)) },
+                trailingContent = {
+                    Switch(
+                        checked = lyricGetterApiSettings.clearOnPause,
+                        onCheckedChange = { viewModel.updateLyricGetterApiClearOnPause(it) },
                     )
                 },
             )

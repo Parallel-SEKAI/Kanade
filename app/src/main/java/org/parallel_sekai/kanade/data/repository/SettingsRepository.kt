@@ -66,6 +66,54 @@ open class SettingsRepository(
     // JSON string of Map<String, Map<String, String>>
     private val SCRIPT_CONFIGS = stringPreferencesKey("script_configs")
 
+    // Media notification lyrics keys
+    private val MEDIA_NOTIFICATION_LYRICS_ENABLED = booleanPreferencesKey("media_notification_lyrics_enabled")
+    private val MEDIA_NOTIFICATION_LYRICS_MODE = intPreferencesKey("media_notification_lyrics_mode")
+    private val MEDIA_NOTIFICATION_LYRICS_SCROLLING_TRUNCATE_ENABLED =
+        booleanPreferencesKey("media_notification_lyrics_scrolling_truncate_enabled")
+    private val MEDIA_NOTIFICATION_LYRICS_MAX_DISPLAY_UNITS =
+        intPreferencesKey("media_notification_lyrics_max_display_units")
+    private val MEDIA_NOTIFICATION_LYRICS_SMART_UNITS_ENABLED =
+        booleanPreferencesKey("media_notification_lyrics_smart_units_enabled")
+    private val MEDIA_NOTIFICATION_LYRICS_SHOW_TIMESTAMP =
+        booleanPreferencesKey("media_notification_lyrics_show_timestamp")
+    private val MEDIA_NOTIFICATION_LYRICS_DISPLAY_STATES =
+        stringSetPreferencesKey("media_notification_lyrics_display_states")
+    private val MEDIA_NOTIFICATION_LYRICS_RESTORE_ON_PAUSE =
+        booleanPreferencesKey("media_notification_lyrics_restore_on_pause")
+    private val MEDIA_NOTIFICATION_LYRICS_TRANSLATION_MAX_DISPLAY_UNITS =
+        intPreferencesKey("media_notification_lyrics_translation_max_display_units")
+
+    // LyricGetter API keys
+    private val LYRIC_GETTER_API_ENABLED = booleanPreferencesKey("lyric_getter_api_enabled")
+    private val LYRIC_GETTER_API_SCROLLING_TRUNCATE_ENABLED =
+        booleanPreferencesKey("lyric_getter_api_scrolling_truncate_enabled")
+    private val LYRIC_GETTER_API_MAX_DISPLAY_UNITS =
+        intPreferencesKey("lyric_getter_api_max_display_units")
+    private val LYRIC_GETTER_API_SMART_UNITS_ENABLED =
+        booleanPreferencesKey("lyric_getter_api_smart_units_enabled")
+    private val LYRIC_GETTER_API_SHOW_TIMESTAMP =
+        booleanPreferencesKey("lyric_getter_api_show_timestamp")
+    private val LYRIC_GETTER_API_DISPLAY_STATES =
+        stringSetPreferencesKey("lyric_getter_api_display_states")
+    private val LYRIC_GETTER_API_CLEAR_ON_PAUSE =
+        booleanPreferencesKey("lyric_getter_api_clear_on_pause")
+
+    // SuperLyric API keys
+    private val SUPER_LYRIC_API_ENABLED = booleanPreferencesKey("super_lyric_api_enabled")
+    private val SUPER_LYRIC_API_SCROLLING_TRUNCATE_ENABLED =
+        booleanPreferencesKey("super_lyric_api_scrolling_truncate_enabled")
+    private val SUPER_LYRIC_API_MAX_DISPLAY_UNITS =
+        intPreferencesKey("super_lyric_api_max_display_units")
+    private val SUPER_LYRIC_API_SMART_UNITS_ENABLED =
+        booleanPreferencesKey("super_lyric_api_smart_units_enabled")
+    private val SUPER_LYRIC_API_SHOW_TIMESTAMP =
+        booleanPreferencesKey("super_lyric_api_show_timestamp")
+    private val SUPER_LYRIC_API_DISPLAY_STATES =
+        stringSetPreferencesKey("super_lyric_api_display_states")
+    private val SUPER_LYRIC_API_CLEAR_ON_PAUSE =
+        booleanPreferencesKey("super_lyric_api_clear_on_pause")
+
     open val activeScriptIdFlow: Flow<String?> =
         context.dataStore.data
             .map { preferences -> preferences[ACTIVE_SCRIPT_ID] }
@@ -279,6 +327,63 @@ open class SettingsRepository(
                 )
             }
 
+    open val mediaNotificationLyricsSettingsFlow:
+        Flow<org.parallel_sekai.kanade.data.model.MediaNotificationLyricsSettings> =
+        context.dataStore.data
+            .map { preferences ->
+                org.parallel_sekai.kanade.data.model.MediaNotificationLyricsSettings(
+                    enabled = preferences[MEDIA_NOTIFICATION_LYRICS_ENABLED] ?: false,
+                    mode = preferences[MEDIA_NOTIFICATION_LYRICS_MODE] ?: 0,
+                    scrollingTruncateEnabled =
+                        preferences[MEDIA_NOTIFICATION_LYRICS_SCROLLING_TRUNCATE_ENABLED] ?: false,
+                    maxDisplayUnits = preferences[MEDIA_NOTIFICATION_LYRICS_MAX_DISPLAY_UNITS] ?: 40,
+                    smartUnitsEnabled = preferences[MEDIA_NOTIFICATION_LYRICS_SMART_UNITS_ENABLED] ?: true,
+                    showTimestamp = preferences[MEDIA_NOTIFICATION_LYRICS_SHOW_TIMESTAMP] ?: false,
+                    displayStates =
+                        preferences[MEDIA_NOTIFICATION_LYRICS_DISPLAY_STATES]?.mapNotNull { it.toIntOrNull() }?.toSet()
+                            ?: setOf(0, 1, 2),
+                    restoreOnPause = preferences[MEDIA_NOTIFICATION_LYRICS_RESTORE_ON_PAUSE] ?: true,
+                    translationMaxDisplayUnits =
+                        preferences[MEDIA_NOTIFICATION_LYRICS_TRANSLATION_MAX_DISPLAY_UNITS] ?: 40,
+                )
+            }
+
+    open val lyricGetterApiSettingsFlow:
+        Flow<org.parallel_sekai.kanade.data.model.ExternalLyricApiSettings> =
+        context.dataStore.data
+            .map { preferences ->
+                org.parallel_sekai.kanade.data.model.ExternalLyricApiSettings(
+                    enabled = preferences[LYRIC_GETTER_API_ENABLED] ?: true,
+                    scrollingTruncateEnabled =
+                        preferences[LYRIC_GETTER_API_SCROLLING_TRUNCATE_ENABLED] ?: false,
+                    maxDisplayUnits = preferences[LYRIC_GETTER_API_MAX_DISPLAY_UNITS] ?: 40,
+                    smartUnitsEnabled = preferences[LYRIC_GETTER_API_SMART_UNITS_ENABLED] ?: true,
+                    showTimestamp = preferences[LYRIC_GETTER_API_SHOW_TIMESTAMP] ?: false,
+                    displayStates =
+                        preferences[LYRIC_GETTER_API_DISPLAY_STATES]?.mapNotNull { it.toIntOrNull() }?.toSet()
+                            ?: setOf(0, 1, 2),
+                    clearOnPause = preferences[LYRIC_GETTER_API_CLEAR_ON_PAUSE] ?: true,
+                )
+            }
+
+    open val superLyricApiSettingsFlow:
+        Flow<org.parallel_sekai.kanade.data.model.ExternalLyricApiSettings> =
+        context.dataStore.data
+            .map { preferences ->
+                org.parallel_sekai.kanade.data.model.ExternalLyricApiSettings(
+                    enabled = preferences[SUPER_LYRIC_API_ENABLED] ?: true,
+                    scrollingTruncateEnabled =
+                        preferences[SUPER_LYRIC_API_SCROLLING_TRUNCATE_ENABLED] ?: false,
+                    maxDisplayUnits = preferences[SUPER_LYRIC_API_MAX_DISPLAY_UNITS] ?: 40,
+                    smartUnitsEnabled = preferences[SUPER_LYRIC_API_SMART_UNITS_ENABLED] ?: true,
+                    showTimestamp = preferences[SUPER_LYRIC_API_SHOW_TIMESTAMP] ?: false,
+                    displayStates =
+                        preferences[SUPER_LYRIC_API_DISPLAY_STATES]?.mapNotNull { it.toIntOrNull() }?.toSet()
+                            ?: setOf(0, 1, 2),
+                    clearOnPause = preferences[SUPER_LYRIC_API_CLEAR_ON_PAUSE] ?: true,
+                )
+            }
+
     open suspend fun updateRepeatMode(mode: Int) {
         context.dataStore.edit { preferences ->
             preferences[REPEAT_MODE] = mode
@@ -314,6 +419,152 @@ open class SettingsRepository(
             } else {
                 preferences[LAST_PLAYLIST_JSON] = json
             }
+        }
+    }
+
+    open suspend fun updateMediaNotificationLyricsEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[MEDIA_NOTIFICATION_LYRICS_ENABLED] = enabled
+        }
+    }
+
+    open suspend fun updateMediaNotificationLyricsMode(mode: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[MEDIA_NOTIFICATION_LYRICS_MODE] = mode
+        }
+    }
+
+    open suspend fun updateMediaNotificationLyricsScrollingTruncateEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[MEDIA_NOTIFICATION_LYRICS_SCROLLING_TRUNCATE_ENABLED] = enabled
+        }
+    }
+
+    open suspend fun updateMediaNotificationLyricsMaxDisplayUnits(units: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[MEDIA_NOTIFICATION_LYRICS_MAX_DISPLAY_UNITS] = units.coerceIn(3, 120)
+        }
+    }
+
+    open suspend fun updateMediaNotificationLyricsSmartUnitsEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[MEDIA_NOTIFICATION_LYRICS_SMART_UNITS_ENABLED] = enabled
+        }
+    }
+
+    open suspend fun updateMediaNotificationLyricsShowTimestamp(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[MEDIA_NOTIFICATION_LYRICS_SHOW_TIMESTAMP] = enabled
+        }
+    }
+
+    open suspend fun updateMediaNotificationLyricsDisplayStates(states: Set<Int>) {
+        context.dataStore.edit { preferences ->
+            val validStates = states.filter { it in 0..2 }.toSet()
+            val finalStates = if (validStates.isEmpty()) setOf(0) else validStates
+            preferences[MEDIA_NOTIFICATION_LYRICS_DISPLAY_STATES] = finalStates.map { it.toString() }.toSet()
+        }
+    }
+
+    open suspend fun updateMediaNotificationLyricsRestoreOnPause(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[MEDIA_NOTIFICATION_LYRICS_RESTORE_ON_PAUSE] = enabled
+        }
+    }
+
+    open suspend fun updateMediaNotificationLyricsTranslationMaxDisplayUnits(units: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[MEDIA_NOTIFICATION_LYRICS_TRANSLATION_MAX_DISPLAY_UNITS] = units.coerceIn(3, 120)
+        }
+    }
+
+    // LyricGetter API update methods
+    open suspend fun updateLyricGetterApiEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRIC_GETTER_API_ENABLED] = enabled
+        }
+    }
+
+    open suspend fun updateLyricGetterApiScrollingTruncateEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRIC_GETTER_API_SCROLLING_TRUNCATE_ENABLED] = enabled
+        }
+    }
+
+    open suspend fun updateLyricGetterApiMaxDisplayUnits(units: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRIC_GETTER_API_MAX_DISPLAY_UNITS] = units.coerceIn(3, 120)
+        }
+    }
+
+    open suspend fun updateLyricGetterApiSmartUnitsEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRIC_GETTER_API_SMART_UNITS_ENABLED] = enabled
+        }
+    }
+
+    open suspend fun updateLyricGetterApiShowTimestamp(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRIC_GETTER_API_SHOW_TIMESTAMP] = enabled
+        }
+    }
+
+    open suspend fun updateLyricGetterApiDisplayStates(states: Set<Int>) {
+        context.dataStore.edit { preferences ->
+            val validStates = states.filter { it in 0..2 }.toSet()
+            val finalStates = if (validStates.isEmpty()) setOf(0) else validStates
+            preferences[LYRIC_GETTER_API_DISPLAY_STATES] = finalStates.map { it.toString() }.toSet()
+        }
+    }
+
+    open suspend fun updateLyricGetterApiClearOnPause(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRIC_GETTER_API_CLEAR_ON_PAUSE] = enabled
+        }
+    }
+
+    // SuperLyric API update methods
+    open suspend fun updateSuperLyricApiEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[SUPER_LYRIC_API_ENABLED] = enabled
+        }
+    }
+
+    open suspend fun updateSuperLyricApiScrollingTruncateEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[SUPER_LYRIC_API_SCROLLING_TRUNCATE_ENABLED] = enabled
+        }
+    }
+
+    open suspend fun updateSuperLyricApiMaxDisplayUnits(units: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[SUPER_LYRIC_API_MAX_DISPLAY_UNITS] = units.coerceIn(3, 120)
+        }
+    }
+
+    open suspend fun updateSuperLyricApiSmartUnitsEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[SUPER_LYRIC_API_SMART_UNITS_ENABLED] = enabled
+        }
+    }
+
+    open suspend fun updateSuperLyricApiShowTimestamp(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[SUPER_LYRIC_API_SHOW_TIMESTAMP] = enabled
+        }
+    }
+
+    open suspend fun updateSuperLyricApiDisplayStates(states: Set<Int>) {
+        context.dataStore.edit { preferences ->
+            val validStates = states.filter { it in 0..2 }.toSet()
+            val finalStates = if (validStates.isEmpty()) setOf(0) else validStates
+            preferences[SUPER_LYRIC_API_DISPLAY_STATES] = finalStates.map { it.toString() }.toSet()
+        }
+    }
+
+    open suspend fun updateSuperLyricApiClearOnPause(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[SUPER_LYRIC_API_CLEAR_ON_PAUSE] = enabled
         }
     }
 }

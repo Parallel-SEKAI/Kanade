@@ -3,7 +3,6 @@ package org.parallel_sekai.kanade
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Color as AndroidColor
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -43,6 +42,8 @@ import org.parallel_sekai.kanade.data.repository.PlaybackRepository
 import org.parallel_sekai.kanade.data.repository.SettingsRepository
 import org.parallel_sekai.kanade.data.utils.CacheManager
 import org.parallel_sekai.kanade.data.utils.LyricGetterManager
+import org.parallel_sekai.kanade.ui.adaptive.adaptiveContentWidth
+import org.parallel_sekai.kanade.ui.adaptive.rememberAdaptiveLayoutInfo
 import org.parallel_sekai.kanade.ui.screens.artist.ArtistDetailScreen
 import org.parallel_sekai.kanade.ui.screens.artist.ArtistListScreen
 import org.parallel_sekai.kanade.ui.screens.library.AlbumDetailScreen
@@ -65,15 +66,15 @@ import org.parallel_sekai.kanade.ui.screens.settings.CacheSettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ExcludedFoldersScreen
 import org.parallel_sekai.kanade.ui.screens.settings.LyricsGetterApiScreen
 import org.parallel_sekai.kanade.ui.screens.settings.LyricsSettingsScreen
+import org.parallel_sekai.kanade.ui.screens.settings.MediaNotificationLyricsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ScriptConfigScreen
 import org.parallel_sekai.kanade.ui.screens.settings.ScriptManagementScreen
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsScreen
 import org.parallel_sekai.kanade.ui.screens.settings.SettingsViewModel
-import org.parallel_sekai.kanade.ui.adaptive.adaptiveContentWidth
-import org.parallel_sekai.kanade.ui.adaptive.rememberAdaptiveLayoutInfo
 import org.parallel_sekai.kanade.ui.screens.settings.SuperLyricApiScreen
 import org.parallel_sekai.kanade.ui.theme.Dimens
 import org.parallel_sekai.kanade.ui.theme.KanadeTheme
+import android.graphics.Color as AndroidColor
 
 sealed class Screen(
     val route: String,
@@ -93,6 +94,8 @@ sealed class Screen(
     object LyricsGetterApi : Screen("lyrics_getter_api", R.string.pref_lyrics_getter, null)
 
     object SuperLyricApi : Screen("super_lyric_api", R.string.pref_super_lyric, null)
+
+    object MediaNotificationLyrics : Screen("media_notification_lyrics", R.string.title_media_notification_lyrics, null)
 
     object ExcludedFolders : Screen("excluded_folders", R.string.title_excluded_folders, null)
 
@@ -498,6 +501,11 @@ class MainActivity : ComponentActivity() {
                                     )
                                 },
                                 onNavigateToSuperLyricApi = { navController.navigate(Screen.SuperLyricApi.route) },
+                                onNavigateToMediaNotificationLyrics = {
+                                    navController.navigate(
+                                        Screen.MediaNotificationLyrics.route,
+                                    )
+                                },
                             )
                         }
                         composable(Screen.LyricsSettings.route) {
@@ -514,6 +522,12 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Screen.SuperLyricApi.route) {
                             SuperLyricApiScreen(
+                                viewModel = settingsViewModel,
+                                onNavigateBack = { navController.popBackStack() },
+                            )
+                        }
+                        composable(Screen.MediaNotificationLyrics.route) {
+                            MediaNotificationLyricsScreen(
                                 viewModel = settingsViewModel,
                                 onNavigateBack = { navController.popBackStack() },
                             )
@@ -596,7 +610,14 @@ class MainActivity : ComponentActivity() {
                                             items.forEach { screen ->
                                                 val label = stringResource(screen.labelResId)
                                                 NavigationRailItem(
-                                                    icon = { screen.icon?.let { Icon(it, contentDescription = label) } },
+                                                    icon = {
+                                                        screen.icon?.let {
+                                                            Icon(
+                                                                it,
+                                                                contentDescription = label,
+                                                            )
+                                                        }
+                                                    },
                                                     label = { Text(label) },
                                                     alwaysShowLabel = true,
                                                     selected = currentRoute == screen.route,

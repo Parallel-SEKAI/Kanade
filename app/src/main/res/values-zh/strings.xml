@@ -171,4 +171,49 @@
     <string name="msg_confirm_delete_script">确定要删除脚本 "%1$s" 吗？</string>
     <string name="btn_delete">删除</string>
     <string name="btn_cancel">取消</string>
+
+    <!-- Media Notification Lyrics -->
+    <string name="title_media_notification_lyrics">媒体通知歌词</string>
+    <string name="pref_media_notification_lyrics_entry">媒体通知歌词</string>
+    <string name="desc_media_notification_lyrics_entry">通过媒体通知显示歌词</string>
+    <string name="header_media_notification_lyrics">媒体通知歌词</string>
+    <string name="pref_media_notification_lyrics">启用媒体通知歌词</string>
+    <string name="desc_media_notification_lyrics">在媒体通知中显示歌词（使用歌曲名和艺术家字段）</string>
+    <string name="label_display_mode">显示模式</string>
+    <string name="mode_original_only">仅原文</string>
+    <string name="mode_original_translation">原文 / 翻译</string>
+    <string name="desc_mode_original_only">标题：原文歌词，艺术家：歌曲名 + 艺术家</string>
+    <string name="desc_mode_original_translation">标题：原文歌词，艺术家：翻译（无翻译时回退到模式A）</string>
+    <string name="pref_scrolling_truncate">按时长滚动截取</string>
+    <string name="desc_scrolling_truncate">根据歌词行时长截取文本，实现平滑滚动</string>
+    <string name="label_max_display_units">最大展示单位 (%d)</string>
+    <string name="desc_max_display_units">最大显示字符单位数（中日韩=1，西文=0.5）</string>
+    <string name="label_translation_max_display_units">翻译最大展示单位 (%d)</string>
+    <string name="desc_translation_max_display_units">翻译最大显示字符单位数（中日韩=1，西文=0.5）</string>
+    <string name="pref_smart_units">智能单位</string>
+    <string name="desc_smart_units">使用智能字符计数（中日韩=1，西文=0.5）</string>
+    <string name="label_display_states">展示设备状态</string>
+    <string name="desc_display_states">在这些设备状态下显示歌词（至少选择一个）</string>
+    <string name="state_unlocked">解锁</string>
+    <string name="state_locked_screen_on">亮屏未解锁</string>
+    <string name="state_screen_off">熄屏</string>
+    <string name="pref_restore_on_pause">暂停时还原</string>
+    <string name="desc_restore_on_pause">播放暂停时还原原始歌曲信息</string>
+    <string name="pref_show_timestamp">显示时刻</string>
+    <string name="desc_show_timestamp">在歌词中显示时刻</string>
+
+    <!-- External Lyric API Settings -->
+    <string name="title_lyric_getter_api_settings">LyricGetter API 设置</string>
+    <string name="title_super_lyric_api_settings">SuperLyric API 设置</string>
+    <string name="header_lyric_getter_settings">LyricGetter 设置</string>
+    <string name="header_super_lyric_settings">SuperLyric 设置</string>
+    <string name="pref_api_enabled">启用 API 歌词发送</string>
+    <string name="pref_enable_lyric_getter_sending">启用 LyricGetter API 歌词发送</string>
+    <string name="desc_enable_lyric_getter_sending">向 LyricGetter API 兼容应用发送歌词</string>
+    <string name="pref_enable_super_lyric_sending">启用 SuperLyric API 歌词发送</string>
+    <string name="desc_enable_super_lyric_sending">向 SuperLyric API 兼容应用发送歌词</string>
+    <string name="desc_lyric_getter_api_enabled">向 LyricGetter API 兼容应用发送歌词</string>
+    <string name="desc_super_lyric_api_enabled">向 SuperLyric API 兼容应用发送歌词</string>
+    <string name="pref_clear_on_pause">暂停时自动清除歌词</string>
+    <string name="desc_clear_on_pause">播放暂停时自动清除歌词</string>
 </resources>

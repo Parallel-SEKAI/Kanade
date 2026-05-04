@@ -17,18 +17,22 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SuperLyricApiScreen(
+fun MediaNotificationLyricsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
 ) {
-    val superLyricApiSettings by viewModel.superLyricApiSettings.collectAsState()
-    val isSuperLyricActivated = viewModel.isSuperLyricActivated
+    val mediaNotificationLyricsSettings by viewModel.mediaNotificationLyricsSettings.collectAsState()
     val scrollState = rememberScrollState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.label_super_lyric_api), fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        stringResource(R.string.header_media_notification_lyrics),
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -47,75 +51,79 @@ fun SuperLyricApiScreen(
                     .padding(innerPadding)
                     .verticalScroll(scrollState),
         ) {
-            SettingsSectionHeader(title = stringResource(R.string.label_activation_status))
-
+            // 1. 启用媒体通知歌词总开关
             ListItem(
-                headlineContent = { Text(stringResource(R.string.label_super_lyric_api)) },
-                trailingContent = {
-                    Text(
-                        text =
-                            if (isSuperLyricActivated) {
-                                stringResource(R.string.status_activated)
-                            } else {
-                                stringResource(R.string.status_not_activated)
-                            },
-                        color =
-                            if (isSuperLyricActivated) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.error
-                            },
-                        fontWeight = FontWeight.Bold,
-                    )
-                },
-            )
-
-            Text(
-                text = stringResource(R.string.desc_super_lyric_api_info), // Reuse info desc or create specific one
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(Dimens.PaddingMedium),
-            )
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
-
-            SettingsSectionHeader(title = stringResource(R.string.header_super_lyric_settings))
-
-            // 启用 SuperLyric API 歌词发送
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.pref_enable_super_lyric_sending)) },
-                supportingContent = { Text(stringResource(R.string.desc_enable_super_lyric_sending)) },
+                headlineContent = { Text(stringResource(R.string.pref_media_notification_lyrics)) },
+                supportingContent = { Text(stringResource(R.string.desc_media_notification_lyrics)) },
                 trailingContent = {
                     Switch(
-                        checked = superLyricApiSettings.enabled,
-                        onCheckedChange = { viewModel.updateSuperLyricApiEnabled(it) },
+                        checked = mediaNotificationLyricsSettings.enabled,
+                        onCheckedChange = { viewModel.updateMediaNotificationLyricsEnabled(it) },
                     )
                 },
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
 
-            // 自动滚动
+            // 2. 显示模式选择
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.label_display_mode)) },
+                supportingContent = {
+                    Column(verticalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Dimens.PaddingSmall),
+                        ) {
+                            FilterChip(
+                                selected = mediaNotificationLyricsSettings.mode == 0,
+                                onClick = { viewModel.updateMediaNotificationLyricsMode(0) },
+                                label = { Text(stringResource(R.string.mode_original_only)) },
+                                modifier = Modifier.weight(1f),
+                            )
+                            FilterChip(
+                                selected = mediaNotificationLyricsSettings.mode == 1,
+                                onClick = { viewModel.updateMediaNotificationLyricsMode(1) },
+                                label = { Text(stringResource(R.string.mode_original_translation)) },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        Text(
+                            text =
+                                if (mediaNotificationLyricsSettings.mode == 0) {
+                                    stringResource(R.string.desc_mode_original_only)
+                                } else {
+                                    stringResource(R.string.desc_mode_original_translation)
+                                },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
+
+            // 3. 按时长滚动截取
             ListItem(
                 headlineContent = { Text(stringResource(R.string.pref_scrolling_truncate)) },
                 supportingContent = { Text(stringResource(R.string.desc_scrolling_truncate)) },
                 trailingContent = {
                     Switch(
-                        checked = superLyricApiSettings.scrollingTruncateEnabled,
-                        onCheckedChange = { viewModel.updateSuperLyricApiScrollingTruncateEnabled(it) },
+                        checked = mediaNotificationLyricsSettings.scrollingTruncateEnabled,
+                        onCheckedChange = { viewModel.updateMediaNotificationLyricsScrollingTruncateEnabled(it) },
                     )
                 },
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
 
-            // 最大展示单位
+            // 4. 最大展示单位 Slider
             ListItem(
                 headlineContent = {
                     Text(
                         stringResource(
                             R.string.label_max_display_units,
-                            superLyricApiSettings.maxDisplayUnits,
+                            mediaNotificationLyricsSettings.maxDisplayUnits,
                         ),
                     )
                 },
@@ -128,10 +136,10 @@ fun SuperLyricApiScreen(
                         )
                         Spacer(modifier = Modifier.height(Dimens.PaddingSmall))
                         Slider(
-                            value = superLyricApiSettings.maxDisplayUnits.toFloat(),
-                            onValueChange = { viewModel.updateSuperLyricApiMaxDisplayUnits(it.roundToInt()) },
+                            value = mediaNotificationLyricsSettings.maxDisplayUnits.toFloat(),
+                            onValueChange = { viewModel.updateMediaNotificationLyricsMaxDisplayUnits(it.roundToInt()) },
                             valueRange = 3f..120f,
-                            steps = 116,
+                            steps = 116, // 120 - 3 - 1
                         )
                     }
                 },
@@ -139,35 +147,71 @@ fun SuperLyricApiScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
 
-            // 智能单位
+            // 5. 翻译最大展示单位 Slider (仅在原文/翻译模式下显示)
+            if (mediaNotificationLyricsSettings.mode == 1) {
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            stringResource(
+                                R.string.label_translation_max_display_units,
+                                mediaNotificationLyricsSettings.translationMaxDisplayUnits,
+                            ),
+                        )
+                    },
+                    supportingContent = {
+                        Column {
+                            Text(
+                                stringResource(R.string.desc_translation_max_display_units),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(modifier = Modifier.height(Dimens.PaddingSmall))
+                            Slider(
+                                value = mediaNotificationLyricsSettings.translationMaxDisplayUnits.toFloat(),
+                                onValueChange = {
+                                    viewModel.updateMediaNotificationLyricsTranslationMaxDisplayUnits(
+                                        it.roundToInt(),
+                                    )
+                                },
+                                valueRange = 3f..120f,
+                                steps = 116, // 120 - 3 - 1
+                            )
+                        }
+                    },
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
+            }
+
+            // 6. 智能单位
             ListItem(
                 headlineContent = { Text(stringResource(R.string.pref_smart_units)) },
                 supportingContent = { Text(stringResource(R.string.desc_smart_units)) },
                 trailingContent = {
                     Switch(
-                        checked = superLyricApiSettings.smartUnitsEnabled,
-                        onCheckedChange = { viewModel.updateSuperLyricApiSmartUnitsEnabled(it) },
+                        checked = mediaNotificationLyricsSettings.smartUnitsEnabled,
+                        onCheckedChange = { viewModel.updateMediaNotificationLyricsSmartUnitsEnabled(it) },
                     )
                 },
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
 
-            // 显示时刻
+            // 7. 显示时刻
             ListItem(
                 headlineContent = { Text(stringResource(R.string.pref_show_timestamp)) },
                 supportingContent = { Text(stringResource(R.string.desc_show_timestamp)) },
                 trailingContent = {
                     Switch(
-                        checked = superLyricApiSettings.showTimestamp,
-                        onCheckedChange = { viewModel.updateSuperLyricApiShowTimestamp(it) },
+                        checked = mediaNotificationLyricsSettings.showTimestamp,
+                        onCheckedChange = { viewModel.updateMediaNotificationLyricsShowTimestamp(it) },
                     )
                 },
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
 
-            // 展示设备状态多选
+            // 8. 展示设备状态多选
             ListItem(
                 headlineContent = { Text(stringResource(R.string.label_display_states)) },
                 supportingContent = {
@@ -178,7 +222,8 @@ fun SuperLyricApiScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
 
-                        val displayStates = superLyricApiSettings.displayStates
+                        // 使用 Checkbox + ListItem 组合
+                        val displayStates = mediaNotificationLyricsSettings.displayStates
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -191,9 +236,10 @@ fun SuperLyricApiScreen(
                                         if (checked) {
                                             displayStates + 0
                                         } else {
+                                            // 防止取消最后一个
                                             if (displayStates.size > 1) displayStates - 0 else displayStates
                                         }
-                                    viewModel.updateSuperLyricApiDisplayStates(newStates)
+                                    viewModel.updateMediaNotificationLyricsDisplayStates(newStates)
                                 },
                             )
                             Text(
@@ -215,7 +261,7 @@ fun SuperLyricApiScreen(
                                         } else {
                                             if (displayStates.size > 1) displayStates - 1 else displayStates
                                         }
-                                    viewModel.updateSuperLyricApiDisplayStates(newStates)
+                                    viewModel.updateMediaNotificationLyricsDisplayStates(newStates)
                                 },
                             )
                             Text(
@@ -237,7 +283,7 @@ fun SuperLyricApiScreen(
                                         } else {
                                             if (displayStates.size > 1) displayStates - 2 else displayStates
                                         }
-                                    viewModel.updateSuperLyricApiDisplayStates(newStates)
+                                    viewModel.updateMediaNotificationLyricsDisplayStates(newStates)
                                 },
                             )
                             Text(
@@ -251,14 +297,14 @@ fun SuperLyricApiScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
 
-            // 暂停时自动清除歌词
+            // 9. 暂停时还原
             ListItem(
-                headlineContent = { Text(stringResource(R.string.pref_clear_on_pause)) },
-                supportingContent = { Text(stringResource(R.string.desc_clear_on_pause)) },
+                headlineContent = { Text(stringResource(R.string.pref_restore_on_pause)) },
+                supportingContent = { Text(stringResource(R.string.desc_restore_on_pause)) },
                 trailingContent = {
                     Switch(
-                        checked = superLyricApiSettings.clearOnPause,
-                        onCheckedChange = { viewModel.updateSuperLyricApiClearOnPause(it) },
+                        checked = mediaNotificationLyricsSettings.restoreOnPause,
+                        onCheckedChange = { viewModel.updateMediaNotificationLyricsRestoreOnPause(it) },
                     )
                 },
             )

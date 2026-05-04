@@ -171,5 +171,50 @@
     <string name="quality_standard">Standard (1080p)</string>
     <string name="quality_high">High (2K)</string>
     <string name="quality_ultra">Ultra (4K)</string>
+
+    <!-- Media Notification Lyrics -->
+    <string name="title_media_notification_lyrics">Media Notification Lyrics</string>
+    <string name="pref_media_notification_lyrics_entry">Media Notification Lyrics</string>
+    <string name="desc_media_notification_lyrics_entry">Display lyrics via media notification</string>
+    <string name="header_media_notification_lyrics">Media Notification Lyrics</string>
+    <string name="pref_media_notification_lyrics">Enable Media Notification Lyrics</string>
+    <string name="desc_media_notification_lyrics">Display lyrics in media notification (song title and artist fields)</string>
+    <string name="label_display_mode">Display Mode</string>
+    <string name="mode_original_only">Original Only</string>
+    <string name="mode_original_translation">Original / Translation</string>
+    <string name="desc_mode_original_only">Title: Original lyrics, Artist: Song name + Artist</string>
+    <string name="desc_mode_original_translation">Title: Original lyrics, Artist: Translation (fallback to mode A if no translation)</string>
+    <string name="pref_scrolling_truncate">Scrolling Truncate by Duration</string>
+    <string name="desc_scrolling_truncate">Truncate lyrics based on line duration for smooth scrolling</string>
+    <string name="label_max_display_units">Max Display Units (%d)</string>
+    <string name="desc_max_display_units">Maximum character units to display (CJK=1, Western=0.5)</string>
+    <string name="label_translation_max_display_units">Translation Max Display Units (%d)</string>
+    <string name="desc_translation_max_display_units">Maximum character units for translation display (CJK=1, Western=0.5)</string>
+    <string name="pref_smart_units">Smart Units</string>
+    <string name="desc_smart_units">Use smart character counting (CJK=1, Western=0.5)</string>
+    <string name="label_display_states">Display Device States</string>
+    <string name="desc_display_states">Show lyrics when device is in these states (at least one required)</string>
+    <string name="state_unlocked">Unlocked</string>
+    <string name="state_locked_screen_on">Locked (Screen On)</string>
+    <string name="state_screen_off">Screen Off</string>
+    <string name="pref_restore_on_pause">Restore on Pause</string>
+    <string name="desc_restore_on_pause">Restore original song info when playback is paused</string>
+    <string name="pref_show_timestamp">Show Timestamp</string>
+    <string name="desc_show_timestamp">Display timestamp in lyrics</string>
+
+    <!-- External Lyric API Settings -->
+    <string name="title_lyric_getter_api_settings">LyricGetter API Settings</string>
+    <string name="title_super_lyric_api_settings">SuperLyric API Settings</string>
+    <string name="header_lyric_getter_settings">LyricGetter Settings</string>
+    <string name="header_super_lyric_settings">SuperLyric Settings</string>
+    <string name="pref_api_enabled">Enable API Lyric Sending</string>
+    <string name="pref_enable_lyric_getter_sending">Enable LyricGetter API Lyric Sending</string>
+    <string name="desc_enable_lyric_getter_sending">Send lyrics to LyricGetter API compatible apps</string>
+    <string name="pref_enable_super_lyric_sending">Enable SuperLyric API Lyric Sending</string>
+    <string name="desc_enable_super_lyric_sending">Send lyrics to SuperLyric API compatible apps</string>
+    <string name="desc_lyric_getter_api_enabled">Send lyrics to LyricGetter API compatible apps</string>
+    <string name="desc_super_lyric_api_enabled">Send lyrics to SuperLyric API compatible apps</string>
+    <string name="pref_clear_on_pause">Clear Lyrics on Pause</string>
+    <string name="desc_clear_on_pause">Automatically clear lyrics when playback is paused</string>
 </resources>
         

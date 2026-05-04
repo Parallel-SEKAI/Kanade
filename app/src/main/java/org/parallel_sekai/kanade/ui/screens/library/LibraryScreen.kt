@@ -6,11 +6,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
@@ -65,15 +65,16 @@ fun LibraryScreen(
         }
     }
 
-    val filteredList = if (searchQuery.isBlank()) {
-        displayList
-    } else {
-        displayList.filter { song ->
-            song.title.contains(searchQuery, ignoreCase = true) ||
-                song.artists.any { it.contains(searchQuery, ignoreCase = true) } ||
-                song.album.contains(searchQuery, ignoreCase = true)
+    val filteredList =
+        if (searchQuery.isBlank()) {
+            displayList
+        } else {
+            displayList.filter { song ->
+                song.title.contains(searchQuery, ignoreCase = true) ||
+                    song.artists.any { it.contains(searchQuery, ignoreCase = true) } ||
+                    song.album.contains(searchQuery, ignoreCase = true)
+            }
         }
-    }
 
     if (adaptiveInfo.isWideScreen) {
         Row(
@@ -285,7 +286,9 @@ private fun LazyListScope.librarySongsContent(
         }
     } else {
         itemsIndexed(filteredList) { index, song ->
-            if (isScriptActive && state.canLoadMoreHome && !state.isHomeLoadingMore &&
+            if (isScriptActive &&
+                state.canLoadMoreHome &&
+                !state.isHomeLoadingMore &&
                 index >= filteredList.size - 20
             ) {
                 onIntent(org.parallel_sekai.kanade.ui.screens.player.PlayerIntent.LoadMoreHome)

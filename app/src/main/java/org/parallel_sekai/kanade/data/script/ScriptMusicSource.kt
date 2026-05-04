@@ -37,11 +37,18 @@ private object ScriptSourceCache {
         return entry.value as? T
     }
 
-    fun <T> put(key: String, value: T) {
+    fun <T> put(
+        key: String,
+        value: T,
+    ) {
         cache[key] = CacheEntry(value, System.currentTimeMillis() + TTL_MS)
     }
 
-    fun generateKey(sourceId: String, method: String, vararg params: Any?): String {
+    fun generateKey(
+        sourceId: String,
+        method: String,
+        vararg params: Any?,
+    ): String {
         val paramsStr = params.joinToString(":") { it?.toString() ?: "null" }
         return "$sourceId:$method:$paramsStr"
     }
@@ -95,16 +102,17 @@ class ScriptMusicSource(
             if (result == "null") return MusicListResult(emptyList())
 
             val jsonElement = json.parseToJsonElement(result)
-            val musicListResult = if (jsonElement is JsonObject) {
-                val response = json.decodeFromJsonElement<ScriptMusicListResponse>(jsonElement)
-                MusicListResult(
-                    items = response.items.map { it.toMusicModel(sourceId) },
-                    totalCount = response.total,
-                )
-            } else {
-                val items = json.decodeFromJsonElement<List<ScriptMusicItem>>(jsonElement)
-                MusicListResult(items.map { it.toMusicModel(sourceId) })
-            }
+            val musicListResult =
+                if (jsonElement is JsonObject) {
+                    val response = json.decodeFromJsonElement<ScriptMusicListResponse>(jsonElement)
+                    MusicListResult(
+                        items = response.items.map { it.toMusicModel(sourceId) },
+                        totalCount = response.total,
+                    )
+                } else {
+                    val items = json.decodeFromJsonElement<List<ScriptMusicItem>>(jsonElement)
+                    MusicListResult(items.map { it.toMusicModel(sourceId) })
+                }
             ScriptSourceCache.put(cacheKey, musicListResult)
             musicListResult
         } catch (e: Exception) {
@@ -127,16 +135,17 @@ class ScriptMusicSource(
             if (result == "null") return MusicListResult(emptyList())
 
             val jsonElement = json.parseToJsonElement(result)
-            val musicListResult = if (jsonElement is JsonObject) {
-                val response = json.decodeFromJsonElement<ScriptMusicListResponse>(jsonElement)
-                MusicListResult(
-                    items = response.items.map { it.toMusicModel(sourceId) },
-                    totalCount = response.total,
-                )
-            } else {
-                val items = json.decodeFromJsonElement<List<ScriptMusicItem>>(jsonElement)
-                MusicListResult(items.map { it.toMusicModel(sourceId) })
-            }
+            val musicListResult =
+                if (jsonElement is JsonObject) {
+                    val response = json.decodeFromJsonElement<ScriptMusicListResponse>(jsonElement)
+                    MusicListResult(
+                        items = response.items.map { it.toMusicModel(sourceId) },
+                        totalCount = response.total,
+                    )
+                } else {
+                    val items = json.decodeFromJsonElement<List<ScriptMusicItem>>(jsonElement)
+                    MusicListResult(items.map { it.toMusicModel(sourceId) })
+                }
             ScriptSourceCache.put(cacheKey, musicListResult)
             musicListResult
         } catch (e: Exception) {
@@ -158,16 +167,17 @@ class ScriptMusicSource(
             if (result == "null") return MusicListResult(emptyList())
 
             val jsonElement = json.parseToJsonElement(result)
-            val musicListResult = if (jsonElement is JsonObject) {
-                val response = json.decodeFromJsonElement<ScriptMusicListResponse>(jsonElement)
-                MusicListResult(
-                    items = response.items.map { it.toMusicModel(sourceId) },
-                    totalCount = response.total,
-                )
-            } else {
-                val items = json.decodeFromJsonElement<List<ScriptMusicItem>>(jsonElement)
-                MusicListResult(items.map { it.toMusicModel(sourceId) })
-            }
+            val musicListResult =
+                if (jsonElement is JsonObject) {
+                    val response = json.decodeFromJsonElement<ScriptMusicListResponse>(jsonElement)
+                    MusicListResult(
+                        items = response.items.map { it.toMusicModel(sourceId) },
+                        totalCount = response.total,
+                    )
+                } else {
+                    val items = json.decodeFromJsonElement<List<ScriptMusicItem>>(jsonElement)
+                    MusicListResult(items.map { it.toMusicModel(sourceId) })
+                }
             ScriptSourceCache.put(cacheKey, musicListResult)
             musicListResult
         } catch (e: Exception) {

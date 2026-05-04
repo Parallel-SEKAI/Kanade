@@ -20,6 +20,7 @@ import org.parallel_sekai.kanade.data.source.IMusicSource
 import org.parallel_sekai.kanade.data.source.MusicListResult
 import org.parallel_sekai.kanade.data.source.SourceManager
 import org.parallel_sekai.kanade.data.source.local.LocalMusicSource
+import org.parallel_sekai.kanade.data.utils.MediaNotificationLyricsState
 import org.parallel_sekai.kanade.service.KanadePlaybackService
 
 /**
@@ -194,13 +195,17 @@ open class PlaybackRepository(
         val playlist =
             (0 until ctrl.mediaItemCount).map { i ->
                 val item = ctrl.getMediaItemAt(i)
+                // 使用 extras 中保存的原始信息，避免歌词污染
+                val originalTitle =
+                    item.mediaMetadata.extras?.getString("original_title") ?: item.mediaMetadata.title?.toString() ?: ""
+                val originalArtists =
+                    item.mediaMetadata.extras?.getString("original_artists") ?: item.mediaMetadata.artist?.toString()
+                        ?: ""
+
                 MusicModel(
                     id = item.mediaMetadata.extras?.getString("original_id") ?: item.mediaId,
-                    title = item.mediaMetadata.title?.toString() ?: "",
-                    artists =
-                        item.mediaMetadata.artist
-                            ?.toString()
-                            ?.split(_artistJoinString.value) ?: emptyList(),
+                    title = originalTitle,
+                    artists = originalArtists.split(_artistJoinString.value),
                     album = item.mediaMetadata.albumTitle?.toString() ?: "",
                     coverUrl = item.mediaMetadata.artworkUri?.toString() ?: "",
                     mediaUri = item.requestMetadata.mediaUri?.toString() ?: "",
@@ -425,11 +430,15 @@ open class PlaybackRepository(
 
     private fun createMediaItem(music: MusicModel): MediaItem {
         val uniqueId = "${music.sourceId}:${music.id}"
+        val artistsString = music.artists.joinToString(_artistJoinString.value)
         val extras =
             android.os.Bundle().apply {
                 putString("source_id", music.sourceId)
                 putString("original_id", music.id)
                 putLong("duration", music.duration)
+                // 保存原始 title 和 artists，防止歌词 metadata 污染保存/恢复
+                putString("original_title", music.title)
+                putString("original_artists", artistsString)
             }
 
         val isLocal = music.sourceId == localMusicSource.sourceId
@@ -454,7 +463,7 @@ open class PlaybackRepository(
                     MediaMetadata
                         .Builder()
                         .setTitle(music.title)
-                        .setArtist(music.artists.joinToString(_artistJoinString.value))
+                        .setArtist(artistsString)
                         .setAlbumTitle(music.album)
                         .setArtworkUri(android.net.Uri.parse(music.coverUrl))
                         .setExtras(extras)
@@ -486,5 +495,28 @@ open class PlaybackRepository(
 
     fun release() {
         MediaController.releaseFuture(controllerFuture)
+    }
+
+    /**
+     * 更新当前播放项的媒体通知 metadata（用于显示歌词）
+     * @param title 新的 title（通常是歌词原文）
+     * @param artist 新的 artist（通常是翻译或歌曲信息）
+     *
+     * 注意：此方法只更新通知覆盖状态，不再使用 replaceMediaItem/seekTo 等会影响播放状态的 API
+     */
+    fun updateCurrentMediaNotificationMetadata(
+        title: String,
+        artist: String,
+    ) {
+        MediaNotificationLyricsState.update(title, artist)
+    }
+
+    /**
+     * 还原当前播放项的媒体通知 metadata 为原始信息
+     *
+     * 注意：此方法只清除通知覆盖状态，不再使用 replaceMediaItem/seekTo 等会影响播放状态的 API
+     */
+    fun restoreCurrentMediaNotificationMetadata() {
+        MediaNotificationLyricsState.clear()
     }
 }
