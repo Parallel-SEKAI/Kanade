@@ -114,6 +114,26 @@ open class SettingsRepository(
     private val SUPER_LYRIC_API_CLEAR_ON_PAUSE =
         booleanPreferencesKey("super_lyric_api_clear_on_pause")
 
+    // Lyricon API keys
+    private val LYRICON_API_ENABLED = booleanPreferencesKey("lyricon_api_enabled")
+    private val LYRICON_API_ENABLE_WORD_BY_WORD = booleanPreferencesKey("lyricon_api_enable_word_by_word")
+    private val LYRICON_API_SCROLLING_TRUNCATE_ENABLED =
+        booleanPreferencesKey("lyricon_api_scrolling_truncate_enabled")
+    private val LYRICON_API_MAX_DISPLAY_UNITS =
+        intPreferencesKey("lyricon_api_max_display_units")
+    private val LYRICON_API_SMART_UNITS_ENABLED =
+        booleanPreferencesKey("lyricon_api_smart_units_enabled")
+    private val LYRICON_API_SHOW_TIMESTAMP =
+        booleanPreferencesKey("lyricon_api_show_timestamp")
+    private val LYRICON_API_DISPLAY_STATES =
+        stringSetPreferencesKey("lyricon_api_display_states")
+    private val LYRICON_API_CLEAR_ON_PAUSE =
+        booleanPreferencesKey("lyricon_api_clear_on_pause")
+    private val LYRICON_API_DISPLAY_TRANSLATION =
+        booleanPreferencesKey("lyricon_api_display_translation")
+    private val LYRICON_API_DISPLAY_ROMA =
+        booleanPreferencesKey("lyricon_api_display_roma")
+
     open val activeScriptIdFlow: Flow<String?> =
         context.dataStore.data
             .map { preferences -> preferences[ACTIVE_SCRIPT_ID] }
@@ -384,6 +404,27 @@ open class SettingsRepository(
                 )
             }
 
+    open val lyriconApiSettingsFlow:
+        Flow<org.parallel_sekai.kanade.data.model.LyriconApiSettings> =
+        context.dataStore.data
+            .map { preferences ->
+                org.parallel_sekai.kanade.data.model.LyriconApiSettings(
+                    enabled = preferences[LYRICON_API_ENABLED] ?: true,
+                    enableWordByWord = preferences[LYRICON_API_ENABLE_WORD_BY_WORD] ?: true,
+                    scrollingTruncateEnabled =
+                        preferences[LYRICON_API_SCROLLING_TRUNCATE_ENABLED] ?: false,
+                    maxDisplayUnits = preferences[LYRICON_API_MAX_DISPLAY_UNITS] ?: 40,
+                    smartUnitsEnabled = preferences[LYRICON_API_SMART_UNITS_ENABLED] ?: true,
+                    showTimestamp = preferences[LYRICON_API_SHOW_TIMESTAMP] ?: false,
+                    displayStates =
+                        preferences[LYRICON_API_DISPLAY_STATES]?.mapNotNull { it.toIntOrNull() }?.toSet()
+                            ?: setOf(0, 1, 2),
+                    clearOnPause = preferences[LYRICON_API_CLEAR_ON_PAUSE] ?: true,
+                    displayTranslation = preferences[LYRICON_API_DISPLAY_TRANSLATION] ?: true,
+                    displayRoma = preferences[LYRICON_API_DISPLAY_ROMA] ?: false,
+                )
+            }
+
     open suspend fun updateRepeatMode(mode: Int) {
         context.dataStore.edit { preferences ->
             preferences[REPEAT_MODE] = mode
@@ -565,6 +606,69 @@ open class SettingsRepository(
     open suspend fun updateSuperLyricApiClearOnPause(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[SUPER_LYRIC_API_CLEAR_ON_PAUSE] = enabled
+        }
+    }
+
+    // Lyricon API update methods
+    open suspend fun updateLyriconApiEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRICON_API_ENABLED] = enabled
+        }
+    }
+
+    open suspend fun updateLyriconApiEnableWordByWord(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRICON_API_ENABLE_WORD_BY_WORD] = enabled
+        }
+    }
+
+    open suspend fun updateLyriconApiScrollingTruncateEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRICON_API_SCROLLING_TRUNCATE_ENABLED] = enabled
+        }
+    }
+
+    open suspend fun updateLyriconApiMaxDisplayUnits(units: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRICON_API_MAX_DISPLAY_UNITS] = units.coerceIn(3, 120)
+        }
+    }
+
+    open suspend fun updateLyriconApiSmartUnitsEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRICON_API_SMART_UNITS_ENABLED] = enabled
+        }
+    }
+
+    open suspend fun updateLyriconApiShowTimestamp(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRICON_API_SHOW_TIMESTAMP] = enabled
+        }
+    }
+
+    open suspend fun updateLyriconApiDisplayStates(states: Set<Int>) {
+        context.dataStore.edit { preferences ->
+            val validStates = states.filter { it in 0..2 }.toSet()
+            val finalStates = if (validStates.isEmpty()) setOf(0) else validStates
+            preferences[LYRICON_API_DISPLAY_STATES] = finalStates.map { it.toString() }.toSet()
+        }
+    }
+
+    open suspend fun updateLyriconApiClearOnPause(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRICON_API_CLEAR_ON_PAUSE] = enabled
+        }
+    }
+
+    open suspend fun updateLyriconApiDisplayTranslation(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRICON_API_DISPLAY_TRANSLATION] = enabled
+        }
+    }
+
+    open suspend fun updateLyriconApiDisplayRoma(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LYRICON_API_DISPLAY_ROMA] = enabled
         }
     }
 }

@@ -69,6 +69,10 @@ class PlayerViewModel(
     private var refreshJob: Job? = null
     private var playlistFetchingJob: Job? = null
 
+    // Lyricon 状态追踪
+    private var lastSentLyriconSongId: String? = null
+    private var lastSentLyriconPositionAtMs = 0L
+
     // 新增：用于存储和传递艺术家解析设置
     private val _artistParsingSettings = MutableStateFlow(ArtistParsingSettings())
 
@@ -86,6 +90,7 @@ class PlayerViewModel(
             org.parallel_sekai.kanade.data.model
                 .ExternalLyricApiSettings(),
         )
+    private val _cachedLyriconApiSettings = MutableStateFlow(LyriconApiSettings())
 
     // 新增：设备显示状态管理器和媒体通知歌词发送器
     private val deviceDisplayStateManager = DeviceDisplayStateManager(applicationContext)
@@ -147,11 +152,40 @@ class PlayerViewModel(
                 }
             }.launchIn(viewModelScope)
 
+        // 监听 Lyricon API 设置并缓存
+        settingsRepository.lyriconApiSettingsFlow
+            .onEach { settings ->
+                val previousSettings = _cachedLyriconApiSettings.value
+                _cachedLyriconApiSettings.value = settings
+
+                // 如果从允许变为不允许或关闭，清除该 API
+                val wasAllowed =
+                    previousSettings.enabled &&
+                        previousSettings.displayStates.contains(deviceDisplayStateManager.currentStateFlow.value)
+                val isAllowed =
+                    settings.enabled &&
+                        settings.displayStates.contains(deviceDisplayStateManager.currentStateFlow.value)
+                if (wasAllowed && !isAllowed) {
+                    lyricGetterManager.clearLyricon()
+                    lastSentLyriconSongId = null
+                    lastSentLyriconPositionAtMs = 0L
+                }
+
+                // 如果 displayTranslation 或 displayRoma 改变，更新 Lyricon 设置
+                if (previousSettings.displayTranslation != settings.displayTranslation) {
+                    lyricGetterManager.updateLyriconDisplayTranslation(settings.displayTranslation)
+                }
+                if (previousSettings.displayRoma != settings.displayRoma) {
+                    lyricGetterManager.updateLyriconDisplayRoma(settings.displayRoma)
+                }
+            }.launchIn(viewModelScope)
+
         // 监听设备显示状态变化，检查是否需要清除外部 API
         deviceDisplayStateManager.currentStateFlow
             .onEach { currentState ->
                 val lyricGetterSettings = _cachedLyricGetterApiSettings.value
                 val superLyricSettings = _cachedSuperLyricApiSettings.value
+                val lyriconSettings = _cachedLyriconApiSettings.value
 
                 // 如果 LyricGetter 不允许当前状态，清除
                 if (lyricGetterSettings.enabled && !lyricGetterSettings.displayStates.contains(currentState)) {
@@ -163,6 +197,13 @@ class PlayerViewModel(
                 if (superLyricSettings.enabled && !superLyricSettings.displayStates.contains(currentState)) {
                     lyricGetterManager.clearSuperLyric()
                     lastSentSuperLyricLyric = null
+                }
+
+                // 如果 Lyricon 不允许当前状态，清除
+                if (lyriconSettings.enabled && !lyriconSettings.displayStates.contains(currentState)) {
+                    lyricGetterManager.clearLyricon()
+                    lastSentLyriconSongId = null
+                    lastSentLyriconPositionAtMs = 0L
                 }
             }.launchIn(viewModelScope)
 
@@ -240,6 +281,14 @@ class PlayerViewModel(
         playbackRepository.isPlaying
             .onEach { isPlaying ->
                 _state.update { it.copy(isPlaying = isPlaying) }
+
+                // 更新 Lyricon 播放状态
+                val lyriconSettings = _cachedLyriconApiSettings.value
+                val currentDeviceState = deviceDisplayStateManager.currentStateFlow.value
+                if (lyriconSettings.enabled && lyriconSettings.displayStates.contains(currentDeviceState)) {
+                    lyricGetterManager.updateLyriconPlaybackState(isPlaying)
+                }
+
                 if (!isPlaying) {
                     // 暂停时：根据各自设置清除外部 API
                     val lyricGetterSettings = _cachedLyricGetterApiSettings.value
@@ -253,6 +302,12 @@ class PlayerViewModel(
                     if (superLyricSettings.clearOnPause) {
                         lyricGetterManager.clearSuperLyric()
                         lastSentSuperLyricLyric = null
+                    }
+
+                    if (lyriconSettings.clearOnPause) {
+                        lyricGetterManager.clearLyricon()
+                        lastSentLyriconSongId = null
+                        lastSentLyriconPositionAtMs = 0L
                     }
 
                     // 暂停时根据设置还原媒体通知（使用缓存的设置，避免每次读取 DataStore）
@@ -307,8 +362,11 @@ class PlayerViewModel(
                             // 切歌时清除所有外部 API 和媒体通知
                             lyricGetterManager.clearLyricGetter()
                             lyricGetterManager.clearSuperLyric()
+                            lyricGetterManager.clearLyricon()
                             lastSentLyricGetterLyric = null
                             lastSentSuperLyricLyric = null
+                            lastSentLyriconSongId = null
+                            lastSentLyriconPositionAtMs = 0L
 
                             // 切歌时清除旧歌词覆盖并重置发送器状态
                             // 顺序：先 restore() 清除覆盖，再 reset() 重置内部状态
@@ -323,6 +381,21 @@ class PlayerViewModel(
                                     lyrics = lyrics,
                                     lyricData = lyricData,
                                 )
+                            }
+
+                            // 切歌后发送新歌到 Lyricon（如果启用且允许当前设备状态）
+                            val lyriconSettings = _cachedLyriconApiSettings.value
+                            val currentDeviceState = deviceDisplayStateManager.currentStateFlow.value
+                            if (lyriconSettings.enabled && lyriconSettings.displayStates.contains(currentDeviceState)) {
+                                lyricGetterManager.setLyriconSongFromKanadeModels(
+                                    music = song,
+                                    lyricData = lyricData,
+                                    settings = lyriconSettings,
+                                )
+                                lastSentLyriconSongId = song.id
+                                // 同步显示选项
+                                lyricGetterManager.updateLyriconDisplayTranslation(lyriconSettings.displayTranslation)
+                                lyricGetterManager.updateLyriconDisplayRoma(lyriconSettings.displayRoma)
                             }
                         } else if (song.coverUrl != previousSong?.coverUrl && song.coverUrl.isNotBlank()) {
                             extractColors(song)
@@ -382,6 +455,9 @@ class PlayerViewModel(
                         val currentLine = lines?.getOrNull(currentLineIndex)
                         val lyricContent = currentLine?.content ?: ""
 
+                        // 获取当前设备状态
+                        val currentDeviceState = deviceDisplayStateManager.currentStateFlow.value
+
                         if (lyricContent.isNotBlank()) {
                             val nextLine = lines?.getOrNull(currentLineIndex + 1)
                             val lineEndOrNextMs = nextLine?.startTime ?: state.value.duration
@@ -394,9 +470,6 @@ class PlayerViewModel(
                                 } else {
                                     0L
                                 }
-
-                            // 获取当前设备状态
-                            val currentDeviceState = deviceDisplayStateManager.currentStateFlow.value
 
                             // 发送到 LyricGetter API
                             val lyricGetterSettings = _cachedLyricGetterApiSettings.value
@@ -446,6 +519,33 @@ class PlayerViewModel(
                                     )
                                     lastSentSuperLyricLyric = formattedLyric
                                 }
+                            }
+                        }
+
+                        // 同步位置到 Lyricon（动态节流间隔）
+                        val lyriconSettings = _cachedLyriconApiSettings.value
+                        if (lyriconSettings.enabled &&
+                            lyriconSettings.displayStates.contains(currentDeviceState)
+                        ) {
+                            // 检测当前歌词是否包含逐字数据
+                            val currentLyricData = state.value.lyricData
+                            val hasWordByWord =
+                                currentLyricData?.lines?.any {
+                                    it.words.isNotEmpty()
+                                } ?: false
+
+                            // 根据歌词类型选择更新间隔
+                            val updateInterval =
+                                if (hasWordByWord && lyriconSettings.enableWordByWord) {
+                                    42L // 逐字歌词: 42ms (约 24 FPS, Lyricon 官方推荐值)
+                                } else {
+                                    1000L // 普通歌词: 1000ms (保持当前值)
+                                }
+
+                            // 使用动态间隔更新位置
+                            if (pos - lastSentLyriconPositionAtMs >= updateInterval) {
+                                lyricGetterManager.updateLyriconPosition(pos)
+                                lastSentLyriconPositionAtMs = pos
                             }
                         }
 
@@ -981,5 +1081,6 @@ class PlayerViewModel(
         super.onCleared()
         deviceDisplayStateManager.release()
         playbackRepository.release()
+        lyricGetterManager.destroyLyricon()
     }
 }

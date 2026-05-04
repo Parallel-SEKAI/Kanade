@@ -22,6 +22,7 @@ open class SettingsViewModel(
 ) : ViewModel() {
     val isLyricsGetterActivated: Boolean get() = lyricGetterManager.isLyricGetterActivated
     val isSuperLyricActivated: Boolean get() = lyricGetterManager.isSuperLyricActivated
+    val isLyriconActivated: Boolean get() = lyricGetterManager.isLyriconActivated
     val isAnyLyricApiActivated: Boolean get() = lyricGetterManager.isActivated
 
     val lyricsSettings: StateFlow<LyricsSettings> =
@@ -89,6 +90,16 @@ open class SettingsViewModel(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = ExternalLyricApiSettings(),
+            )
+
+    val lyriconApiSettings: StateFlow<org.parallel_sekai.kanade.data.model.LyriconApiSettings> =
+        repository.lyriconApiSettingsFlow
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue =
+                    org.parallel_sekai.kanade.data.model
+                        .LyriconApiSettings(),
             )
 
     init {
@@ -336,6 +347,67 @@ open class SettingsViewModel(
     fun updateSuperLyricApiClearOnPause(enabled: Boolean) {
         viewModelScope.launch {
             repository.updateSuperLyricApiClearOnPause(enabled)
+        }
+    }
+
+    // Lyricon API update methods
+    fun updateLyriconApiEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateLyriconApiEnabled(enabled)
+        }
+    }
+
+    fun updateLyriconApiEnableWordByWord(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateLyriconApiEnableWordByWord(enabled)
+        }
+    }
+
+    fun updateLyriconApiScrollingTruncateEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateLyriconApiScrollingTruncateEnabled(enabled)
+        }
+    }
+
+    fun updateLyriconApiMaxDisplayUnits(units: Int) {
+        viewModelScope.launch {
+            repository.updateLyriconApiMaxDisplayUnits(units)
+        }
+    }
+
+    fun updateLyriconApiSmartUnitsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateLyriconApiSmartUnitsEnabled(enabled)
+        }
+    }
+
+    fun updateLyriconApiShowTimestamp(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateLyriconApiShowTimestamp(enabled)
+        }
+    }
+
+    fun updateLyriconApiDisplayStates(states: Set<Int>) {
+        viewModelScope.launch {
+            repository.updateLyriconApiDisplayStates(states)
+        }
+    }
+
+    fun updateLyriconApiClearOnPause(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateLyriconApiClearOnPause(enabled)
+        }
+    }
+
+    fun updateLyriconApiDisplayTranslation(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateLyriconApiDisplayTranslation(enabled)
+        }
+    }
+
+    fun updateLyriconApiDisplayRoma(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateLyriconApiDisplayRoma(enabled)
         }
     }
 }

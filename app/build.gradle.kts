@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation("com.github.xiaowine:Lyric-Getter-Api:6.0.0")
     implementation("com.github.HChenX:SuperLyricApi:2.4")
+    implementation("io.github.proify.lyricon:provider:0.1.70")
 
     implementation(platform(libs.androidx.compose.bom))
     implementation("androidx.compose.material3:material3") // 明确指定

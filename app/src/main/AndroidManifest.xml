@@ -21,6 +21,21 @@
         android:theme="@style/Theme.Kanade"
         android:enableOnBackInvokedCallback="true"
         android:networkSecurityConfig="@xml/network_security_config">
+
+        <!-- Lyricon Provider Configuration -->
+        <meta-data
+            android:name="lyricon_module"
+            android:value="true" />
+        <meta-data
+            android:name="lyricon_module_author"
+            android:value="Kanade Team" />
+        <meta-data
+            android:name="lyricon_module_description"
+            android:value="Kanade Music Player" />
+        <meta-data
+            android:name="lyricon_module_tags"
+            android:resource="@array/lyricon_module_tags" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

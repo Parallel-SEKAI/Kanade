@@ -95,6 +95,8 @@ sealed class Screen(
 
     object SuperLyricApi : Screen("super_lyric_api", R.string.pref_super_lyric, null)
 
+    object LyriconApi : Screen("lyricon_api", R.string.pref_lyricon, null)
+
     object MediaNotificationLyrics : Screen("media_notification_lyrics", R.string.title_media_notification_lyrics, null)
 
     object ExcludedFolders : Screen("excluded_folders", R.string.title_excluded_folders, null)
@@ -501,6 +503,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 },
                                 onNavigateToSuperLyricApi = { navController.navigate(Screen.SuperLyricApi.route) },
+                                onNavigateToLyriconApi = { navController.navigate(Screen.LyriconApi.route) },
                                 onNavigateToMediaNotificationLyrics = {
                                     navController.navigate(
                                         Screen.MediaNotificationLyrics.route,
@@ -522,6 +525,12 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Screen.SuperLyricApi.route) {
                             SuperLyricApiScreen(
+                                viewModel = settingsViewModel,
+                                onNavigateBack = { navController.popBackStack() },
+                            )
+                        }
+                        composable(Screen.LyriconApi.route) {
+                            org.parallel_sekai.kanade.ui.screens.settings.LyriconApiScreen(
                                 viewModel = settingsViewModel,
                                 onNavigateBack = { navController.popBackStack() },
                             )

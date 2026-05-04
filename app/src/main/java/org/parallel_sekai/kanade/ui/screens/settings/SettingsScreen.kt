@@ -30,6 +30,7 @@ fun SettingsScreen(
     onNavigateToCacheSettings: () -> Unit,
     onNavigateToLyricsGetterApi: () -> Unit,
     onNavigateToSuperLyricApi: () -> Unit,
+    onNavigateToLyriconApi: () -> Unit,
     onNavigateToMediaNotificationLyrics: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
@@ -80,6 +81,7 @@ fun SettingsScreen(
                             onUpdateSearchAsPlaylist = { viewModel.updateSearchResultAsPlaylist(it) },
                             onNavigateToLyricsGetterApi = onNavigateToLyricsGetterApi,
                             onNavigateToSuperLyricApi = onNavigateToSuperLyricApi,
+                            onNavigateToLyriconApi = onNavigateToLyriconApi,
                             onNavigateToMediaNotificationLyrics = onNavigateToMediaNotificationLyrics,
                             onNavigateToExcludedFolders = onNavigateToExcludedFolders,
                             onNavigateToCacheSettings = onNavigateToCacheSettings,
@@ -108,6 +110,7 @@ fun SettingsScreen(
                     onUpdateSearchAsPlaylist = { viewModel.updateSearchResultAsPlaylist(it) },
                     onNavigateToLyricsGetterApi = onNavigateToLyricsGetterApi,
                     onNavigateToSuperLyricApi = onNavigateToSuperLyricApi,
+                    onNavigateToLyriconApi = onNavigateToLyriconApi,
                     onNavigateToMediaNotificationLyrics = onNavigateToMediaNotificationLyrics,
                     onNavigateToExcludedFolders = onNavigateToExcludedFolders,
                     onNavigateToCacheSettings = onNavigateToCacheSettings,
@@ -146,6 +149,7 @@ private fun GeneralSettingsSection(
     onUpdateSearchAsPlaylist: (Boolean) -> Unit,
     onNavigateToLyricsGetterApi: () -> Unit,
     onNavigateToSuperLyricApi: () -> Unit,
+    onNavigateToLyriconApi: () -> Unit,
     onNavigateToMediaNotificationLyrics: () -> Unit,
     onNavigateToExcludedFolders: () -> Unit,
     onNavigateToCacheSettings: () -> Unit,
@@ -164,6 +168,13 @@ private fun GeneralSettingsSection(
         supportingContent = { Text(stringResource(R.string.desc_super_lyric)) },
         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
         modifier = Modifier.clickable(onClick = onNavigateToSuperLyricApi),
+    )
+
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.pref_lyricon)) },
+        supportingContent = { Text(stringResource(R.string.desc_lyricon)) },
+        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+        modifier = Modifier.clickable(onClick = onNavigateToLyriconApi),
     )
 
     ListItem(
